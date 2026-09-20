@@ -13,6 +13,7 @@ dist/
 .next/
 .nuxt/
 coverage/
+.vite/
 
 # Java
 target/
