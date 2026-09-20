@@ -1,0 +1,41 @@
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+dist/
+.next/
+.nuxt/
+coverage/
+
+# Java
+target/
+build/
+.gradle/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Local media / generated assets
+storage/
+uploads/
+renders/
+inbox/
+*.mp4
+*.wav
+*.mp3
+
+# Logs
+*.log
+
+# Certificates / secrets
+certs/*
+!certs/.gitkeep
