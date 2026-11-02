@@ -28,15 +28,10 @@ import org.springframework.web.server.ResponseStatusException;
 public class CoreApi {
     private final JdbcTemplate db;
     private final ObjectMapper json;
-    private final String geminiKey;
-    private final String geminiModel;
-    private final boolean providerCallsEnabled;
     private final WorkflowApi workflows;
     private final AiService ai;
-    public CoreApi(JdbcTemplate db, ObjectMapper json, @Value("${GEMINI_API_KEY:}") String geminiKey,
-            @Value("${GEMINI_MODEL:gemini-2.5-flash}") String geminiModel,
-            @Value("${CREATORFLOW_ALLOW_PROVIDER_CALLS:false}") boolean providerCallsEnabled,WorkflowApi workflows,AiService ai) {
-        this.db=db; this.json=json; this.geminiKey=geminiKey; this.geminiModel=geminiModel; this.providerCallsEnabled=providerCallsEnabled;this.workflows=workflows;this.ai=ai;
+    public CoreApi(JdbcTemplate db, ObjectMapper json,WorkflowApi workflows,AiService ai) {
+        this.db=db; this.json=json;this.workflows=workflows;this.ai=ai;
     }
     public record GenerateIdeas(@NotBlank String niche, @NotBlank String language, @Min(1) @Max(20) int count,
                                 @Min(15) @Max(600) int targetDurationSec, @NotBlank String style) {}
@@ -70,8 +65,6 @@ public class CoreApi {
         if(db.update("delete from content_ideas where id=?",id)==0) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Idea not found");
     }
     @PostMapping("/ideas/generate") List<Map<String,Object>> generate(@Valid @RequestBody GenerateIdeas input) throws Exception {
-        if(geminiKey.isBlank()) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Gemini NOT_CONFIGURED");
-        if(!providerCallsEnabled) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"AI provider calls disabled");
         String prompt="Return only a JSON array of exactly "+input.count()+" objects with string title and hook for "+input.niche()+" in "+input.language()+". Style: "+input.style()+". No markdown.";
         String raw=ai.generateJson("IDEA",null,prompt);
         try {

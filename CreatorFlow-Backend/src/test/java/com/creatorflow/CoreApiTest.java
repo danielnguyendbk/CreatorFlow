@@ -12,14 +12,17 @@ class CoreApiTest {
     @Test
     void generationWithoutCredentialsFailsBeforeWritingOrCallingProvider() {
         JdbcTemplate db = new JdbcTemplate();
-        CoreApi api = new CoreApi(db, new ObjectMapper(), "", "gemini-2.5-flash", false, null, null);
+        CoreApi api = new CoreApi(db, new ObjectMapper(), null,
+            new AiService(db,new ObjectMapper(),"","gemini-2.5-flash","","openrouter/free",false));
         ResponseStatusException error = assertThrows(ResponseStatusException.class,
             () -> api.generate(new CoreApi.GenerateIdeas("Java", "en", 2, 60, "explainer")));
         assertEquals(503, error.getStatusCode().value());
     }
     @Test
     void configuredKeyStillRequiresExplicitProviderOptIn() {
-        CoreApi api = new CoreApi(new JdbcTemplate(), new ObjectMapper(), "dummy-key", "gemini-2.5-flash", false, null, null);
+        JdbcTemplate db=new JdbcTemplate();
+        CoreApi api = new CoreApi(db, new ObjectMapper(), null,
+            new AiService(db,new ObjectMapper(),"dummy-key","gemini-2.5-flash","","openrouter/free",false));
         ResponseStatusException error = assertThrows(ResponseStatusException.class,
             () -> api.generate(new CoreApi.GenerateIdeas("Java", "en", 2, 60, "explainer")));
         assertEquals(503, error.getStatusCode().value());
