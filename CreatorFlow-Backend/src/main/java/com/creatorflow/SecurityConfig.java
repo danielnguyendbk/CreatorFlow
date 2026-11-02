@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,6 +35,7 @@ public class SecurityConfig {
         var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cors);
         http.csrf(c -> c.disable()).cors(c -> c.configurationSource(source))
+            .exceptionHandling(e -> e.authenticationEntryPoint((req,res,ex) -> res.sendError(HttpStatus.UNAUTHORIZED.value())))
             .authorizeHttpRequests(a -> a.requestMatchers("/actuator/health/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
                 .anyRequest().authenticated())
             .addFilterBefore(new OncePerRequestFilter() {
@@ -45,7 +47,7 @@ public class SecurityConfig {
                     }
                     byte[] expected = ("Bearer " + token).getBytes(StandardCharsets.UTF_8);
                     byte[] given = req.getHeader("Authorization") == null ? new byte[0] : req.getHeader("Authorization").getBytes(StandardCharsets.UTF_8);
-                    if (!MessageDigest.isEqual(expected, given)) { res.sendError(401); return; }
+                    if (!MessageDigest.isEqual(expected, given)) { res.setStatus(401); return; }
                     SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("local-user", null, List.of()));
                     chain.doFilter(req, res);
                 }
