@@ -1,6 +1,7 @@
 import type { Storyboard, Scene } from '@/types';
 import { mockStoryboards } from '@/mocks/storyboards';
 import { mockDelay } from './_mock';
+import { apiRequest, realApi } from './_http';
 
 const _storyboards = [...mockStoryboards];
 
@@ -68,6 +69,7 @@ function generateFallbackStoryboard(contentId: string): Storyboard {
 
 export const storyboardApi = {
   async getStoryboardByContent(contentId: string): Promise<Storyboard | null> {
+    if (realApi) return apiRequest(`/api/storyboards/by-content/${encodeURIComponent(contentId)}`);
     await mockDelay();
     let sb = _storyboards.find((s) => s.contentId === contentId);
     if (!sb) {
@@ -78,6 +80,7 @@ export const storyboardApi = {
   },
 
   async getStoryboard(id: string): Promise<Storyboard> {
+    if (realApi) return apiRequest(`/api/storyboards/${encodeURIComponent(id)}`);
     await mockDelay();
     const sb = _storyboards.find((s) => s.id === id);
     if (!sb) throw new Error(`Storyboard ${id} not found`);
@@ -89,6 +92,7 @@ export const storyboardApi = {
     sceneId: string,
     updates: Partial<Scene>,
   ): Promise<Storyboard> {
+    if (realApi) return apiRequest(`/api/storyboards/${encodeURIComponent(storyboardId)}/scenes/${encodeURIComponent(sceneId)}`, { method: 'PATCH', body: JSON.stringify(updates) });
     await mockDelay(300);
     const sb = _storyboards.find((s) => s.id === storyboardId);
     if (!sb) throw new Error(`Storyboard ${storyboardId} not found`);

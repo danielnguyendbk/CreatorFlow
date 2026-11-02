@@ -11,7 +11,7 @@ export const activityApi = {
   },
 
   async getEventsByEntity(entityId: string): Promise<ActivityEvent[]> {
-    if (realApi) return (await apiRequest<ActivityEvent[]>(`/api/activity?limit=200`)).filter((e) => e.entityId === entityId);
+    if (realApi) return apiRequest(`/api/activity?entityId=${encodeURIComponent(entityId)}`);
     await mockDelay(300);
     return mockActivity.filter((e) => e.entityId === entityId);
   },

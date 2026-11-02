@@ -21,6 +21,7 @@ export const contentApi = {
   },
 
   async updateContentStatus(id: string, status: ContentStatus): Promise<Content> {
+    if (realApi) return apiRequest(`/api/contents/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
     await mockDelay(300);
     const content = _contents.find((c) => c.id === id);
     if (!content) throw new Error(`Content ${id} not found`);
@@ -30,6 +31,7 @@ export const contentApi = {
   },
 
   async retryStage(id: string, stage: string): Promise<Content> {
+    if (realApi) return apiRequest(`/api/contents/${encodeURIComponent(id)}/stages/${encodeURIComponent(stage)}/retry`, { method: 'POST' });
     await mockDelay(400);
     const content = _contents.find((c) => c.id === id);
     if (!content) throw new Error(`Content ${id} not found`);

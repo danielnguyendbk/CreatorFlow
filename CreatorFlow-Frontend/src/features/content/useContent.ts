@@ -8,6 +8,7 @@ import {
   activityApi,
 } from '@/api';
 import type { ContentStatus, Scene, SceneAssetStatus, WorkflowStage } from '@/types';
+import { realApi } from '@/api/_http';
 
 export function useContents() {
   return useQuery({
@@ -102,6 +103,15 @@ export function useUploadSceneClip() {
       sceneId: string;
       onProgress?: (percent: number) => void;
     }) => {
+      if (realApi) {
+        const asset = await assetApi.uploadAsset(file, contentId, sceneId, onProgress);
+        const updatedSb = await storyboardApi.getStoryboard(storyboardId);
+        const currentContent = await contentApi.getContent(contentId);
+        if (currentContent.workflowInstanceId && updatedSb.scenes.every((scene) => scene.assetStatus === 'READY')) {
+          await contentApi.resumeWorkflow(contentId);
+        }
+        return { asset, storyboard: updatedSb };
+      }
       // 1. Set scene assetStatus to UPLOADING
       await storyboardApi.updateScene(storyboardId, sceneId, {
         assetStatus: 'UPLOADING' as SceneAssetStatus,

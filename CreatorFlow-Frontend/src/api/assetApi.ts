@@ -1,17 +1,19 @@
 import type { Asset, SceneAssetStatus } from '@/types';
 import { mockAssets } from '@/mocks/assets';
 import { mockDelay } from './_mock';
-import { apiRequest, realApi } from './_http';
+import { apiRequest, realApi, uploadRequest } from './_http';
 
 let _assets = [...mockAssets];
 
 export const assetApi = {
   async getAssets(): Promise<Asset[]> {
+    if (realApi) return apiRequest('/api/assets');
     await mockDelay();
     return [..._assets];
   },
 
   async getAsset(id: string): Promise<Asset> {
+    if (realApi) return apiRequest(`/api/assets/${encodeURIComponent(id)}`);
     await mockDelay();
     const asset = _assets.find((a) => a.id === id);
     if (!asset) throw new Error(`Asset ${id} not found`);
@@ -19,6 +21,7 @@ export const assetApi = {
   },
 
   async getAssetsByContent(contentId: string): Promise<Asset[]> {
+    if (realApi) return apiRequest(`/api/assets/by-content/${encodeURIComponent(contentId)}`);
     await mockDelay(300);
     return _assets.filter((a) => a.contentId === contentId);
   },
@@ -47,6 +50,7 @@ export const assetApi = {
     sceneId: string,
     onProgress?: (percent: number) => void,
   ): Promise<Asset> {
+    if (realApi) return uploadRequest('/api/assets', file, { contentId, sceneId }, onProgress);
     // Simulate upload progress
     for (let p = 10; p <= 90; p += 20) {
       await mockDelay(300);
@@ -75,6 +79,7 @@ export const assetApi = {
   },
 
   async getInboxAssets(): Promise<Asset[]> {
+    if (realApi) return apiRequest('/api/assets/inbox');
     await mockDelay(300);
     return _assets.filter((a) => a.contentId === null);
   },
@@ -84,6 +89,7 @@ export const assetApi = {
     metadata: Record<string, string> = {},
     onProgress?: (percent: number) => void,
   ): Promise<Asset> {
+    if (realApi) return uploadRequest('/api/assets', file, {}, onProgress);
     for (let p = 15; p <= 85; p += 25) {
       await mockDelay(200);
       onProgress?.(p);
@@ -130,6 +136,7 @@ export const assetApi = {
     contentId: string,
     sceneId: string,
   ): Promise<Asset> {
+    if (realApi) return apiRequest(`/api/assets/${encodeURIComponent(assetId)}/assign`, { method: 'POST', body: JSON.stringify({ contentId, sceneId }) });
     await mockDelay(300);
     const asset = _assets.find((a) => a.id === assetId);
     if (!asset) throw new Error(`Asset ${assetId} not found`);
@@ -140,6 +147,7 @@ export const assetApi = {
   },
 
   async deleteAsset(id: string): Promise<void> {
+    if (realApi) return apiRequest(`/api/assets/${encodeURIComponent(id)}`, { method: 'DELETE' });
     await mockDelay(300);
     const exists = _assets.some((a) => a.id === id);
     if (!exists) throw new Error(`Asset ${id} not found`);
