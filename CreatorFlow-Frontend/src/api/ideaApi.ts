@@ -1,16 +1,19 @@
 import type { ContentIdea, IdeaStatus } from '@/types';
 import { mockIdeas } from '@/mocks/ideas';
 import { mockDelay } from './_mock';
+import { apiRequest, realApi } from './_http';
 
 let _ideas = [...mockIdeas];
 
 export const ideaApi = {
   async getIdeas(): Promise<ContentIdea[]> {
+    if (realApi) return apiRequest('/api/ideas');
     await mockDelay();
     return [..._ideas];
   },
 
   async getIdea(id: string): Promise<ContentIdea> {
+    if (realApi) return apiRequest(`/api/ideas/${encodeURIComponent(id)}`);
     await mockDelay();
     const idea = _ideas.find((i) => i.id === id);
     if (!idea) throw new Error(`Idea ${id} not found`);
@@ -18,6 +21,7 @@ export const ideaApi = {
   },
 
   async updateIdeaStatus(id: string, status: IdeaStatus): Promise<ContentIdea> {
+    if (realApi) return apiRequest(`/api/ideas/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
     await mockDelay(300);
     const idea = _ideas.find((i) => i.id === id);
     if (!idea) throw new Error(`Idea ${id} not found`);
@@ -33,6 +37,7 @@ export const ideaApi = {
     targetDurationSec: number;
     style: string;
   }): Promise<ContentIdea[]> {
+    if (realApi) return apiRequest('/api/ideas/generate', { method: 'POST', body: JSON.stringify(params) });
     await mockDelay(1500); // simulate AI call
     const generated: ContentIdea[] = Array.from({ length: params.count }, (_, i) => ({
       id: `idea-gen-${Date.now()}-${i}`,
@@ -54,6 +59,7 @@ export const ideaApi = {
   },
 
   async deleteIdea(id: string): Promise<void> {
+    if (realApi) return apiRequest(`/api/ideas/${encodeURIComponent(id)}`, { method: 'DELETE' });
     await mockDelay(300);
     _ideas = _ideas.filter((i) => i.id !== id);
   },

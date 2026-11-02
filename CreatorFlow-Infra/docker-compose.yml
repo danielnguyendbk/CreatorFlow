@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: creatorflow-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: creatorflow
+      POSTGRES_USER: creatorflow
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in environment}
+    ports:
+      - "5432:5432"
+    volumes:
+      - creatorflow_pgdata:/var/lib/postgresql/data
+
+volumes:
+  creatorflow_pgdata:

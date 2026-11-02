@@ -1,16 +1,19 @@
 import type { Content, ContentStatus } from '@/types';
 import { mockContents } from '@/mocks/contents';
 import { mockDelay } from './_mock';
+import { apiRequest, realApi } from './_http';
 
 let _contents = [...mockContents];
 
 export const contentApi = {
   async getContents(): Promise<Content[]> {
+    if (realApi) return apiRequest('/api/contents');
     await mockDelay();
     return [..._contents];
   },
 
   async getContent(id: string): Promise<Content> {
+    if (realApi) return apiRequest(`/api/contents/${encodeURIComponent(id)}`);
     await mockDelay();
     const content = _contents.find((c) => c.id === id);
     if (!content) throw new Error(`Content ${id} not found`);
@@ -43,6 +46,7 @@ export const contentApi = {
   },
 
   async resumeWorkflow(id: string): Promise<Content> {
+    if (realApi) return apiRequest(`/api/contents/${encodeURIComponent(id)}/resume`, { method: 'POST' });
     await mockDelay(400);
     const content = _contents.find((c) => c.id === id);
     if (!content) throw new Error(`Content ${id} not found`);
@@ -70,6 +74,7 @@ export const contentApi = {
     language: string;
     ideaId?: string;
   }): Promise<Content> {
+    if (realApi) return apiRequest('/api/contents', { method: 'POST', body: JSON.stringify(params) });
     await mockDelay(600);
     const newContent: Content = {
       id: `content-${Date.now()}`,
@@ -103,6 +108,7 @@ export const contentApi = {
     failed: number;
     stageCounts: Record<string, number>;
   }> {
+    if (realApi) return apiRequest('/api/contents/dashboard-stats');
     await mockDelay(300);
     return {
       todayIdeas: 10,

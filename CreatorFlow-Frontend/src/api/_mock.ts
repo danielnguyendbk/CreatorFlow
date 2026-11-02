@@ -4,7 +4,9 @@
  */
 
 export const mockDelay = (ms = 400): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+  import.meta.env.VITE_API_BASE_URL
+    ? Promise.reject(new Error('This API is not implemented in real mode'))
+    : new Promise((resolve) => setTimeout(resolve, ms));
 
 export class ApiError extends Error {
   constructor(

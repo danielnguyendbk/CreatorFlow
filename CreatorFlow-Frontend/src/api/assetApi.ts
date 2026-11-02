@@ -1,6 +1,7 @@
 import type { Asset, SceneAssetStatus } from '@/types';
 import { mockAssets } from '@/mocks/assets';
 import { mockDelay } from './_mock';
+import { apiRequest, realApi } from './_http';
 
 let _assets = [...mockAssets];
 
@@ -26,6 +27,7 @@ export const assetApi = {
   async getPendingFlowScenes(): Promise<
     { contentId: string; contentTitle: string; scenes: { sceneId: string; sceneNumber: number; prompt: string }[] }[]
   > {
+    if (realApi) return apiRequest('/api/assets/pending-flow-scenes');
     await mockDelay(400);
     return [
       {
