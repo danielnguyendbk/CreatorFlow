@@ -262,6 +262,14 @@ export const nodeStatusConfig: Record<NodeStatus, StatusMeta> = {
 // Render Status
 // -------------------------------------------------------
 export const renderStatusConfig: Record<RenderStatus, StatusMeta> = {
+  CANCELLED: {
+    label: 'Cancelled',
+    icon: XCircle,
+    color: 'zinc',
+    bgClass: 'bg-zinc-800',
+    textClass: 'text-zinc-400',
+    ringClass: 'ring-zinc-700',
+  },
   QUEUED: {
     label: 'Queued',
     icon: Clock,

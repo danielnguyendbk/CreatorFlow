@@ -5,6 +5,7 @@ export function useWorkflows() {
   return useQuery({
     queryKey: ['workflows'],
     queryFn: () => workflowApi.getWorkflows(),
+    refetchInterval: import.meta.env.VITE_API_BASE_URL ? 3000 : false,
   });
 }
 
@@ -13,6 +14,7 @@ export function useWorkflow(id: string) {
     queryKey: ['workflow', id],
     queryFn: () => workflowApi.getWorkflow(id),
     enabled: Boolean(id),
+    refetchInterval: import.meta.env.VITE_API_BASE_URL ? 3000 : false,
   });
 }
 

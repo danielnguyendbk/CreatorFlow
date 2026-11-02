@@ -5,6 +5,7 @@ export function useRenderJobs() {
   return useQuery({
     queryKey: ['renders'],
     queryFn: () => renderApi.getRenderJobs(),
+    refetchInterval: import.meta.env.VITE_API_BASE_URL ? 3000 : false,
   });
 }
 
@@ -13,6 +14,7 @@ export function useRenderJob(id: string) {
     queryKey: ['render', id],
     queryFn: () => renderApi.getRenderJob(id),
     enabled: Boolean(id),
+    refetchInterval: import.meta.env.VITE_API_BASE_URL ? 3000 : false,
   });
 }
 

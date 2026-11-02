@@ -227,7 +227,8 @@ export type RenderStatus =
   | 'RENDERING'
   | 'SUCCESS'
   | 'FAILED'
-  | 'RETRYING';
+  | 'RETRYING'
+  | 'CANCELLED';
 
 export interface RenderJob extends Timestamps {
   id: ID;
