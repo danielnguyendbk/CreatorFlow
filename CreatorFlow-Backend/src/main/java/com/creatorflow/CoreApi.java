@@ -30,9 +30,11 @@ public class CoreApi {
     private final ObjectMapper json;
     private final String geminiKey;
     private final String geminiModel;
+    private final boolean providerCallsEnabled;
     public CoreApi(JdbcTemplate db, ObjectMapper json, @Value("${GEMINI_API_KEY:}") String geminiKey,
-            @Value("${GEMINI_MODEL:gemini-2.5-flash}") String geminiModel) {
-        this.db=db; this.json=json; this.geminiKey=geminiKey; this.geminiModel=geminiModel;
+            @Value("${GEMINI_MODEL:gemini-2.5-flash}") String geminiModel,
+            @Value("${CREATORFLOW_ALLOW_PROVIDER_CALLS:false}") boolean providerCallsEnabled) {
+        this.db=db; this.json=json; this.geminiKey=geminiKey; this.geminiModel=geminiModel; this.providerCallsEnabled=providerCallsEnabled;
     }
     public record GenerateIdeas(@NotBlank String niche, @NotBlank String language, @Min(1) @Max(20) int count,
                                 @Min(15) @Max(600) int targetDurationSec, @NotBlank String style) {}
@@ -58,6 +60,7 @@ public class CoreApi {
     }
     @PostMapping("/ideas/generate") List<Map<String,Object>> generate(@Valid @RequestBody GenerateIdeas input) throws Exception {
         if(geminiKey.isBlank()) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Gemini NOT_CONFIGURED");
+        if(!providerCallsEnabled) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"AI provider calls disabled");
         UUID job=UUID.randomUUID();
         String prompt="Return only a JSON array of exactly "+input.count()+" objects with string title and hook for "+input.niche()+" in "+input.language()+". Style: "+input.style()+". No markdown.";
         db.update("insert into ai_generation_jobs(id,type,status,provider,model,prompt) values (?,'IDEA','RUNNING','GEMINI',?,?)",job,geminiModel,prompt);
