@@ -26,7 +26,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class SecurityConfig {
     @Bean
     SecurityFilterChain security(HttpSecurity http, @Value("${creatorflow.api-token:}") String token,
-            @Value("${CREATORFLOW_FRONTEND_ORIGIN:http://localhost:5173}") String origin) throws Exception {
+            @Value("${CREATORFLOW_FRONTEND_ORIGIN:http://127.0.0.1:5173}") String origin) throws Exception {
         if (token.isBlank()) throw new IllegalStateException("CREATORFLOW_API_TOKEN is required");
         var cors = new CorsConfiguration();
         cors.setAllowedOrigins(List.of(origin));

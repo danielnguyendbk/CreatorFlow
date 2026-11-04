@@ -79,6 +79,7 @@ public class AiService {
         if(providers.stream().noneMatch(TextProvider::configured))
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"AI providers NOT_CONFIGURED");
         UUID id=UUID.randomUUID();
+        long started=System.nanoTime();
         db.update("insert into ai_generation_jobs(id,content_id,type,status,prompt) values (?,?,?,'RUNNING',?)",id,contentId,type,prompt);
         Exception last=null;
         for(TextProvider provider:providers){
@@ -87,14 +88,33 @@ public class AiService {
             try {
                 db.update("update ai_generation_jobs set provider=?,model=?,updated_at=now() where id=?",provider.name(),provider.model(),id);
                 Result result=provider.generate(prompt);
-                db.update("update ai_generation_jobs set status='COMPLETED',response=?,input_tokens=?,output_tokens=?,updated_at=now() where id=?",
-                    result.text(),result.inputTokens(),result.outputTokens(),id);
+                db.update("update ai_generation_jobs set status='COMPLETED',response=?,input_tokens=?,output_tokens=?,duration_ms=?,updated_at=now() where id=?",
+                    result.text(),result.inputTokens(),result.outputTokens(),(System.nanoTime()-started)/1_000_000,id);
                 db.update("insert into provider_usage(id,provider,model,generation_job_id,input_tokens,output_tokens,cost_usd) values (?,?,?,?,?,?,?)",
                     UUID.randomUUID(),provider.name(),provider.model(),id,result.inputTokens(),result.outputTokens(),"OPENROUTER".equals(provider.name())?0:null);
                 return result.text();
             } catch(Exception e) {last=e;}
         }
-        db.update("update ai_generation_jobs set status='FAILED',error=?,updated_at=now() where id=?",last==null?"No provider":last.getMessage(),id);
+        db.update("update ai_generation_jobs set status='FAILED',error=?,duration_ms=?,updated_at=now() where id=?",last==null?"No provider":last.getMessage(),(System.nanoTime()-started)/1_000_000,id);
         throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"AI generation failed");
+    }
+    public Map<String,Object> testGemini(){
+        TextProvider provider=providers.getFirst();
+        if(!enabled || !provider.configured()) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Gemini NOT_CONFIGURED or provider calls disabled");
+        String prompt="Return only valid JSON: {\"ok\":true}";
+        UUID id=UUID.randomUUID();long started=System.nanoTime();
+        db.update("insert into ai_generation_jobs(id,type,status,provider,model,prompt) values (?,'HEALTH','RUNNING',?,?,?)",id,provider.name(),provider.model(),prompt);
+        try {
+            Result result=provider.generate(prompt);
+            long elapsed=(System.nanoTime()-started)/1_000_000;
+            db.update("update ai_generation_jobs set status='COMPLETED',response=?,input_tokens=?,output_tokens=?,duration_ms=?,updated_at=now() where id=?",
+                result.text(),result.inputTokens(),result.outputTokens(),elapsed,id);
+            db.update("insert into provider_usage(id,provider,model,generation_job_id,input_tokens,output_tokens,cost_usd) values (?,?,?,?,?,?,null)",
+                UUID.randomUUID(),provider.name(),provider.model(),id,result.inputTokens(),result.outputTokens());
+            return Map.of("status","CONNECTED","model",provider.model(),"durationMs",elapsed);
+        } catch(Exception e){
+            db.update("update ai_generation_jobs set status='FAILED',error=?,duration_ms=?,updated_at=now() where id=?",e.getMessage(),(System.nanoTime()-started)/1_000_000,id);
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"Gemini connection test failed");
+        }
     }
 }

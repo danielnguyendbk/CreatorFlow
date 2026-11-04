@@ -26,6 +26,7 @@ import {
 import { providerStatusConfig } from '@/utils/statusConfig';
 import { notify } from '@/stores/notificationStore';
 import { useSettings, useUpdateSettings } from './useSettings';
+import { apiRequest, realApi } from '@/api/_http';
 import type { SystemSettings, ContentFormat, ProviderStatus } from '@/types';
 
 type SettingsTab = 'ai' | 'content' | 'pipeline' | 'publishing';
@@ -55,12 +56,14 @@ const DURATION_OPTIONS = [
 ];
 
 const GEMINI_MODELS = [
+  { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
   { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (Recommended)' },
   { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash (Fastest)' },
   { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
 ];
 
 const TTS_VOICES = [
+  { value: 'System Speech default', label: 'System Speech default' },
   { value: 'en-US-GuyNeural', label: 'Guy Neural (en-US, Male Authoritative)' },
   { value: 'en-US-JennyNeural', label: 'Jenny Neural (en-US, Female Warm)' },
   { value: 'vi-VN-HoaiMyNeural', label: 'Hoài My (vi-VN, Female Expressive)' },
@@ -93,9 +96,9 @@ export function SettingsPage() {
   const [form, setForm] = useState<SystemSettings | null>(null);
   const [isDirty, setIsDirty] = useState(false);
 
-  // Local state for API keys and simulation
+  // Demo-only controls are disabled when backend settings own their configuration.
   const [showGeminiKey, setShowGeminiKey] = useState(false);
-  const [geminiApiKey, setGeminiApiKey] = useState('AIzaSyD-••••••••••••••••••••••••');
+  const [geminiApiKey, setGeminiApiKey] = useState('');
   const [testingGemini, setTestingGemini] = useState(false);
   const [testingTts, setTestingTts] = useState(false);
   const [resolution, setResolution] = useState('1080x1920');
@@ -190,8 +193,22 @@ export function SettingsPage() {
     setIsDirty(true);
   };
 
-  const handleTogglePublishPlatform = (platform: keyof SystemSettings['publishing']) => {
+  const handleTogglePublishPlatform = async (platform: keyof SystemSettings['publishing']) => {
     if (!form) return;
+    if (realApi) {
+      if (platform !== 'youtube') { notify.error('Not configured', `${platform} OAuth and publishing are not available yet.`); return; }
+      try {
+        if (form.publishing.youtube === 'CONFIGURED') {
+          await apiRequest('/api/social/youtube/revoke', { method: 'POST' });
+          await refetch();
+          notify.success('YouTube disconnected', 'The stored refresh token was revoked.');
+        } else {
+          const result = await apiRequest<{ authorizationUrl: string }>('/api/social/youtube/authorize');
+          window.location.assign(result.authorizationUrl);
+        }
+      } catch (error) { notify.error('YouTube connection failed', error instanceof Error ? error.message : 'Unknown error'); }
+      return;
+    }
     const current = form.publishing[platform];
     const nextStatus: ProviderStatus = current === 'CONFIGURED' ? 'NOT_CONFIGURED' : 'CONFIGURED';
     setForm({
@@ -211,11 +228,18 @@ export function SettingsPage() {
   const handleTestGemini = async () => {
     setTestingGemini(true);
     try {
+      if (realApi) {
+        const result = await apiRequest<{ model: string; durationMs: number }>('/api/settings/test-gemini', { method: 'POST' });
+        notify.success('Gemini API Connected', `${result.model} responded in ${result.durationMs} ms.`);
+        return;
+      }
       await new Promise((resolve) => setTimeout(resolve, 800));
       notify.success(
         'Gemini API Connected',
         'Model gemini-2.5-pro responded in 142ms. Quota is healthy.',
       );
+    } catch (error) {
+      notify.error('Gemini test failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setTestingGemini(false);
     }
@@ -224,11 +248,18 @@ export function SettingsPage() {
   const handleTestTts = async () => {
     setTestingTts(true);
     try {
+      if (realApi) {
+        const result = await apiRequest<{ bytes: number }>('/api/settings/test-tts', { method: 'POST' });
+        notify.success('TTS Voice Synthesized', `Generated ${result.bytes} bytes of WAV audio.`);
+        return;
+      }
       await new Promise((resolve) => setTimeout(resolve, 600));
       notify.success(
         'TTS Voice Synthesized',
         `Synthesized test audio preview using voice '${form?.aiProviders.localTts.voice ?? 'en-US-GuyNeural'}'`,
       );
+    } catch (error) {
+      notify.error('TTS test failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setTestingTts(false);
     }
@@ -237,7 +268,7 @@ export function SettingsPage() {
   const handleSave = async () => {
     if (!form) return;
     try {
-      await updateSettingsMutation.mutateAsync(form);
+      await updateSettingsMutation.mutateAsync(realApi ? { general: form.general, contentDefaults: form.contentDefaults } : form);
       setIsDirty(false);
       notify.success('Settings Saved', 'System configurations have been successfully updated.');
     } catch {
@@ -447,8 +478,9 @@ export function SettingsPage() {
                   label="LLM Model Engine"
                   options={GEMINI_MODELS}
                   value={form.aiProviders.gemini.model ?? 'gemini-2.5-pro'}
+                  disabled={realApi}
                   onChange={(e) => handleAiProviderGemini('model', e.target.value)}
-                  hint="Gemini 2.5 Pro provides the richest viral narrative reasoning and hook pacing."
+                  hint={realApi ? 'Set GEMINI_MODEL in the backend environment.' : 'Select the model used for generation.'}
                 />
               </div>
 
@@ -460,11 +492,12 @@ export function SettingsPage() {
                   <input
                     type={showGeminiKey ? 'text' : 'password'}
                     value={geminiApiKey}
+                    disabled={realApi}
                     onChange={(e) => {
                       setGeminiApiKey(e.target.value);
                       setIsDirty(true);
                     }}
-                    placeholder="Enter API Key"
+                    placeholder={realApi ? 'Configured in backend environment' : 'Enter API Key'}
                     className="h-9 w-full rounded-lg border border-zinc-700 bg-zinc-800/50 pl-3 pr-10 text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   />
                   <button
@@ -476,7 +509,7 @@ export function SettingsPage() {
                   </button>
                 </div>
                 <p className="text-[11px] text-zinc-500 mt-1">
-                  Stored securely in local environment configuration.
+                  {realApi ? 'Set GEMINI_API_KEY in the backend environment.' : 'Demo setting only.'}
                 </p>
               </div>
             </div>
@@ -585,7 +618,7 @@ export function SettingsPage() {
                   isLoading={testingTts}
                   className="text-xs border-zinc-700 hover:bg-zinc-800 text-zinc-300"
                 >
-                  Audition Voice
+                  {realApi ? 'Test Voice' : 'Audition Voice'}
                 </Button>
               </div>
             </div>
@@ -596,17 +629,18 @@ export function SettingsPage() {
                   label="Default Voice Character"
                   options={TTS_VOICES}
                   value={form.aiProviders.localTts.voice ?? 'en-US-GuyNeural'}
+                  disabled={realApi}
                   onChange={(e) => handleTtsVoice(e.target.value)}
-                  hint="High dynamic-range voice optimized for narrative shorts."
+                  hint={realApi ? 'Windows System Speech chooses the installed default voice.' : 'Demo voice selection.'}
                 />
               </div>
 
               <div>
                 <Input
                   label="Speech Pacing / Speed Rate"
-                  defaultValue="1.05x"
+                  defaultValue={realApi ? 'System default' : '1.05x'}
                   disabled
-                  hint="Fine-tuned in story script generator for high-energy retention."
+                  hint={realApi ? 'Uses the installed System Speech voice and rate.' : 'Demo pacing setting.'}
                 />
               </div>
             </div>
@@ -677,6 +711,7 @@ export function SettingsPage() {
                 <input
                   type="checkbox"
                   checked={autoStoryboard}
+                  disabled={realApi}
                   onChange={(e) => {
                     setAutoStoryboard(e.target.checked);
                     setIsDirty(true);
@@ -697,6 +732,7 @@ export function SettingsPage() {
                 <input
                   type="checkbox"
                   checked={requirePublishApproval}
+                  disabled={realApi}
                   onChange={(e) => {
                     setRequirePublishApproval(e.target.checked);
                     setIsDirty(true);
@@ -731,7 +767,7 @@ export function SettingsPage() {
                   <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
                     FFmpeg Video Render Engine
                     <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 rounded px-1.5 py-0.2 font-mono">
-                      v6.1.1 Detected
+                      {form.media.ffmpegStatus === 'CONFIGURED' ? 'FFmpeg available' : 'FFmpeg unavailable'}
                     </span>
                   </h3>
                   <p className="text-xs text-zinc-400">
@@ -749,6 +785,7 @@ export function SettingsPage() {
                   label="Render Resolution"
                   options={RESOLUTION_OPTIONS}
                   value={resolution}
+                  disabled={realApi}
                   onChange={(e) => {
                     setResolution(e.target.value);
                     setIsDirty(true);
@@ -762,6 +799,7 @@ export function SettingsPage() {
                   label="Video Encoder Codec"
                   options={CODEC_OPTIONS}
                   value={codec}
+                  disabled={realApi}
                   onChange={(e) => {
                     setCodec(e.target.value);
                     setIsDirty(true);
@@ -775,6 +813,7 @@ export function SettingsPage() {
                   label="Parallel Worker Limit"
                   options={WORKER_OPTIONS}
                   value={workers}
+                  disabled={realApi}
                   onChange={(e) => {
                     setWorkers(e.target.value);
                     setIsDirty(true);
@@ -805,6 +844,7 @@ export function SettingsPage() {
                 <input
                   type="text"
                   value={form.media.outputDirectory}
+                  disabled={realApi}
                   onChange={(e) => handleMediaChange('outputDirectory', e.target.value)}
                   className="h-9 w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 text-xs font-mono text-zinc-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 />
@@ -821,6 +861,7 @@ export function SettingsPage() {
                 <input
                   type="text"
                   value={form.media.tempDirectory}
+                  disabled={realApi}
                   onChange={(e) => handleMediaChange('tempDirectory', e.target.value)}
                   className="h-9 w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 text-xs font-mono text-zinc-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 />

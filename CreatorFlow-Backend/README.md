@@ -14,6 +14,8 @@ For real frontend mode, set `VITE_API_BASE_URL=http://127.0.0.1:5173`, `VITE_BAC
 
 Gemini generation requires `GEMINI_API_KEY` and `CREATORFLOW_ALLOW_PROVIDER_CALLS=true`. OpenRouter is a fallback only when its key and a free model are configured. Generation jobs and usage records are stored in PostgreSQL; failed provider calls are reported as failures. No live AI provider was exercised without user credentials.
 
+The Settings page reads provider configuration from the backend. Its Gemini and voice test buttons call `/api/settings/test-gemini` and `/api/settings/test-tts`; the Gemini test is an explicit provider call and records usage. Model, key, and media paths are configured by the backend environment; worker controls are fixed by the current local worker implementation. These controls are read-only in real API mode.
+
 YouTube OAuth requires `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, `YOUTUBE_REDIRECT_URI`, and a persistent random 32-byte Base64 `CREATORFLOW_TOKEN_ENCRYPTION_KEY`. Start OAuth through `GET /api/social/youtube/authorize`; the callback stores an encrypted refresh token. `POST /api/social/youtube/revoke` revokes it. Publishing additionally requires `CREATORFLOW_ENABLE_REAL_PUBLISH=true`, a connected account, a final video, and explicit approval on the publication job. The default is disabled. TikTok, Instagram, and Facebook publishing currently report `NOT_CONFIGURED`; no upload is simulated as successful.
 
 ## Tests
