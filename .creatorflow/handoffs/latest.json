@@ -58,7 +58,8 @@
     "Docker Desktop Linux daemon unavailable; local PostgreSQL 18 on 127.0.0.1:55432 used",
     "Gemini/OpenRouter keys absent and provider calls disabled",
     "YouTube live OAuth/publishing credentials and platform approval absent",
-    "TikTok/Instagram/Facebook adapters absent"
+    "TikTok/Instagram/Facebook adapters absent",
+    "Draft PR creation returned GitHub connector 403 Resource not accessible by integration; no PR exists"
   ],
   "architectureDecisions": [
     "Keep V1 Spring modular monolith and its existing frontend HTTP contracts",
@@ -68,6 +69,6 @@
   ],
   "nextCycle": {
     "firstTask": "V2-P0-04",
-    "instructions": "Read this handoff and docs, then verify remote heads, Git status, source, test DB and current provider state. Reconcile historical duplicate publication targets with a migration that preserves audit history."
+    "instructions": "Read this handoff and docs, then verify remote heads, Git status, source, test DB and current provider state. Reconcile historical duplicate publication targets with a migration that preserves audit history. Draft PR creation needs GitHub App permission or user action."
   }
 }

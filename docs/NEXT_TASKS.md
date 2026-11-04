@@ -17,3 +17,5 @@ Updated: 2026-11-05. Read `AGENTS.md` and `.creatorflow/handoffs/latest.json`, t
 | V2-P5-01 / 02 | P3 | V2-P2-01, V2-P2-02 | Isolated coding cycle, review/tests, draft PR and optional five-hour trigger. | Worktree isolation, PR draft fixture, virtual-clock overlap tests. | No automatic `main` merge or production deploy. |
 
 Immediate next cycle: start with V2-P0-04 on a new feature branch from the latest reviewed head. The local test DB already contains a duplicate pair created by the confirmed pre-fix reproducer; use a fixture or its IDs only after checking current DB state. The new migration must preserve history and must never send a social request.
+
+Review handoff: a draft PR from `feat/v2-p0-hardening` into `feat/backend-v1` was attempted but GitHub returned 403 for the connected integration. A repository admin can grant the GitHub App pull-request write permission, or the user can create the PR from the pushed branch. Do not claim a PR number until GitHub confirms creation.

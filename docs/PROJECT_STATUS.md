@@ -17,6 +17,7 @@ Updated: 2026-11-05. Branch: `feat/v2-p0-hardening`. Last tested implementation 
 | Gemini/OpenRouter | IMPLEMENTED, NOT_CONFIGURED | Provider calls remain disabled without explicit opt-in and credentials. No live Gemini/OpenRouter test this cycle. |
 | Docker | BLOCKED | Docker Desktop Linux engine pipe absent. Isolated local PostgreSQL on `127.0.0.1:55432` supplied the database tests. |
 | V2 account manager, local agent, workflow task engine, Telegram, autonomous coding | DESIGNED | Architecture and dependency plan written; no V2 runtime components claimed. |
+| Draft PR | BLOCKED | GitHub connector returned HTTP 403 `Resource not accessible by integration` when creating a draft PR targeting `feat/backend-v1`. Both commits were pushed to `origin/feat/v2-p0-hardening`; no PR was created. |
 
 ## Confirmed gaps and production readiness
 
@@ -27,6 +28,7 @@ Updated: 2026-11-05. Branch: `feat/v2-p0-hardening`. Last tested implementation 
 5. Uploaded media is signature checked, but a signature-valid corrupt MP4 can pass upload and fail FFmpeg later. Decode/probe validation is a later hardening task.
 6. TikTok, Instagram and Facebook OAuth/upload adapters are absent. YouTube live posting remains disabled. No public post, production deploy or `main` merge occurred.
 7. V2 features are design only. CLI multi-account/session switching and Antigravity automation have not been proven supported on this host.
+8. Draft PR creation needs GitHub App pull-request write permission or a user-created PR from the pushed branch. The local `gh` CLI is unavailable; no alternate credential was extracted.
 
 ## Changed files in this cycle
 
