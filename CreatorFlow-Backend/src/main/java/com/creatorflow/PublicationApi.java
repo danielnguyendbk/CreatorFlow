@@ -32,6 +32,9 @@ public class PublicationApi {
         catch(java.sql.SQLException e){throw new IllegalStateException("Cannot read hashtags",e);}
         return result;
     }
+    private void lockTarget(UUID contentId,String platform){
+        db.queryForList("select pg_advisory_xact_lock(hashtextextended(?::text || ':' || ?,0))",contentId,platform);
+    }
     @GetMapping List<Map<String,Object>> all(){return db.queryForList(SELECT+" order by p.created_at desc").stream().map(this::shape).toList();}
     @GetMapping("/{id}") Map<String,Object> one(@PathVariable UUID id){
         var rows=db.queryForList(SELECT+" where p.id=?",id);if(rows.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Publication not found");return shape(rows.getFirst());
@@ -48,7 +51,8 @@ public class PublicationApi {
         String platform=(String)body.get("platform");
         if(platform==null || !List.of("YOUTUBE_SHORTS","TIKTOK","INSTAGRAM_REELS","FACEBOOK_REELS").contains(platform))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Unsupported platform");
-        var existing=db.queryForList("select id from publication_jobs where content_id=? and platform=? and status in ('DRAFT','SCHEDULED','PUBLISHING','PUBLISHED','RETRYING')",contentId,platform);
+        lockTarget(contentId,platform);
+        var existing=db.queryForList("select id from publication_jobs where content_id=? and platform=? order by case status when 'PUBLISHED' then 0 when 'PUBLISHING' then 1 when 'SCHEDULED' then 2 when 'RETRYING' then 3 when 'DRAFT' then 4 else 5 end, created_at desc limit 1",contentId,platform);
         if(!existing.isEmpty()) return one((UUID)existing.getFirst().get("id"));
         java.time.OffsetDateTime when;
         try {when=java.time.OffsetDateTime.parse(String.valueOf(body.get("scheduledAt")));}
@@ -87,6 +91,9 @@ public class PublicationApi {
         var job=one(id);
         if(!"FAILED".equals(job.get("status")) || ((Number)job.get("attempts")).intValue()>=((Number)job.get("maxAttempts")).intValue())
             throw new ResponseStatusException(HttpStatus.CONFLICT,"Publication retry unavailable");
+        lockTarget((UUID)job.get("contentId"),(String)job.get("platform"));
+        int other=db.queryForObject("select count(*) from publication_jobs where content_id=? and platform=? and id<>? and status in ('DRAFT','SCHEDULED','PUBLISHING','PUBLISHED','RETRYING')",Integer.class,job.get("contentId"),job.get("platform"),id);
+        if(other>0) throw new ResponseStatusException(HttpStatus.CONFLICT,"Another publication already owns this target");
         db.update("update publication_jobs set status='SCHEDULED',error=null,updated_at=now() where id=?",id);return one(id);
     }
     @PostMapping("/{id}/publish-now") Map<String,Object> publishNow(@PathVariable UUID id){

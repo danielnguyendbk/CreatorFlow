@@ -76,6 +76,8 @@ $publication = PostJson "/api/publication-jobs/$($publication.id)/approve" @{}
 ExpectHttp { PostJson "/api/publication-jobs/$($publication.id)/publish-now" @{} } 503
 $publication = GetJson "/api/publication-jobs/$($publication.id)"
 if ($publication.status -ne 'FAILED' -or $publication.platformPostId -or $publication.error -notlike 'NOT_CONFIGURED*') { throw 'Publication did not fail closed' }
+$repeatedPublication = PostJson '/api/publication-jobs' @{ contentId=[string]$content.id; platform='YOUTUBE_SHORTS'; scheduledAt=[DateTimeOffset]::UtcNow.AddHours(2).ToString('o'); caption='Synthetic fixture'; title='E2E sample'; hashtags=@('smoke','creatorflow') }
+if ($repeatedPublication.id -ne $publication.id) { throw 'Failed publication target produced a duplicate job' }
 
 # An MP4 header without a movie atom forces a real FFmpeg failure for retry/cancel checks.
 $failedContent = PostJson '/api/contents' @{ title='E2E render failure'; topic='Failure handling'; niche='smoke'; language='en' }
