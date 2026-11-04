@@ -61,6 +61,8 @@ do {
     if ($render.status -eq 'FAILED') { throw "Render failed: $($render.error)" }
     if ((Get-Date) -gt $deadline) { throw 'Render timed out' }
 } until ($render.status -eq 'SUCCESS')
+$workflow = GetJson "/api/workflows/$($workflow.id)"
+if ($workflow.status -ne 'COMPLETED' -or @($workflow.nodes | Where-Object { $_.nodeName -eq 'RenderVideo' -and $_.status -eq 'COMPLETED' }).Count -eq 0) { throw 'Workflow did not complete after render' }
 $finalAsset = GetJson "/api/assets/$($render.outputAssetId)"
 $videoPath = Join-Path (Split-Path -Parent $EvidenceFile) 'e2e-output.mp4'
 Invoke-WebRequest -Uri "$BaseUrl$($finalAsset.url)" -Headers $headers -UseBasicParsing -OutFile $videoPath | Out-Null
@@ -74,8 +76,43 @@ $publication = PostJson "/api/publication-jobs/$($publication.id)/approve" @{}
 ExpectHttp { PostJson "/api/publication-jobs/$($publication.id)/publish-now" @{} } 503
 $publication = GetJson "/api/publication-jobs/$($publication.id)"
 if ($publication.status -ne 'FAILED' -or $publication.platformPostId -or $publication.error -notlike 'NOT_CONFIGURED*') { throw 'Publication did not fail closed' }
-$evidence = @{ ideaId=$idea.id; contentId=$content.id; storyboardId=$board.id; sceneId=$board.scenes[0].id; assetId=$asset.id; voiceAssetId=$voice.assetId; workflowId=$workflow.id; renderJobId=$render.id; finalAssetId=$finalAsset.id; publicationId=$publication.id; durationSec=[double]$probe.format.duration; mediaStreams=$types; publicationStatus=$publication.status }
+
+# An MP4 header without a movie atom forces a real FFmpeg failure for retry/cancel checks.
+$failedContent = PostJson '/api/contents' @{ title='E2E render failure'; topic='Failure handling'; niche='smoke'; language='en' }
+$failedBoard = PostJson '/api/storyboards' @{ contentId=[string]$failedContent.id; title='Failure fixture'; scenes=@(@{ durationSec=20; narration='This voice is used to test render failure handling.'; visualType='AI_VIDEO'; prompt='Corrupt video fixture' }) }
+$invalidVideo = [IO.Path]::Combine([IO.Path]::GetTempPath(),[Guid]::NewGuid().ToString('N') + '.mp4')
+[IO.File]::WriteAllBytes($invalidVideo,([byte[]](0,0,0,20,102,116,121,112,105,115,111,109) + (New-Object byte[] 128)))
+try {
+    $badClient = New-Object System.Net.Http.HttpClient
+    $badClient.DefaultRequestHeaders.Authorization = [System.Net.Http.Headers.AuthenticationHeaderValue]::new('Bearer',$env:CREATORFLOW_API_TOKEN)
+    $badForm = New-Object System.Net.Http.MultipartFormDataContent
+    $badMedia = [System.Net.Http.ByteArrayContent]::new([IO.File]::ReadAllBytes($invalidVideo))
+    $badMedia.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::new('video/mp4')
+    $badForm.Add($badMedia,'file','corrupt.mp4')
+    $badForm.Add([System.Net.Http.StringContent]::new([string]$failedContent.id),'contentId')
+    $badForm.Add([System.Net.Http.StringContent]::new([string]$failedBoard.scenes[0].id),'sceneId')
+    $badResponse = $badClient.PostAsync("$BaseUrl/api/assets",$badForm).GetAwaiter().GetResult()
+    if (-not $badResponse.IsSuccessStatusCode) { throw "Failure fixture upload HTTP $([int]$badResponse.StatusCode)" }
+} finally { Remove-Item -LiteralPath $invalidVideo -ErrorAction SilentlyContinue; if ($badClient) { $badClient.Dispose() } }
+$failedWorkflow = PostJson '/api/workflows' @{ contentId=[string]$failedContent.id }
+$null = PostJson "/api/contents/$($failedContent.id)/voice" @{}
+$failedWorkflow = PostJson "/api/workflows/$($failedWorkflow.id)/resume" @{}
+$failedRender = PostJson '/api/render-jobs' @{ contentId=[string]$failedContent.id }
+$deadline = (Get-Date).AddMinutes(2)
+do {
+    Start-Sleep -Seconds 2
+    $failedRender = GetJson "/api/render-jobs/$($failedRender.id)"
+    if ((Get-Date) -gt $deadline) { throw 'Failure fixture render timed out' }
+} until ($failedRender.status -eq 'FAILED')
+$failedWorkflow = GetJson "/api/workflows/$($failedWorkflow.id)"
+if ($failedWorkflow.status -ne 'FAILED') { throw 'Workflow did not reflect render failure' }
+$retried = PostJson "/api/render-jobs/$($failedRender.id)/retry" @{}
+if ($retried.id -ne $failedRender.id -or $retried.retryCount -ne 1) { throw 'Render retry created a duplicate job' }
+$null = PostJson "/api/render-jobs/$($failedRender.id)/cancel" @{}
+$cancelled = GetJson "/api/render-jobs/$($failedRender.id)"
+if ($cancelled.status -ne 'CANCELLED') { throw 'Render cancellation failed' }
+$evidence = @{ ideaId=$idea.id; contentId=$content.id; storyboardId=$board.id; sceneId=$board.scenes[0].id; assetId=$asset.id; voiceAssetId=$voice.assetId; workflowId=$workflow.id; renderJobId=$render.id; finalAssetId=$finalAsset.id; publicationId=$publication.id; durationSec=[double]$probe.format.duration; mediaStreams=$types; publicationStatus=$publication.status; failedRenderJobId=$failedRender.id; cancelledRenderStatus=$cancelled.status; retryCount=$retried.retryCount }
 $target = Join-Path (Get-Location) $EvidenceFile
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
 $evidence | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $target -Encoding UTF8
-Write-Output "E2E PASS: $($render.id), $($probe.format.duration)s, streams: $($types -join ', ')"
+Write-Output "E2E PASS: $($render.id), $($probe.format.duration)s, streams: $($types -join ', '); retry/cancel: $($cancelled.status)"

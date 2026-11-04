@@ -16,6 +16,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,10 +29,11 @@ public class RenderApi {
     private final ObjectMapper json;
     private final String ffmpeg;
     private final Path root;
+    private final TransactionTemplate transactions;
     private final Map<UUID,Process> processes=new ConcurrentHashMap<>();
-    RenderApi(JdbcTemplate db,ObjectMapper json,@Value("${FFMPEG_PATH:ffmpeg}") String ffmpeg,
+    RenderApi(JdbcTemplate db,ObjectMapper json,PlatformTransactionManager transactionManager,@Value("${FFMPEG_PATH:ffmpeg}") String ffmpeg,
               @Value("${CREATORFLOW_STORAGE_DIR:storage/assets}") String assetRoot) throws Exception {
-        this.db=db;this.json=json;this.ffmpeg=ffmpeg;this.root=Path.of(assetRoot).toAbsolutePath().normalize();Files.createDirectories(root);
+        this.db=db;this.json=json;this.transactions=new TransactionTemplate(transactionManager);this.ffmpeg=ffmpeg;this.root=Path.of(assetRoot).toAbsolutePath().normalize();Files.createDirectories(root);
     }
     private static final String SELECT="select r.id,r.content_id as \"contentId\",c.title as \"contentTitle\",r.status,r.progress_percent as \"progressPercent\",r.started_at as \"startedAt\",r.completed_at as \"completedAt\",r.worker,r.retry_count as \"retryCount\",r.max_retries as \"maxRetries\",r.error,r.output_asset_id as \"outputAssetId\",r.logs,r.created_at as \"createdAt\",r.updated_at as \"updatedAt\" from render_jobs r join contents c on c.id=r.content_id";
     private Map<String,Object> shape(Map<String,Object> row){
@@ -57,17 +61,27 @@ public class RenderApi {
         UUID id=UUID.randomUUID();db.update("insert into render_jobs(id,content_id,status) values (?,?,'QUEUED')",id,contentId);
         return one(id);
     }
-    @PostMapping("/{id}/retry") Map<String,Object> retry(@PathVariable UUID id){
+    @PostMapping("/{id}/retry") @Transactional Map<String,Object> retry(@PathVariable UUID id){
         var job=one(id);
         if(!"FAILED".equals(job.get("status")) || ((Number)job.get("retryCount")).intValue()>=((Number)job.get("maxRetries")).intValue())
             throw new ResponseStatusException(HttpStatus.CONFLICT,"Render retry unavailable");
         db.update("update render_jobs set status='QUEUED',progress_percent=0,retry_count=retry_count+1,error=null,updated_at=now() where id=? and status='FAILED'",id);
+        UUID contentId=(UUID)job.get("contentId");
+        var workflows=db.queryForList("update workflow_instances set status='RUNNING',current_node='RenderVideo',retry_count=retry_count+1,error=null,completed_at=null,updated_at=now() where content_id=? and status='FAILED' returning id",contentId);
+        for(var workflow:workflows)
+            db.update("insert into workflow_node_executions(id,workflow_instance_id,node_name,node_type,status,started_at,retry_count) values (?,?,'RenderVideo','RENDER','PENDING',now(),?)",
+                UUID.randomUUID(),workflow.get("id"),((Number)job.get("retryCount")).intValue()+1);
+        db.update("update contents set status='IN_PROGRESS',current_stage='RENDER',updated_at=now() where id=?",contentId);
         return one(id);
     }
-    @PostMapping("/{id}/cancel") @ResponseStatus(HttpStatus.NO_CONTENT) void cancel(@PathVariable UUID id){
+    @PostMapping("/{id}/cancel") @Transactional @ResponseStatus(HttpStatus.NO_CONTENT) void cancel(@PathVariable UUID id){
         var job=one(id);
         if(!List.of("QUEUED","RENDERING","RETRYING").contains(job.get("status"))) throw new ResponseStatusException(HttpStatus.CONFLICT,"Render cannot be cancelled");
-        db.update("update render_jobs set status='CANCELLED',updated_at=now() where id=?",id);
+        if(db.update("update render_jobs set status='CANCELLED',updated_at=now() where id=? and status in ('QUEUED','RENDERING','RETRYING')",id)==0)
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"Render already finished");
+        db.update("update workflow_node_executions set status='SKIPPED',completed_at=now() where workflow_instance_id in (select id from workflow_instances where content_id=?) and node_name='RenderVideo' and status in ('PENDING','RUNNING')",job.get("contentId"));
+        db.update("update workflow_instances set status='CANCELLED',completed_at=now(),updated_at=now() where content_id=? and status='RUNNING'",job.get("contentId"));
+        db.update("update contents set status='FAILED',updated_at=now() where id=?",job.get("contentId"));
         Process process=processes.get(id);if(process!=null) process.destroyForcibly();
     }
     @EventListener(ApplicationReadyEvent.class) void recover(){db.update("update render_jobs set status='QUEUED',worker=null,updated_at=now() where status='RENDERING'");}
@@ -77,9 +91,12 @@ public class RenderApi {
         UUID id=(UUID)rows.getFirst().get("id"),contentId=(UUID)rows.getFirst().get("content_id");
         try {render(id,contentId);}
         catch(Exception e){
-            if(!"CANCELLED".equals(one(id).get("status"))){
-                db.update("update render_jobs set status='FAILED',error=?,updated_at=now() where id=?",e.getMessage(),id);
+            if(db.update("update render_jobs set status='FAILED',error=?,updated_at=now() where id=? and status='RENDERING'",e.getMessage(),id)>0){
                 db.update("update contents set status='FAILED',updated_at=now() where id=?",contentId);
+                db.update("update workflow_node_executions set status='FAILED',error=?,completed_at=now() where workflow_instance_id in (select id from workflow_instances where content_id=?) and node_name='RenderVideo' and status in ('PENDING','RUNNING')",e.getMessage(),contentId);
+                db.update("update workflow_instances set status='FAILED',error=?,completed_at=now(),updated_at=now() where content_id=? and status='RUNNING'",e.getMessage(),contentId);
+            } else if("CANCELLED".equals(one(id).get("status"))){
+                try {Files.deleteIfExists(root.resolve(id+".mp4"));} catch(Exception ignored) { /* no published asset points to it */ }
             }
         }
     }
@@ -121,14 +138,20 @@ public class RenderApi {
         run(job,List.of("-f","concat","-safe","0","-i",list.toString(),"-c","copy",silent.toString()),log);
         run(job,List.of("-i",silent.toString(),"-i",(String)audio.getFirst().get("storage_path"),"-i",subtitle.toString(),"-map","0:v:0","-map","1:a:0","-map","2:s:0","-c:v","copy","-c:a","aac","-c:s","mov_text","-t",Integer.toString(elapsed),"-movflags","+faststart",output.toString()),log);
         if(!Files.isRegularFile(output) || Files.size(output)<1024) throw new IllegalStateException("Output MP4 missing");
+        long outputBytes=Files.size(output),subtitleBytes=Files.size(subtitle);
+        String logJson=json.writeValueAsString(List.of("FFmpeg output verified: "+outputBytes+" bytes"));
         UUID asset=UUID.randomUUID(),subAsset=UUID.randomUUID();
-        db.update("insert into assets(id,filename,asset_type,content_id,file_size_bytes,mime_type,storage_path) values (?,'final.mp4','FINAL_VIDEO',?,?,'video/mp4',?)",asset,contentId,Files.size(output),output.toString());
-        db.update("insert into assets(id,filename,asset_type,content_id,file_size_bytes,mime_type,storage_path) values (?,'subtitle.srt','SUBTITLE',?,?,'application/x-subrip',?)",subAsset,contentId,Files.size(subtitle),subtitle.toString());
-        db.update("update render_jobs set status='SUCCESS',progress_percent=100,output_asset_id=?,completed_at=now(),logs=?::jsonb,updated_at=now() where id=?",asset,json.writeValueAsString(List.of("FFmpeg output verified: "+Files.size(output)+" bytes")),job);
-        db.update("update contents set status='READY',current_stage='PUBLICATION',progress_percent=90,updated_at=now() where id=?",contentId);
-        for(String stage:List.of("RENDER","SUBTITLE"))
-            db.update("insert into stage_progress(content_id,stage,status,started_at,completed_at) values (?,?,'COMPLETED',now(),now()) on conflict(content_id,stage) do update set status='COMPLETED',completed_at=now(),error=null",contentId,stage);
-        db.update("update workflow_instances set status='COMPLETED',completed_at=now(),updated_at=now() where content_id=? and status='RUNNING'",contentId);
-        db.update("update workflow_node_executions set status='COMPLETED',completed_at=now() where workflow_instance_id in (select id from workflow_instances where content_id=?) and node_name='RenderVideo' and status='PENDING'",contentId);
+        transactions.executeWithoutResult(ignored->{
+            String status=db.queryForObject("select status from render_jobs where id=? for update",String.class,job);
+            if(!"RENDERING".equals(status)) throw new IllegalStateException("Render cancelled before finalization");
+            db.update("insert into assets(id,filename,asset_type,content_id,file_size_bytes,mime_type,storage_path) values (?,'final.mp4','FINAL_VIDEO',?,?,'video/mp4',?)",asset,contentId,outputBytes,output.toString());
+            db.update("insert into assets(id,filename,asset_type,content_id,file_size_bytes,mime_type,storage_path) values (?,'subtitle.srt','SUBTITLE',?,?,'application/x-subrip',?)",subAsset,contentId,subtitleBytes,subtitle.toString());
+            db.update("update render_jobs set status='SUCCESS',progress_percent=100,output_asset_id=?,completed_at=now(),logs=?::jsonb,updated_at=now() where id=?",asset,logJson,job);
+            db.update("update contents set status='READY',current_stage='PUBLICATION',progress_percent=90,updated_at=now() where id=?",contentId);
+            for(String stage:List.of("RENDER","SUBTITLE"))
+                db.update("insert into stage_progress(content_id,stage,status,started_at,completed_at) values (?,?,'COMPLETED',now(),now()) on conflict(content_id,stage) do update set status='COMPLETED',completed_at=now(),error=null",contentId,stage);
+            db.update("update workflow_instances set status='COMPLETED',completed_at=now(),updated_at=now() where content_id=? and status='RUNNING'",contentId);
+            db.update("update workflow_node_executions set status='COMPLETED',completed_at=now() where workflow_instance_id in (select id from workflow_instances where content_id=?) and node_name='RenderVideo' and status='PENDING'",contentId);
+        });
     }
 }

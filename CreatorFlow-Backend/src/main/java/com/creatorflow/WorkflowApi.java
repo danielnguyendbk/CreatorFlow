@@ -44,6 +44,8 @@ public class WorkflowApi {
         if(!"WAITING".equals(wf.get("status"))) throw new ResponseStatusException(HttpStatus.CONFLICT,"Workflow is not waiting");
         int missing=db.queryForObject("select count(*) from scenes s join storyboards b on b.id=s.storyboard_id where b.content_id=? and s.asset_status<>'READY'",Integer.class,contentId);
         if(missing>0) throw new ResponseStatusException(HttpStatus.CONFLICT,"Scenes still need assets");
+        int voice=db.queryForObject("select count(*) from assets where content_id=? and asset_type='AUDIO'",Integer.class,contentId);
+        if(voice==0) throw new ResponseStatusException(HttpStatus.CONFLICT,"Voice audio required before render");
         db.update("update workflow_instances set status='RUNNING',current_node='RenderVideo',updated_at=now() where id=?",id);
         db.update("update workflow_node_executions set status='COMPLETED',completed_at=now() where workflow_instance_id=? and status='WAITING'",id);
         db.update("insert into workflow_node_executions(id,workflow_instance_id,node_name,node_type,status,started_at) values (?,?,'RenderVideo','RENDER','PENDING',now())",UUID.randomUUID(),id);
