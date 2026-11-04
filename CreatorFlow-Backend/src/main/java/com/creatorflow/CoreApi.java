@@ -61,7 +61,7 @@ public class CoreApi {
         if(db.update("update content_ideas set status=?,updated_at=now() where id=?",status,id)==0) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Idea not found");
         return idea(id);
     }
-    @DeleteMapping("/ideas/{id}") @Transactional void deleteIdea(@PathVariable UUID id){
+    @DeleteMapping("/ideas/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) @Transactional void deleteIdea(@PathVariable UUID id){
         if(db.update("delete from content_ideas where id=?",id)==0) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Idea not found");
     }
     @PostMapping("/ideas/generate") List<Map<String,Object>> generate(@Valid @RequestBody GenerateIdeas input) throws Exception {
@@ -160,7 +160,13 @@ public class CoreApi {
     @GetMapping("/activity") List<Map<String,Object>> events(@RequestParam(defaultValue="50") int limit,@RequestParam(required=false) UUID entityId){
         String select="select id,timestamp,type,entity_id as \"entityId\",entity_type as \"entityType\",message,severity,metadata from activity_events";
         int cap=Math.min(200,Math.max(1,limit));
-        return entityId==null?db.queryForList(select+" order by timestamp desc limit ?",cap):
+        var rows=entityId==null?db.queryForList(select+" order by timestamp desc limit ?",cap):
             db.queryForList(select+" where entity_id=? order by timestamp desc limit ?",entityId,cap);
+        return rows.stream().map(row->{
+            var item=new LinkedHashMap<>(row);
+            try {item.put("metadata",json.readValue(row.get("metadata").toString(),Map.class));}
+            catch(Exception e){throw new IllegalStateException("Invalid activity metadata",e);}
+            return (Map<String,Object>)item;
+        }).toList();
     }
 }

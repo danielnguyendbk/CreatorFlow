@@ -105,7 +105,7 @@ public class AssetApi {
             .header(HttpHeaders.CONTENT_DISPOSITION,"inline; filename=\""+((String)row.get("filename")).replace("\"", "")+"\"")
             .body(new UrlResource(path.toUri()));
     }
-    @DeleteMapping("/{id}") @Transactional void delete(@PathVariable UUID id) throws IOException {
+    @DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) @Transactional void delete(@PathVariable UUID id) throws IOException {
         var rows=db.queryForList("select storage_path from assets where id=?",id);
         if(rows.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Asset not found");
         db.update("update scenes set asset_id=null,asset_status='WAITING_FOR_ASSET' where asset_id=?",id);

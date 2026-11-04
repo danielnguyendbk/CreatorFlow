@@ -6,6 +6,7 @@ export function usePublications() {
   return useQuery({
     queryKey: ['publications'],
     queryFn: () => publicationApi.getPublications(),
+    refetchInterval: import.meta.env.VITE_API_BASE_URL ? 3000 : false,
   });
 }
 

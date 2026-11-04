@@ -14,7 +14,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     const error = await response.json().catch(() => ({}));
     throw new Error(error.error ?? `HTTP ${response.status}`);
   }
-  return response.status === 204 ? undefined as T : response.json() as Promise<T>;
+  return response.status === 204 ? null as T : response.json() as Promise<T>;
 }
 
 export function uploadRequest<T>(path: string, file: File, fields: Record<string, string>, onProgress?: (percent: number) => void): Promise<T> {

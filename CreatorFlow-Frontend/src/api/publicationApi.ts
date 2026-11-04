@@ -1,16 +1,19 @@
 import type { PublicationJob, Platform, PublicationStatus } from '@/types';
 import { mockPublications } from '@/mocks/publications';
 import { mockDelay } from './_mock';
+import { apiRequest, realApi } from './_http';
 
 let _publications = [...mockPublications];
 
 export const publicationApi = {
   async getPublications(): Promise<PublicationJob[]> {
+    if (realApi) return apiRequest('/api/publication-jobs');
     await mockDelay();
     return [..._publications];
   },
 
   async getPublication(id: string): Promise<PublicationJob> {
+    if (realApi) return apiRequest(`/api/publication-jobs/${encodeURIComponent(id)}`);
     await mockDelay();
     const pub = _publications.find((p) => p.id === id);
     if (!pub) throw new Error(`Publication ${id} not found`);
@@ -26,6 +29,7 @@ export const publicationApi = {
     title: string;
     hashtags: string[];
   }): Promise<PublicationJob> {
+    if (realApi) return apiRequest('/api/publication-jobs', { method: 'POST', body: JSON.stringify(params) });
     await mockDelay(600);
     const newPub: PublicationJob = {
       id: `pub-${Date.now()}`,
@@ -44,6 +48,7 @@ export const publicationApi = {
   },
 
   async updatePublicationStatus(id: string, status: PublicationStatus): Promise<PublicationJob> {
+    if (realApi) return apiRequest(`/api/publication-jobs/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
     await mockDelay(300);
     const pub = _publications.find((p) => p.id === id);
     if (!pub) throw new Error(`Publication ${id} not found`);
@@ -53,6 +58,7 @@ export const publicationApi = {
   },
 
   async retryPublication(id: string): Promise<PublicationJob> {
+    if (realApi) return apiRequest(`/api/publication-jobs/${encodeURIComponent(id)}/retry`, { method: 'POST' });
     await mockDelay(500);
     const pub = _publications.find((p) => p.id === id);
     if (!pub) throw new Error(`Publication ${id} not found`);
@@ -64,6 +70,10 @@ export const publicationApi = {
   },
 
   async publishNow(id: string): Promise<PublicationJob> {
+    if (realApi) {
+      await apiRequest(`/api/publication-jobs/${encodeURIComponent(id)}/approve`, { method: 'POST' });
+      return apiRequest(`/api/publication-jobs/${encodeURIComponent(id)}/publish-now`, { method: 'POST' });
+    }
     await mockDelay(600);
     const pub = _publications.find((p) => p.id === id);
     if (!pub) throw new Error(`Publication ${id} not found`);
@@ -79,6 +89,7 @@ export const publicationApi = {
     id: string,
     updates: Partial<Pick<PublicationJob, 'title' | 'caption' | 'hashtags' | 'scheduledAt'>>,
   ): Promise<PublicationJob> {
+    if (realApi) return apiRequest(`/api/publication-jobs/${encodeURIComponent(id)}/details`, { method: 'PATCH', body: JSON.stringify(updates) });
     await mockDelay(300);
     const pub = _publications.find((p) => p.id === id);
     if (!pub) throw new Error(`Publication ${id} not found`);

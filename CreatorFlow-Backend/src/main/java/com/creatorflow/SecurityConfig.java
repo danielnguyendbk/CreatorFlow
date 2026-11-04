@@ -36,13 +36,13 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", cors);
         http.csrf(c -> c.disable()).cors(c -> c.configurationSource(source))
             .exceptionHandling(e -> e.authenticationEntryPoint((req,res,ex) -> res.sendError(HttpStatus.UNAUTHORIZED.value())))
-            .authorizeHttpRequests(a -> a.requestMatchers("/actuator/health/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+            .authorizeHttpRequests(a -> a.requestMatchers("/actuator/health/**", "/v3/api-docs/**", "/swagger-ui/**", "/api/social/youtube/callback").permitAll()
                 .anyRequest().authenticated())
             .addFilterBefore(new OncePerRequestFilter() {
                 @Override protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
                         throws ServletException, IOException {
                     String path = req.getRequestURI();
-                    if (path.startsWith("/actuator/health") || path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui")) {
+                    if (path.startsWith("/actuator/health") || path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui") || path.equals("/api/social/youtube/callback")) {
                         chain.doFilter(req, res); return;
                     }
                     byte[] expected = ("Bearer " + token).getBytes(StandardCharsets.UTF_8);

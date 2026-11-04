@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +31,11 @@ public class StoryboardApi {
         return result;
     }
     @GetMapping("/{id}") Map<String,Object> byId(@PathVariable UUID id){return board(id);}
-    @GetMapping("/by-content/{contentId}") Map<String,Object> byContent(@PathVariable UUID contentId){
+    @GetMapping("/by-content/{contentId}") ResponseEntity<Map<String,Object>> byContentResponse(@PathVariable UUID contentId){
+        var rows=db.queryForList("select id from storyboards where content_id=?",contentId);
+        return rows.isEmpty()?ResponseEntity.noContent().build():ResponseEntity.ok(board((UUID)rows.getFirst().get("id")));
+    }
+    Map<String,Object> byContent(UUID contentId){
         var rows=db.queryForList("select id from storyboards where content_id=?",contentId);
         return rows.isEmpty()?null:board((UUID)rows.getFirst().get("id"));
     }

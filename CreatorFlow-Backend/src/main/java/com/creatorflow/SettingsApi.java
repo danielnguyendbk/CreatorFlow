@@ -21,11 +21,13 @@ public class SettingsApi {
     private final String model;
     private final String ffmpeg;
     private final String ttsScript;
+    private final boolean publishEnabled;
     SettingsApi(JdbcTemplate db,ObjectMapper json,@Value("${GEMINI_API_KEY:}") String key,
             @Value("${GEMINI_MODEL:gemini-2.5-flash}") String model,
             @Value("${FFMPEG_PATH:ffmpeg}") String ffmpeg,
-            @Value("${CREATORFLOW_TTS_SCRIPT:scripts/synthesize.ps1}") String ttsScript) {
-        this.db=db;this.json=json;this.geminiConfigured=!key.isBlank();this.model=model;this.ffmpeg=ffmpeg;this.ttsScript=ttsScript;
+            @Value("${CREATORFLOW_TTS_SCRIPT:scripts/synthesize.ps1}") String ttsScript,
+            @Value("${CREATORFLOW_ENABLE_REAL_PUBLISH:false}") boolean publishEnabled) {
+        this.db=db;this.json=json;this.geminiConfigured=!key.isBlank();this.model=model;this.ffmpeg=ffmpeg;this.ttsScript=ttsScript;this.publishEnabled=publishEnabled;
     }
     private Map<String,Object> stored(String key,Map<String,Object> defaults){
         var rows=db.queryForList("select value::text as value from system_settings where key=?",key);
@@ -47,7 +49,8 @@ public class SettingsApi {
         result.put("aiProviders",Map.of("gemini",Map.of("name","Gemini","status",geminiConfigured?"CONFIGURED":not,"model",model),
             "googleFlow",Map.of("mode","MANUAL","status",not),"localTts",Map.of("status",java.nio.file.Files.isRegularFile(java.nio.file.Path.of(ttsScript))?"CONFIGURED":not)));
         result.put("media",Map.of("ffmpegStatus",ffmpegAvailable()?"CONFIGURED":not,"outputDirectory","storage/renders","tempDirectory","storage/tmp"));
-        result.put("publishing",Map.of("youtube",not,"tiktok",not,"instagram",not,"facebook",not));
+        int youtube=db.queryForObject("select count(*) from social_connections where platform='YOUTUBE_SHORTS' and status='CONFIGURED' and revoked_at is null",Integer.class);
+        result.put("publishing",Map.of("youtube",publishEnabled && youtube>0?"CONFIGURED":not,"tiktok",not,"instagram",not,"facebook",not));
         return result;
     }
     @PatchMapping @Transactional Map<String,Object> update(@RequestBody Map<String,Object> partial) throws JsonProcessingException {

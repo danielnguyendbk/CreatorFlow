@@ -12,5 +12,15 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: '127.0.0.1',
+    proxy: process.env.CREATORFLOW_API_TOKEN && process.env.VITE_BACKEND_URL ? {
+      '/api': {
+        target: process.env.VITE_BACKEND_URL,
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (request) => request.setHeader('Authorization', `Bearer ${process.env.CREATORFLOW_API_TOKEN}`))
+        },
+      },
+    } : undefined,
   },
 })

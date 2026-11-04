@@ -58,7 +58,7 @@ const PIPELINE_STAGES: { stage: WorkflowStage; label: string }[] = [
   { stage: 'VISUAL_ASSETS', label: 'Visuals' },
   { stage: 'RENDER', label: 'Render' },
   { stage: 'SUBTITLE', label: 'Subtitle' },
-  { stage: 'PUBLICATION', label: 'Published' },
+  { stage: 'PUBLICATION', label: 'Publication' },
 ];
 
 interface PipelineOverviewProps {

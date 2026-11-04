@@ -13,6 +13,8 @@ dist/
 .next/
 .nuxt/
 coverage/
+.playwright-cli/
+.vite/
 
 # Java
 target/
