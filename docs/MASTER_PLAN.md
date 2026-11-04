@@ -35,6 +35,10 @@ Updated: 2026-11-05. Source baseline: `origin/feat/backend-v1` at `a7c1f06`. Imp
 5. Extend content and publishing only behind provider grants and explicit per-post approval.
 6. Add autonomous coding and optional five-hour schedule after isolation, review and test gates are proven.
 
+## Progress recorded 2026-11-05
+
+`V2-P0-01` is implemented and tested on local PostgreSQL: repeated and concurrent schedule operations reuse one job; retry refuses a second active target. `V2-P0-02` has a tested local authentication/validation boundary, but the full frontend contract matrix and production identity model remain open. `V2-P0-03` has a fresh MP4 smoke run and restart check; worker lease and scheduler failure recovery remain open. See `PROJECT_STATUS.md` for exact test evidence and `NEXT_TASKS.md` for the next dependency-ordered tasks.
+
 ## Non-negotiable boundaries
 
 - The backend remains a modular monolith; PostgreSQL is the source of truth. No Redis, broker or Kubernetes requirement is introduced for V2 P0.

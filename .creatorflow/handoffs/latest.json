@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-11-04T17:39:09Z",
+  "branch": "feat/v2-p0-hardening",
+  "sourceBranch": "origin/feat/backend-v1",
+  "sourceCommit": "a7c1f0622972b021aa8c76124dac4ee42bd65e04",
+  "lastImplementationCommit": "57c2b58be40606d2f6e7aa7e76318d91418d2c18",
+  "completedTasks": [
+    {
+      "id": "V2-P0-01",
+      "status": "TESTED",
+      "result": "Failed publication targets are reused; concurrent scheduling creates one job; retry refuses a second active target."
+    },
+    {
+      "id": "V2-P0-02-auth-boundary",
+      "status": "TESTED",
+      "result": "Local token protects reads/writes; malformed authorized requests return 400; readiness is public."
+    },
+    {
+      "id": "V2-P0-03-media-smoke",
+      "status": "TESTED",
+      "result": "Fresh 15-second MP4 has video, audio and subtitle; render retry/cancel and PostgreSQL persistence survived restart."
+    }
+  ],
+  "incompleteTasks": [
+    "V2-P0-04 historical duplicate publication reconciliation",
+    "V2-P0-05 scheduler error and ambiguous-upload reconciliation",
+    "V2-P0-06 complete frontend HTTP contract and browser interactions",
+    "V2-P0-07 media decodability validation",
+    "V2-P0-08 durable AI retry and validated completion",
+    "V2 account manager, local agent, task engine, Telegram and autonomous coding are design only"
+  ],
+  "changedFiles": [
+    "AGENTS.md",
+    "docs/MASTER_PLAN.md",
+    "docs/ARCHITECTURE.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/NEXT_TASKS.md",
+    ".creatorflow/handoffs/latest.json",
+    "CreatorFlow-Backend/src/main/java/com/creatorflow/PublicationApi.java",
+    "CreatorFlow-Backend/src/test/java/com/creatorflow/PublicationIdempotencyIntegrationTest.java",
+    "CreatorFlow-Backend/src/test/java/com/creatorflow/ApiSecurityIntegrationTest.java",
+    "CreatorFlow-Backend/scripts/smoke-e2e.ps1"
+  ],
+  "tests": [
+    "mvn test with local PostgreSQL: 9 tests, 0 failures, 0 errors",
+    "npm run build: pass; bundle-size warning",
+    "fresh PostgreSQL migration audit: Flyway V1-V4 success, readiness UP",
+    "smoke-e2e.ps1: pass; 15-second MP4 with video/audio/subtitle, retry/cancel and failed-publication idempotency",
+    "ffmpeg decode of storage/e2e-output.mp4: exit 0",
+    "backend restart: readiness UP, render SUCCESS, retry job CANCELLED, workflow COMPLETED, publication FAILED without post ID"
+  ],
+  "localEvidence": [
+    "storage/e2e-evidence-v2-p0.json",
+    "storage/e2e-output.mp4"
+  ],
+  "blockers": [
+    "Docker Desktop Linux daemon unavailable; local PostgreSQL 18 on 127.0.0.1:55432 used",
+    "Gemini/OpenRouter keys absent and provider calls disabled",
+    "YouTube live OAuth/publishing credentials and platform approval absent",
+    "TikTok/Instagram/Facebook adapters absent"
+  ],
+  "architectureDecisions": [
+    "Keep V1 Spring modular monolith and its existing frontend HTTP contracts",
+    "Use PostgreSQL as task/event source of truth and add local agent only after P0 boundaries",
+    "Keep one Git worktree writer per task and fail closed on unsupported CLI account switching",
+    "Treat Telegram as control surface, not state store; never publish without explicit approval"
+  ],
+  "nextCycle": {
+    "firstTask": "V2-P0-04",
+    "instructions": "Read this handoff and docs, then verify remote heads, Git status, source, test DB and current provider state. Reconcile historical duplicate publication targets with a migration that preserves audit history."
+  }
+}
