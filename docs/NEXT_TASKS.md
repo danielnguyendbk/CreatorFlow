@@ -2,6 +2,8 @@
 
 Updated: 2026-11-05. Read `AGENTS.md` and `.creatorflow/handoffs/latest.json`, then verify Git and runtime before executing. Tasks below are ordered by dependency, not by feature enthusiasm.
 
+V2-P0-04 through V2-P0-06 are implemented in `feat/v2-p0-reliability`. Their exact test scope is in `PROJECT_STATUS.md` and `FRONTEND_API_CONTRACT.md`. The table retains acceptance criteria for audit history.
+
 | Task ID | Priority | Depends on | Work | Acceptance criteria / actual test | Definition of Done |
 | --- | --- | --- | --- | --- | --- |
 | V2-P0-04 | P0 | V2-P0-01 | Detect/reconcile historical duplicate publication targets without losing audit history. Keep one canonical active/approved job, archive or mark superseded rows with a migration. | PostgreSQL fixture with failed + scheduled duplicates migrates deterministically; API retry cannot revive a superseded job. | Migration passes on fresh and duplicate-bearing DB; no platform upload is triggered. |
@@ -16,6 +18,6 @@ Updated: 2026-11-05. Read `AGENTS.md` and `.creatorflow/handoffs/latest.json`, t
 | V2-P4-01 | P2 | V2-P0-05, V2-P2-01 | Complete content pipeline and official TikTok provider behind approvals. | Mock provider and artifact E2E; live test only with granted scope and explicit approval. | No false `PUBLISHED`; platform ID/confirmation recorded. |
 | V2-P5-01 / 02 | P3 | V2-P2-01, V2-P2-02 | Isolated coding cycle, review/tests, draft PR and optional five-hour trigger. | Worktree isolation, PR draft fixture, virtual-clock overlap tests. | No automatic `main` merge or production deploy. |
 
-Immediate next cycle: start with V2-P0-04 on a new feature branch from the latest reviewed head. The local test DB already contains a duplicate pair created by the confirmed pre-fix reproducer; use a fixture or its IDs only after checking current DB state. The new migration must preserve history and must never send a social request.
+Immediate next cycle: start V2-P0-07 media decodability validation on a new feature branch from the verified `feat/v2-p0-reliability` head. Add corrupt PNG/MP4/WAV fixtures, reject before scene assignment, then rerun the 15-second MP4 smoke. In parallel, complete the remaining V2-P0-06 browser mutation click-through for asset assignment and settings, and design an operator-only reconciliation procedure for historically conflicting post IDs before enabling publication.
 
 Review handoff: a draft PR from `feat/v2-p0-hardening` into `feat/backend-v1` was attempted but GitHub returned 403 for the connected integration. A repository admin can grant the GitHub App pull-request write permission, or the user can create the PR from the pushed branch. Do not claim a PR number until GitHub confirms creation.

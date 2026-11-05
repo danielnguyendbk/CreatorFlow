@@ -1,6 +1,6 @@
 # Frontend to Spring API contract audit
 
-Checked 2026-11-05 on `feat/v2-p0-reliability`. The nine `CreatorFlow-Frontend/src/api` modules use the routes below when `VITE_API_BASE_URL` is set. The local HTTP check used the Vite proxy and PostgreSQL; it did not exercise every browser control.
+Checked 2026-11-05 on `feat/v2-p0-reliability`. The nine `CreatorFlow-Frontend/src/api` modules use the routes below when `VITE_API_BASE_URL` is set. The local HTTP check used the Vite proxy and PostgreSQL.
 
 | Client | Real-mode Spring routes | Result |
 | --- | --- | --- |
@@ -19,7 +19,8 @@ Checked 2026-11-05 on `feat/v2-p0-reliability`. The nine `CreatorFlow-Frontend/s
 - Authenticated GETs of all nine API families, dashboard, settings and storyboard returned HTTP 200 on local backend.
 - Direct final MP4 download returned 401 without a bearer token and 200 `video/mp4` with one. Through the local Vite proxy, dashboard, settings and MP4 download returned 200 using the proxy's server-side token.
 - `npm run build` with `VITE_API_BASE_URL=http://127.0.0.1:5173` passed after the `esbuild` process was allowed to start. The first sandboxed attempt failed with `spawn EPERM`; it was not a TypeScript error.
-- The UI layout and routes were not changed. A full click-through browser smoke is still open; this HTTP audit does not claim it.
+- Playwright CLI visited all 12 existing route patterns against the local proxy. Each reported 0 console errors and one React Router future-flag warning. After TanStack Query settled, the dashboard snapshot showed `5` ideas, matching the HTTP `todayIdeas` value. The UI layout and routes were not changed.
+- A full click-through mutation smoke for every button is still open; route navigation and API smoke do not claim it.
 
 ## Remaining integration constraints
 

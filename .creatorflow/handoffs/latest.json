@@ -1,74 +1,99 @@
-{
-  "schemaVersion": 1,
-  "generatedAtUtc": "2026-11-04T17:39:09Z",
-  "branch": "feat/v2-p0-hardening",
-  "sourceBranch": "origin/feat/backend-v1",
-  "sourceCommit": "a7c1f0622972b021aa8c76124dac4ee42bd65e04",
-  "lastImplementationCommit": "57c2b58be40606d2f6e7aa7e76318d91418d2c18",
-  "completedTasks": [
-    {
-      "id": "V2-P0-01",
-      "status": "TESTED",
-      "result": "Failed publication targets are reused; concurrent scheduling creates one job; retry refuses a second active target."
-    },
-    {
-      "id": "V2-P0-02-auth-boundary",
-      "status": "TESTED",
-      "result": "Local token protects reads/writes; malformed authorized requests return 400; readiness is public."
-    },
-    {
-      "id": "V2-P0-03-media-smoke",
-      "status": "TESTED",
-      "result": "Fresh 15-second MP4 has video, audio and subtitle; render retry/cancel and PostgreSQL persistence survived restart."
-    }
-  ],
-  "incompleteTasks": [
-    "V2-P0-04 historical duplicate publication reconciliation",
-    "V2-P0-05 scheduler error and ambiguous-upload reconciliation",
-    "V2-P0-06 complete frontend HTTP contract and browser interactions",
-    "V2-P0-07 media decodability validation",
-    "V2-P0-08 durable AI retry and validated completion",
-    "V2 account manager, local agent, task engine, Telegram and autonomous coding are design only"
-  ],
-  "changedFiles": [
-    "AGENTS.md",
-    "docs/MASTER_PLAN.md",
-    "docs/ARCHITECTURE.md",
-    "docs/PROJECT_STATUS.md",
-    "docs/NEXT_TASKS.md",
-    ".creatorflow/handoffs/latest.json",
-    "CreatorFlow-Backend/src/main/java/com/creatorflow/PublicationApi.java",
-    "CreatorFlow-Backend/src/test/java/com/creatorflow/PublicationIdempotencyIntegrationTest.java",
-    "CreatorFlow-Backend/src/test/java/com/creatorflow/ApiSecurityIntegrationTest.java",
-    "CreatorFlow-Backend/scripts/smoke-e2e.ps1"
-  ],
-  "tests": [
-    "mvn test with local PostgreSQL: 9 tests, 0 failures, 0 errors",
-    "npm run build: pass; bundle-size warning",
-    "fresh PostgreSQL migration audit: Flyway V1-V4 success, readiness UP",
-    "smoke-e2e.ps1: pass; 15-second MP4 with video/audio/subtitle, retry/cancel and failed-publication idempotency",
-    "ffmpeg decode of storage/e2e-output.mp4: exit 0",
-    "backend restart: readiness UP, render SUCCESS, retry job CANCELLED, workflow COMPLETED, publication FAILED without post ID"
-  ],
-  "localEvidence": [
-    "storage/e2e-evidence-v2-p0.json",
-    "storage/e2e-output.mp4"
-  ],
-  "blockers": [
-    "Docker Desktop Linux daemon unavailable; local PostgreSQL 18 on 127.0.0.1:55432 used",
-    "Gemini/OpenRouter keys absent and provider calls disabled",
-    "YouTube live OAuth/publishing credentials and platform approval absent",
-    "TikTok/Instagram/Facebook adapters absent",
-    "Draft PR creation returned GitHub connector 403 Resource not accessible by integration; no PR exists"
-  ],
-  "architectureDecisions": [
-    "Keep V1 Spring modular monolith and its existing frontend HTTP contracts",
-    "Use PostgreSQL as task/event source of truth and add local agent only after P0 boundaries",
-    "Keep one Git worktree writer per task and fail closed on unsupported CLI account switching",
-    "Treat Telegram as control surface, not state store; never publish without explicit approval"
-  ],
-  "nextCycle": {
-    "firstTask": "V2-P0-04",
-    "instructions": "Read this handoff and docs, then verify remote heads, Git status, source, test DB and current provider state. Reconcile historical duplicate publication targets with a migration that preserves audit history. Draft PR creation needs GitHub App permission or user action."
-  }
+﻿{
+    "schemaVersion":  1,
+    "generatedAtUtc":  "2026-11-05T01:54:07Z",
+    "branch":  "feat/v2-p0-reliability",
+    "sourceBranch":  "origin/feat/v2-p0-hardening",
+    "sourceCommit":  "86f0ceeadd9f300e412438a742dfbc8e137f13f2",
+    "lastImplementationCommit":  "b1aaf9b",
+    "completedTasks":  [
+                           {
+                               "id":  "V2-P0-01",
+                               "status":  "TESTED",
+                               "result":  "Failed publication targets are reused; concurrent scheduling creates one job; retry refuses a second active target."
+                           },
+                           {
+                               "id":  "V2-P0-02-auth-boundary",
+                               "status":  "TESTED",
+                               "result":  "Local token protects reads/writes; malformed authorized requests return 400; readiness is public."
+                           },
+                           {
+                               "id":  "V2-P0-03-media-smoke",
+                               "status":  "TESTED",
+                               "result":  "Fresh 15-second MP4 has video, audio and subtitle; render retry/cancel and PostgreSQL persistence survived restart."
+                           },
+                           {
+                               "status":  "TESTED",
+                               "result":  "Flyway V5 fresh, duplicate-bearing and conflicting-post-ID fixtures passed; history and post IDs retained; API retry 409 on conflicted rows.",
+                               "id":  "V2-P0-04"
+                           },
+                           {
+                               "status":  "TESTED",
+                               "result":  "Mock YouTube pre/post PUT failures classified; restart quarantine and retry rejection passed; no live upload.",
+                               "id":  "V2-P0-05"
+                           },
+                           {
+                               "status":  "TESTED",
+                               "result":  "All nine API clients mapped; HTTP contract and local proxy passed; Playwright visited 12 routes, 0 console errors; full mutation click-through remains open.",
+                               "id":  "V2-P0-06"
+                           }
+                       ],
+    "incompleteTasks":  [
+                            "V2-P0-06 full browser mutation click-through",
+                            "V2-P0-07 media decodability validation",
+                            "V2-P0-08 durable AI retry and validated completion",
+                            "Operator procedure for historically conflicting post IDs",
+                            "V2 account manager, local agent, task engine, Telegram and autonomous coding remain design only"
+                        ],
+    "changedFiles":  [
+                         "CreatorFlow-Backend/src/main/resources/db/migration/V5__publication_reconciliation.sql",
+                         "CreatorFlow-Backend/src/main/java/com/creatorflow/PublicationApi.java",
+                         "CreatorFlow-Backend/src/main/java/com/creatorflow/YouTubePublisher.java",
+                         "CreatorFlow-Backend/src/test/java/com/creatorflow/PublicationMigrationIntegrationTest.java",
+                         "CreatorFlow-Backend/src/test/java/com/creatorflow/PublicationIdempotencyIntegrationTest.java",
+                         "CreatorFlow-Backend/src/test/java/com/creatorflow/YouTubePublisherTest.java",
+                         "CreatorFlow-Backend/scripts/smoke-contract.ps1",
+                         "CreatorFlow-Frontend/src/api/_http.ts",
+                         "CreatorFlow-Frontend/src/api/assetApi.ts",
+                         "CreatorFlow-Frontend/src/features/assets/useAssets.ts",
+                         "CreatorFlow-Frontend/src/types/index.ts",
+                         "docs/FRONTEND_API_CONTRACT.md",
+                         "docs/PROJECT_STATUS.md",
+                         "docs/NEXT_TASKS.md",
+                         ".creatorflow/handoffs/latest.json"
+                     ],
+    "tests":  [
+                  "mvn test -q on local PostgreSQL 18.3: 12 tests, 0 failures/errors",
+                  "mvn package -q: pass",
+                  "Flyway V1-V5 fresh database: pass",
+                  "Flyway V5 existing FAILED/SCHEDULED duplicate: pass",
+                  "Flyway V5 conflicting remote post IDs: pass, both retained and flagged",
+                  "Flyway isolated schema migration rerun: 0 new migrations, validate pass",
+                  "npm run build with VITE_API_BASE_URL set: pass",
+                  "smoke-contract.ps1: pass, 11 routes plus auth/validation/media",
+                  "smoke-e2e.ps1: pass, 15-second MP4 with video/audio/subtitle and retry/cancel",
+                  "Backend restart: render SUCCESS, workflow COMPLETED, publication FAILED/NOT_CONFIGURED",
+                  "Playwright CLI: 12 routes, 0 console errors; dashboard DB count observed"
+              ],
+    "localEvidence":  [
+                          "storage/e2e-evidence-v2-p0.json",
+                          "storage/e2e-output.mp4"
+                      ],
+    "blockers":  [
+                     "Live Gemini/OpenRouter credentials absent; provider calls disabled",
+                     "YouTube live OAuth/publishing credentials and explicit posting approval absent",
+                     "TikTok/Instagram/Facebook publishing adapters absent",
+                     "Production user identity and authenticated media delivery not implemented",
+                     "Full browser mutation click-through not completed",
+                     "GitHub draft PR permission previously returned 403; recheck once after push"
+                 ],
+    "architectureDecisions":  [
+                                  "Preserve all historical publication rows and post IDs; one canonical target per content/platform",
+                                  "Quarantine ambiguous PUT outcomes and in-flight jobs after restart; never blind retry",
+                                  "Keep local Vite proxy token injection scoped to 127.0.0.1",
+                                  "Retain modular monolith and existing frontend routes/layout"
+                              ],
+    "nextCycle":  {
+                      "firstTask":  "V2-P0-07",
+                      "instructions":  "Verify branch/head/runtime, then validate media decodability before scene assignment. Finish browser mutation click-through and operator reconciliation procedure. No live social upload without explicit authorization."
+                  }
 }
