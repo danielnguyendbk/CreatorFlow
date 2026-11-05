@@ -10,6 +10,35 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class YouTubePublisherTest {
+    @Test void distinguishesFailureBeforeVideoFromUnknownUploadOutcome() throws Exception {
+        var server=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
+        var puts=new AtomicInteger();
+        int port=server.getAddress().getPort();
+        server.createContext("/before",exchange->{exchange.sendResponseHeaders(503,-1);exchange.close();});
+        server.createContext("/after",exchange->{
+            if("POST".equals(exchange.getRequestMethod())) {
+                exchange.getResponseHeaders().add("Location","http://127.0.0.1:"+port+"/after/session");
+                exchange.sendResponseHeaders(200,-1);
+            } else {
+                puts.incrementAndGet();exchange.getRequestBody().readAllBytes();
+                exchange.sendResponseHeaders(503,-1);
+            }
+            exchange.close();
+        });
+        server.start();
+        var video=Files.createTempFile("creatorflow-youtube-failure-",".mp4");
+        try {
+            Files.write(video,new byte[]{0,1,2,3});
+            var oauth=new YouTubeOAuthApi(null,new ObjectMapper(),"","","","","","") {
+                @Override String accessToken(){return "test-token";}
+            };
+            var before=new YouTubePublisher(oauth,new ObjectMapper(),"http://127.0.0.1:"+port+"/before","http://127.0.0.1:"+port+"/verify");
+            assertFalse(assertThrows(YouTubePublisher.UploadException.class,()->before.publish(video,"a","b")).outcomeUnknown);
+            var after=new YouTubePublisher(oauth,new ObjectMapper(),"http://127.0.0.1:"+port+"/after","http://127.0.0.1:"+port+"/verify");
+            assertTrue(assertThrows(YouTubePublisher.UploadException.class,()->after.publish(video,"a","b")).outcomeUnknown);
+            assertEquals(1,puts.get());
+        } finally {Files.deleteIfExists(video);server.stop(0);}
+    }
     @Test void uploadRequiresPlatformPostIdAndConfirmation() throws Exception {
         var server=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
         var uploads=new AtomicInteger();

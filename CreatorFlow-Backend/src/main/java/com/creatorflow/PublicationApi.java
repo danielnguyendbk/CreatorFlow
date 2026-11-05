@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,7 +27,11 @@ public class PublicationApi {
                    @Value("${CREATORFLOW_ENABLE_REAL_PUBLISH:false}") boolean realPublishEnabled){
         this.db=db;this.youtube=youtube;this.storageRoot=Path.of(root).toAbsolutePath().normalize();this.realPublishEnabled=realPublishEnabled;
     }
-    private static final String SELECT="select p.id,p.content_id as \"contentId\",c.title as \"contentTitle\",p.platform,p.status,p.scheduled_at as \"scheduledAt\",p.published_at as \"publishedAt\",p.caption,p.title,p.hashtags,p.attempts,p.max_attempts as \"maxAttempts\",p.error,p.platform_post_id as \"platformPostId\",p.approved_at as \"approvedAt\",p.created_at as \"createdAt\",p.updated_at as \"updatedAt\" from publication_jobs p join contents c on c.id=p.content_id";
+    private static final String SELECT="select p.id,p.content_id as \"contentId\",c.title as \"contentTitle\",p.platform,p.status,p.scheduled_at as \"scheduledAt\",p.published_at as \"publishedAt\",p.caption,p.title,p.hashtags,p.attempts,p.max_attempts as \"maxAttempts\",p.error,p.platform_post_id as \"platformPostId\",p.approved_at as \"approvedAt\",p.superseded_by as \"supersededBy\",p.reconciliation_required as \"reconciliationRequired\",p.failure_category as \"failureCategory\",p.created_at as \"createdAt\",p.updated_at as \"updatedAt\" from publication_jobs p join contents c on c.id=p.content_id";
+    private void requireActionable(Map<String,Object> job){
+        if(job.get("supersededBy")!=null || Boolean.TRUE.equals(job.get("reconciliationRequired")))
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"Publication requires manual reconciliation");
+    }
     private Map<String,Object> shape(Map<String,Object> row){
         var result=new LinkedHashMap<>(row);
         try {if(row.get("hashtags") instanceof java.sql.Array a) result.put("hashtags",a.getArray());}
@@ -52,8 +58,8 @@ public class PublicationApi {
         if(platform==null || !List.of("YOUTUBE_SHORTS","TIKTOK","INSTAGRAM_REELS","FACEBOOK_REELS").contains(platform))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Unsupported platform");
         lockTarget(contentId,platform);
-        var existing=db.queryForList("select id from publication_jobs where content_id=? and platform=? order by case status when 'PUBLISHED' then 0 when 'PUBLISHING' then 1 when 'SCHEDULED' then 2 when 'RETRYING' then 3 when 'DRAFT' then 4 else 5 end, created_at desc limit 1",contentId,platform);
-        if(!existing.isEmpty()) return one((UUID)existing.getFirst().get("id"));
+        var existing=db.queryForList("select id from publication_jobs where content_id=? and platform=? and superseded_by is null limit 1",contentId,platform);
+        if(!existing.isEmpty()) {var canonical=one((UUID)existing.getFirst().get("id"));requireActionable(canonical);return canonical;}
         java.time.OffsetDateTime when;
         try {when=java.time.OffsetDateTime.parse(String.valueOf(body.get("scheduledAt")));}
         catch(Exception e){throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid scheduledAt");}
@@ -66,6 +72,7 @@ public class PublicationApi {
     }
     @PatchMapping("/{id}/details") @Transactional Map<String,Object> details(@PathVariable UUID id,@RequestBody Map<String,Object> changes){
         var job=one(id);
+        requireActionable(job);
         if(!List.of("DRAFT","SCHEDULED","FAILED").contains(job.get("status"))) throw new ResponseStatusException(HttpStatus.CONFLICT,"Publication cannot be edited");
         if(changes.keySet().stream().anyMatch(k->!List.of("title","caption","hashtags","scheduledAt").contains(k)))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid publication fields");
@@ -77,6 +84,7 @@ public class PublicationApi {
     }
     @PostMapping("/{id}/approve") @Transactional Map<String,Object> approve(@PathVariable UUID id){
         var job=one(id);
+        requireActionable(job);
         if(!"READY".equals(db.queryForObject("select status from contents where id=?",String.class,job.get("contentId")))
             && !"SCHEDULED".equals(db.queryForObject("select status from contents where id=?",String.class,job.get("contentId"))))
             throw new ResponseStatusException(HttpStatus.CONFLICT,"Final render required before approval");
@@ -84,57 +92,69 @@ public class PublicationApi {
     }
     @PatchMapping("/{id}/status") Map<String,Object> status(@PathVariable UUID id,@RequestBody Map<String,String> body){
         var job=one(id);
+        requireActionable(job);
         if(!"DRAFT".equals(body.get("status"))) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Publication status is worker-controlled");
         db.update("update publication_jobs set status='DRAFT',approved_at=null,updated_at=now() where id=? and status='SCHEDULED'",id);return one(id);
     }
     @PostMapping("/{id}/retry") @Transactional Map<String,Object> retry(@PathVariable UUID id){
         var job=one(id);
+        requireActionable(job);
         if(!"FAILED".equals(job.get("status")) || ((Number)job.get("attempts")).intValue()>=((Number)job.get("maxAttempts")).intValue())
             throw new ResponseStatusException(HttpStatus.CONFLICT,"Publication retry unavailable");
         lockTarget((UUID)job.get("contentId"),(String)job.get("platform"));
         int other=db.queryForObject("select count(*) from publication_jobs where content_id=? and platform=? and id<>? and status in ('DRAFT','SCHEDULED','PUBLISHING','PUBLISHED','RETRYING')",Integer.class,job.get("contentId"),job.get("platform"),id);
         if(other>0) throw new ResponseStatusException(HttpStatus.CONFLICT,"Another publication already owns this target");
-        db.update("update publication_jobs set status='SCHEDULED',error=null,updated_at=now() where id=?",id);return one(id);
+        db.update("update publication_jobs set status='SCHEDULED',error=null,failure_category=null,updated_at=now() where id=?",id);return one(id);
     }
     @PostMapping("/{id}/publish-now") Map<String,Object> publishNow(@PathVariable UUID id){
         var job=one(id);
+        requireActionable(job);
         if(job.get("approvedAt")==null) throw new ResponseStatusException(HttpStatus.CONFLICT,"User approval required");
         if(!"YOUTUBE_SHORTS".equals(job.get("platform"))){
-            db.update("update publication_jobs set status='FAILED',error='NOT_CONFIGURED: platform publishing adapter unavailable',updated_at=now() where id=?",id);
+            db.update("update publication_jobs set status='FAILED',failure_category='NOT_CONFIGURED',error='NOT_CONFIGURED: platform publishing adapter unavailable',updated_at=now() where id=?",id);
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"NOT_CONFIGURED: platform publishing unavailable");
         }
         if(!realPublishEnabled){
-            db.update("update publication_jobs set status='FAILED',error='NOT_CONFIGURED: real publishing disabled',updated_at=now() where id=?",id);
+            db.update("update publication_jobs set status='FAILED',failure_category='NOT_CONFIGURED',error='NOT_CONFIGURED: real publishing disabled',updated_at=now() where id=?",id);
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"NOT_CONFIGURED: real publishing disabled");
         }
         if("PUBLISHED".equals(job.get("status"))) return job;
         if(job.get("platformPostId")!=null){
             try {if(youtube.confirmed((String)job.get("platformPostId"))){
-                db.update("update publication_jobs set status='PUBLISHED',published_at=now(),error=null,updated_at=now() where id=?",id);
+                db.update("update publication_jobs set status='PUBLISHED',published_at=now(),error=null,failure_category=null,updated_at=now() where id=?",id);
                 db.update("update contents set status='PUBLISHED',updated_at=now() where id=?",job.get("contentId"));return one(id);
-            }} catch(Exception e){throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"YouTube confirmation failed");}
+            }} catch(Exception e){
+                db.update("update publication_jobs set failure_category='CONFIRMATION_ERROR',error='YouTube confirmation failed',updated_at=now() where id=?",id);
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"YouTube confirmation failed");
+            }
             throw new ResponseStatusException(HttpStatus.CONFLICT,"YouTube processing not confirmed");
         }
         int connected=db.queryForObject("select count(*) from social_connections where platform='YOUTUBE_SHORTS' and status='CONFIGURED' and revoked_at is null",Integer.class);
         if(connected==0){
-            db.update("update publication_jobs set status='FAILED',error='NOT_CONFIGURED: YouTube OAuth connection missing',updated_at=now() where id=?",id);
+            db.update("update publication_jobs set status='FAILED',failure_category='NOT_CONFIGURED',error='NOT_CONFIGURED: YouTube OAuth connection missing',updated_at=now() where id=?",id);
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"NOT_CONFIGURED: YouTube OAuth connection missing");
         }
         var asset=db.queryForList("select storage_path from assets where content_id=? and asset_type='FINAL_VIDEO' order by created_at desc limit 1",job.get("contentId"));
         if(asset.isEmpty()) throw new ResponseStatusException(HttpStatus.CONFLICT,"Final video missing");
         Path video=Path.of((String)asset.getFirst().get("storage_path")).toAbsolutePath().normalize();
         if(!video.startsWith(storageRoot) || !Files.isRegularFile(video)) throw new ResponseStatusException(HttpStatus.CONFLICT,"Final video file missing");
-        var claimed=db.queryForList("update publication_jobs set status='PUBLISHING',attempts=attempts+1,error=null,updated_at=now() where id=? and approved_at is not null and platform_post_id is null and status in ('DRAFT','SCHEDULED','RETRYING') returning id",id);
+        var claimed=db.queryForList("update publication_jobs set status='PUBLISHING',attempts=attempts+1,error=null,failure_category=null,updated_at=now() where id=? and approved_at is not null and platform_post_id is null and reconciliation_required=false and superseded_by is null and status in ('DRAFT','SCHEDULED','RETRYING') returning id",id);
         if(claimed.isEmpty()) throw new ResponseStatusException(HttpStatus.CONFLICT,"Publication already claimed or needs reconciliation");
         try {
             String postId=youtube.publish(video,(String)job.get("title"),(String)job.get("caption"));
             db.update("update publication_jobs set platform_post_id=?,updated_at=now() where id=?",postId,id);
             return publishNow(id);
-        } catch(ResponseStatusException e){throw e;}
-        catch(Exception e){
-            db.update("update publication_jobs set error='RECONCILIATION_REQUIRED: upload outcome unknown',updated_at=now() where id=?",id);
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"YouTube upload outcome requires reconciliation");
+        } catch(YouTubePublisher.UploadException e){
+            if(e.outcomeUnknown){
+                db.update("update publication_jobs set reconciliation_required=true,failure_category='UPLOAD_OUTCOME_UNKNOWN',error='RECONCILIATION_REQUIRED: upload outcome unknown',updated_at=now() where id=?",id);
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"YouTube upload outcome requires reconciliation");
+            }
+            db.update("update publication_jobs set status='FAILED',failure_category='PRE_UPLOAD_FAILURE',error='YouTube upload did not start',updated_at=now() where id=?",id);
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"YouTube upload did not start");
         }
+    }
+    @EventListener(ApplicationReadyEvent.class) void recoverUncertainUploads(){
+        db.update("update publication_jobs set reconciliation_required=true,failure_category='UPLOAD_OUTCOME_UNKNOWN',error='RECONCILIATION_REQUIRED: process restarted during publication',updated_at=now() where status='PUBLISHING' and platform_post_id is null and reconciliation_required=false");
     }
     @Scheduled(fixedDelay=30000) void due(){
         if(!realPublishEnabled) return;

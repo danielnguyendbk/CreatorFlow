@@ -18,6 +18,26 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @EnabledIfEnvironmentVariable(named="CREATORFLOW_TEST_DB_URL",matches=".+")
 class PublicationIdempotencyIntegrationTest {
+    @Test void restartQuarantinesUnconfirmedUploadWithoutRetryingIt(){
+        var datasource=new DriverManagerDataSource(System.getenv("CREATORFLOW_TEST_DB_URL"),
+            System.getenv("CREATORFLOW_TEST_DB_USER"),System.getenv().getOrDefault("CREATORFLOW_TEST_DB_PASSWORD",""));
+        var db=new JdbcTemplate(datasource);
+        var api=new PublicationApi(db,null,"storage/assets",false);
+        UUID contentId=UUID.randomUUID(),jobId=UUID.randomUUID();
+        db.update("insert into contents(id,title,topic,status,current_stage,language,niche) values (?,'Recovery fixture','Recovery','READY','PUBLICATION','en','test')",contentId);
+        try {
+            db.update("insert into publication_jobs(id,content_id,platform,status,caption,title,approved_at,attempts) values (?,?,'YOUTUBE_SHORTS','PUBLISHING','fixture','Recovery',now(),1)",jobId,contentId);
+            api.recoverUncertainUploads();
+            assertTrue((Boolean)api.one(jobId).get("reconciliationRequired"));
+            assertEquals("UPLOAD_OUTCOME_UNKNOWN",api.one(jobId).get("failureCategory"));
+            assertEquals(1,db.queryForObject("select attempts from publication_jobs where id=?",Integer.class,jobId));
+            assertEquals(409,assertThrows(ResponseStatusException.class,()->api.publishNow(jobId)).getStatusCode().value());
+            assertEquals(409,assertThrows(ResponseStatusException.class,()->api.retry(jobId)).getStatusCode().value());
+        } finally {
+            db.update("delete from publication_jobs where id=?",jobId);
+            db.update("delete from contents where id=?",contentId);
+        }
+    }
     @Test void concurrentSchedulingClaimsOneTarget() throws Exception {
         var datasource=new DriverManagerDataSource(System.getenv("CREATORFLOW_TEST_DB_URL"),
             System.getenv("CREATORFLOW_TEST_DB_USER"),System.getenv().getOrDefault("CREATORFLOW_TEST_DB_PASSWORD",""));
@@ -59,7 +79,10 @@ class PublicationIdempotencyIntegrationTest {
                 assertEquals(failedId,scheduled.get("id"));
             }
             assertEquals(1,db.queryForObject("select count(*) from publication_jobs where content_id=? and platform='YOUTUBE_SHORTS'",Integer.class,contentId));
-            db.update("insert into publication_jobs(id,content_id,platform,status,scheduled_at,caption,title) values (?,?,'YOUTUBE_SHORTS','SCHEDULED',now(),'fixture','P0 fixture')",activeId,contentId);
+            // V5 permits history but only one canonical target.
+            db.update("insert into publication_jobs(id,content_id,platform,status,scheduled_at,caption,title,superseded_by) values (?,?,'YOUTUBE_SHORTS','SCHEDULED',now(),'fixture','P0 fixture',?)",activeId,contentId,failedId);
+            db.update("update publication_jobs set superseded_by=? where id=?",activeId,failedId);
+            db.update("update publication_jobs set superseded_by=null where id=?",activeId);
             var error=assertThrows(ResponseStatusException.class,()->transactions.execute(ignored->api.retry(failedId)));
             assertEquals(409,error.getStatusCode().value());
             assertEquals("FAILED",db.queryForObject("select status from publication_jobs where id=?",String.class,failedId));

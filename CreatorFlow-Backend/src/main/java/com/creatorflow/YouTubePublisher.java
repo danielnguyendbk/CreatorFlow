@@ -14,6 +14,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class YouTubePublisher {
+    static class UploadException extends Exception {
+        final boolean outcomeUnknown;
+        UploadException(boolean outcomeUnknown, Exception cause){super(cause);this.outcomeUnknown=outcomeUnknown;}
+    }
     private final YouTubeOAuthApi oauth;
     private final ObjectMapper json;
     private final HttpClient http=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
@@ -23,7 +27,9 @@ public class YouTubePublisher {
         @Value("${YOUTUBE_VERIFY_ENDPOINT:https://www.googleapis.com/youtube/v3/videos}") String verifyEndpoint){
         this.oauth=oauth;this.json=json;this.uploadEndpoint=URI.create(uploadEndpoint);this.verifyEndpoint=URI.create(verifyEndpoint);
     }
-    String publish(Path video,String title,String caption) throws Exception {
+    String publish(Path video,String title,String caption) throws UploadException {
+        boolean uploadStarted=false;
+        try {
         if(!Files.isRegularFile(video) || Files.size(video)==0) throw new IllegalArgumentException("Final video missing");
         String token=oauth.accessToken();
         String metadata=json.writeValueAsString(Map.of("snippet",Map.of("title",title,"description",caption,"categoryId","22"),
@@ -40,11 +46,13 @@ public class YouTubePublisher {
             throw new IllegalStateException("Unexpected YouTube upload location");
         var put=HttpRequest.newBuilder(upload).header("Authorization","Bearer "+token).header("Content-Type","video/mp4")
             .timeout(Duration.ofMinutes(10)).PUT(HttpRequest.BodyPublishers.ofFile(video)).build();
+        uploadStarted=true;
         var result=http.send(put,HttpResponse.BodyHandlers.ofString());
         if(result.statusCode()!=200 && result.statusCode()!=201) throw new IllegalStateException("YouTube upload HTTP "+result.statusCode());
         String postId=json.readTree(result.body()).path("id").asText();
         if(postId.isBlank()) throw new IllegalStateException("YouTube post ID missing");
         return postId;
+        } catch(Exception e) {throw new UploadException(uploadStarted,e);}
     }
     boolean confirmed(String postId) throws Exception {
         String token=oauth.accessToken();
