@@ -29,7 +29,11 @@ export function uploadRequest<T>(path: string, file: File, fields: Record<string
     xhr.upload.onprogress = (event) => { if (event.lengthComputable) onProgress?.(Math.round(100 * event.loaded / event.total)); };
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText) as T);
-      else reject(new Error(JSON.parse(xhr.responseText || '{}').error ?? `HTTP ${xhr.status}`));
+      else {
+        let message = `HTTP ${xhr.status}`;
+        try { message = JSON.parse(xhr.responseText || '{}').error ?? message; } catch { /* Non-JSON gateway error. */ }
+        reject(new Error(message));
+      }
     };
     xhr.onerror = () => reject(new Error('Upload failed'));
     xhr.send(form);

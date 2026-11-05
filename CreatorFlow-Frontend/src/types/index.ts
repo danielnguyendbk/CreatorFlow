@@ -280,6 +280,9 @@ export interface PublicationJob extends Timestamps {
   maxAttempts: number;
   error: string | null;
   platformPostId: string | null;
+  supersededBy?: ID | null;
+  reconciliationRequired?: boolean;
+  failureCategory?: string | null;
 }
 
 // ------------------------------------------------------------

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { assetApi, storyboardApi, contentApi } from '@/api';
 import type { SceneAssetStatus } from '@/types';
+import { realApi } from '@/api/_http';
 
 export function useAssets() {
   return useQuery({
@@ -66,6 +67,17 @@ export function useAssignAssetToScene() {
     }) => {
       // 1. Assign asset in asset store
       const updatedAsset = await assetApi.assignAssetToScene(assetId, contentId, sceneId);
+
+      if (realApi) {
+        if (storyboardId) {
+          const storyboard = await storyboardApi.getStoryboard(storyboardId);
+          const content = await contentApi.getContent(contentId);
+          if (content.workflowInstanceId && storyboard.scenes.every((scene) => scene.assetStatus === 'READY')) {
+            await contentApi.resumeWorkflow(contentId);
+          }
+        }
+        return updatedAsset;
+      }
 
       // 2. If storyboardId provided or known, update storyboard scene status to READY
       if (storyboardId) {

@@ -155,6 +155,7 @@ export const assetApi = {
   },
 
   async updateSceneAssetStatus(sceneId: string, status: SceneAssetStatus): Promise<void> {
+    if (realApi) throw new Error('Scene asset status is controlled by the backend during asset assignment');
     await mockDelay(200);
     console.info(`Scene ${sceneId} asset status → ${status}`);
   },
