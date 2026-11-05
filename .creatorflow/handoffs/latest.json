@@ -1,10 +1,10 @@
 ﻿{
     "schemaVersion":  1,
-    "generatedAtUtc":  "2026-11-05T01:55:39Z",
+    "generatedAtUtc":  "2026-11-05T01:57:51Z",
     "branch":  "feat/v2-p0-reliability",
     "sourceBranch":  "origin/feat/v2-p0-hardening",
     "sourceCommit":  "86f0ceeadd9f300e412438a742dfbc8e137f13f2",
-    "lastImplementationCommit":  "b1aaf9b",
+    "lastImplementationCommit":  "88c8c54",
     "completedTasks":  [
                            {
                                "id":  "V2-P0-01",
@@ -28,7 +28,7 @@
                            },
                            {
                                "status":  "TESTED",
-                               "result":  "Mock YouTube pre/post PUT failures classified; restart quarantine and retry rejection passed; no live upload.",
+                               "result":  "Mock YouTube HTTP 503 and actual timeout before/after PUT classified; restart quarantine and retry rejection passed; no live upload.",
                                "id":  "V2-P0-05"
                            },
                            {
@@ -62,7 +62,6 @@
                          ".creatorflow/handoffs/latest.json"
                      ],
     "tests":  [
-                  "mvn test -q on local PostgreSQL 18.3: 12 tests, 0 failures/errors",
                   "mvn package -q: pass",
                   "Flyway V1-V5 fresh database: pass",
                   "Flyway V5 existing FAILED/SCHEDULED duplicate: pass",
@@ -72,7 +71,9 @@
                   "smoke-contract.ps1: pass, 11 routes plus auth/validation/media",
                   "smoke-e2e.ps1: pass, 15-second MP4 with video/audio/subtitle and retry/cancel",
                   "Backend restart: render SUCCESS, workflow COMPLETED, publication FAILED/NOT_CONFIGURED",
-                  "Playwright CLI: 12 routes, 0 console errors; dashboard DB count observed"
+                  "Playwright CLI: 12 routes, 0 console errors; dashboard DB count observed",
+                  "mvn test -q on local PostgreSQL 18.3 after HTTP timeout regression: 13 tests, 0 failures/errors",
+                  "Mock YouTube 80 ms HTTP timeout before/after PUT: safe/unknown classification, PUT count 1"
               ],
     "localEvidence":  [
                           "storage/e2e-evidence-v2-p0.json",

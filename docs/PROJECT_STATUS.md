@@ -7,18 +7,20 @@ Updated: 2026-11-05. Current branch: `feat/v2-p0-reliability`, based on `feat/v2
 | Task | Status | Actual evidence and limits |
 | --- | --- | --- |
 | V2-P0-04 historical reconciliation | IMPLEMENTED, TESTED | Flyway V5 succeeded on a fresh PostgreSQL database, on existing duplicate `FAILED/SCHEDULED` data, and on a fixture with two different post IDs. `PublicationMigrationIntegrationTest` migrated V1–V4 then V5 in an isolated schema, reran V5 (0 migrations), validated schema history, retained both post IDs and required manual reconciliation. API retry of both conflicting rows returned 409. No rows were deleted. |
-| V2-P0-05 publication recovery | IMPLEMENTED, TESTED (local/mock only) | Mock YouTube tests distinguish failure before video PUT from unknown outcome after PUT; restart integration quarantines `PUBLISHING` without post ID and rejects retry. `failure_category` persists in PostgreSQL. Existing confirmation mock passed. No real YouTube request was sent. |
+| V2-P0-05 publication recovery | IMPLEMENTED, TESTED (local/mock only) | Mock YouTube tests distinguish HTTP 503 and actual HTTP timeout before video PUT from those after PUT; restart integration quarantines `PUBLISHING` without post ID and rejects retry. `failure_category` persists in PostgreSQL. Existing confirmation mock passed. No real YouTube request was sent. |
 | V2-P0-06 frontend/API | IMPLEMENTED, TESTED (route/HTTP scope) | All nine clients mapped in `FRONTEND_API_CONTRACT.md`; real asset assignment hook fixed. `smoke-contract.ps1` passed 11 list/settings routes, auth, validation, storyboard and authenticated MP4 download. Vite real-mode proxy returned 200 for dashboard, settings and media. Playwright visited all 12 existing route patterns with 0 console errors; dashboard loaded the database count. Full click-through mutation coverage remains open. |
-| Backend tests | TESTED | `mvn test -q` with local PostgreSQL 18.3: 12 tests, 0 failures, 0 errors; `mvn package -q` also passed. Flyway warns PostgreSQL 18.3 is newer than its tested version. |
+| Backend tests | TESTED | `mvn test -q` with local PostgreSQL 18.3 after timeout regression: 13 tests, 0 failures, 0 errors; `mvn package -q` passed before the timeout-only follow-up. Flyway warns PostgreSQL 18.3 is newer than its tested version. |
 | Frontend build | TESTED | `VITE_API_BASE_URL=http://127.0.0.1:5173 npm run build` passed TypeScript and Vite. First sandbox attempt failed `spawn EPERM`; rerun with process permission passed. Bundle-size warning remains. |
 | Media E2E/restart | TESTED | `smoke-e2e.ps1` created a 15-second MP4 with video/audio/subtitle, render retry/cancel ended `CANCELLED`. After backend restart, render was `SUCCESS`, workflow `COMPLETED`, publication `FAILED` with no post ID and category `NOT_CONFIGURED`. |
 | Live Gemini/YouTube/TikTok/Instagram/Facebook | NOT_CONFIGURED | No provider credentials or live publication authorization; local adapter mocks are not live evidence. |
 
 Current gaps: the current identity model is a local shared bearer token; remote exposure is not ready. The frontend direct media URL relies on the local Vite proxy for browser authentication. `assetApi.updateSceneAssetStatus()` is an unused demo helper and now throws in real mode. Historical conflicts require operator investigation before clearing the flag. A full browser click-through of mutation controls remains open. No real social upload, production deployment or `main` merge occurred.
 
-Current implementation commits: `e085518` (migration), `d0f8def` (recovery), `b1aaf9b` (frontend/contract). `docs/FRONTEND_API_CONTRACT.md` has a follow-up browser-evidence update pending the handoff commit.
+Implementation commits: `e085518` (migration), `d0f8def` (recovery), `b1aaf9b` (frontend/contract), `88c8c54` (timeout regression). Handoff documentation commits follow those changes.
 
 Branch `feat/v2-p0-reliability` was pushed to `origin`. Draft PR creation targeting `feat/v2-p0-hardening` was attempted through the GitHub connector and returned HTTP 403 `Resource not accessible by integration`; no PR exists. Manual PR URL: https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p0-hardening...feat/v2-p0-reliability?expand=1
+
+Follow-up regression: `YouTubePublisherTest.timeoutBeforeAndAfterVideoPutHasDifferentRecoveryClass` used 80 ms client timeouts and a local HTTP server. The before-PUT timeout was classified as certain no video upload; the after-PUT timeout as unknown, with exactly one PUT. Full Maven suite passed 13/13 afterward.
 
 ## Verified this cycle
 
