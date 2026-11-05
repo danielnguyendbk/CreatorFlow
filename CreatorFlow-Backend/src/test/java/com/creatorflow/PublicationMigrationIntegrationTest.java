@@ -30,12 +30,12 @@ class PublicationMigrationIntegrationTest {
                 +"('33333333-3333-4333-8333-333333333333','11111111-1111-4111-8111-111111111111','YOUTUBE_SHORTS','FAILED','fixture','second','remote-B')");
             var second=Flyway.configure().dataSource(source).defaultSchema(schema).schemas(schema)
                 .locations("classpath:db/migration").load();
-            assertEquals(2,second.migrate().migrationsExecuted);
+            assertEquals(3,second.migrate().migrationsExecuted);
             assertEquals(0,second.migrate().migrationsExecuted);
             assertEquals(2,db.queryForObject("select count(*) from "+prefix+"publication_jobs where platform_post_id is not null and reconciliation_required",Integer.class));
             assertEquals(1,db.queryForObject("select count(*) from "+prefix+"publication_jobs where superseded_by is null",Integer.class));
             assertEquals(1,db.queryForObject("select count(*) from "+prefix+"publication_jobs where superseded_by is not null",Integer.class));
-            assertEquals(6,db.queryForObject("select count(*) from "+prefix+"flyway_schema_history where success",Integer.class));
+            assertEquals(7,db.queryForObject("select count(*) from "+prefix+"flyway_schema_history where success",Integer.class));
             second.validate();
         } finally {
             db.execute("drop schema "+schema+" cascade");
