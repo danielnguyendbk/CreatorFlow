@@ -10,6 +10,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
@@ -24,6 +27,21 @@ class ApiSecurityIntegrationTest {
         properties.add("spring.datasource.password",()->System.getenv().getOrDefault("CREATORFLOW_TEST_DB_PASSWORD",""));
     }
     @Autowired TestRestTemplate http;
+    @Autowired JdbcTemplate db;
+
+    @Test void corruptMediaReturnsStructured422WithoutCreatingAsset(){
+        int before=db.queryForObject("select count(*) from assets",Integer.class);
+        HttpHeaders fileHeaders=new HttpHeaders();fileHeaders.setContentType(MediaType.IMAGE_PNG);
+        byte[] bytes=new byte[]{(byte)0x89,'P','N','G',13,10,26,10,0,0,0,0};
+        var file=new ByteArrayResource(bytes){@Override public String getFilename(){return "corrupt.png";}};
+        var body=new LinkedMultiValueMap<String,Object>();
+        body.add("file",new HttpEntity<>(file,fileHeaders));
+        HttpHeaders headers=new HttpHeaders();headers.setBearerAuth("fixture-test-token");headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        var response=http.exchange("/api/assets",HttpMethod.POST,new HttpEntity<>(body,headers),String.class);
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY,response.getStatusCode());
+        org.junit.jupiter.api.Assertions.assertTrue(response.getBody().contains("MEDIA_INVALID"));
+        assertEquals(before,db.queryForObject("select count(*) from assets",Integer.class));
+    }
 
     @Test void readAndWriteRequireTokenWhileReadinessIsPublic(){
         assertEquals(HttpStatus.UNAUTHORIZED,http.getForEntity("/api/ideas",String.class).getStatusCode());

@@ -79,7 +79,7 @@ if ($publication.status -ne 'FAILED' -or $publication.platformPostId -or $public
 $repeatedPublication = PostJson '/api/publication-jobs' @{ contentId=[string]$content.id; platform='YOUTUBE_SHORTS'; scheduledAt=[DateTimeOffset]::UtcNow.AddHours(2).ToString('o'); caption='Synthetic fixture'; title='E2E sample'; hashtags=@('smoke','creatorflow') }
 if ($repeatedPublication.id -ne $publication.id) { throw 'Failed publication target produced a duplicate job' }
 
-# An MP4 header without a movie atom forces a real FFmpeg failure for retry/cancel checks.
+# A truncated MP4 must be rejected before it can mark a scene READY.
 $failedContent = PostJson '/api/contents' @{ title='E2E render failure'; topic='Failure handling'; niche='smoke'; language='en' }
 $failedBoard = PostJson '/api/storyboards' @{ contentId=[string]$failedContent.id; title='Failure fixture'; scenes=@(@{ durationSec=20; narration='This voice is used to test render failure handling.'; visualType='AI_VIDEO'; prompt='Corrupt video fixture' }) }
 $invalidVideo = [IO.Path]::Combine([IO.Path]::GetTempPath(),[Guid]::NewGuid().ToString('N') + '.mp4')
@@ -94,8 +94,31 @@ try {
     $badForm.Add([System.Net.Http.StringContent]::new([string]$failedContent.id),'contentId')
     $badForm.Add([System.Net.Http.StringContent]::new([string]$failedBoard.scenes[0].id),'sceneId')
     $badResponse = $badClient.PostAsync("$BaseUrl/api/assets",$badForm).GetAwaiter().GetResult()
-    if (-not $badResponse.IsSuccessStatusCode) { throw "Failure fixture upload HTTP $([int]$badResponse.StatusCode)" }
+    if ([int]$badResponse.StatusCode -ne 422) { throw "Expected corrupt media HTTP 422, got $([int]$badResponse.StatusCode)" }
 } finally { Remove-Item -LiteralPath $invalidVideo -ErrorAction SilentlyContinue; if ($badClient) { $badClient.Dispose() } }
+$failedBoard = GetJson "/api/storyboards/$($failedBoard.id)"
+if ($failedBoard.scenes[0].assetStatus -ne 'WAITING_FOR_ASSET') { throw 'Rejected media changed scene readiness' }
+
+# Create an isolated valid fixture asset, then corrupt only that fixture's stored
+# file to exercise the render worker's failure and retry path after upload.
+$validFixture = [IO.Path]::Combine([IO.Path]::GetTempPath(),[Guid]::NewGuid().ToString('N') + '.png')
+try {
+    Invoke-WebRequest -Uri "$BaseUrl$($asset.url)" -Headers $headers -UseBasicParsing -OutFile $validFixture | Out-Null
+    $fixtureClient = New-Object System.Net.Http.HttpClient
+    $fixtureClient.DefaultRequestHeaders.Authorization = [System.Net.Http.Headers.AuthenticationHeaderValue]::new('Bearer',$env:CREATORFLOW_API_TOKEN)
+    $form = New-Object System.Net.Http.MultipartFormDataContent
+    $media = [System.Net.Http.ByteArrayContent]::new([IO.File]::ReadAllBytes($validFixture))
+    $media.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::new('image/png')
+    $form.Add($media,'file','failure-fixture.png')
+    $form.Add([System.Net.Http.StringContent]::new([string]$failedContent.id),'contentId')
+    $form.Add([System.Net.Http.StringContent]::new([string]$failedBoard.scenes[0].id),'sceneId')
+    $response = $fixtureClient.PostAsync("$BaseUrl/api/assets",$form).GetAwaiter().GetResult()
+    if (-not $response.IsSuccessStatusCode) { throw "Valid fixture upload HTTP $([int]$response.StatusCode)" }
+    $fixtureAsset = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult() | ConvertFrom-Json
+} finally { Remove-Item -LiteralPath $validFixture -ErrorAction SilentlyContinue; if ($fixtureClient) { $fixtureClient.Dispose() } }
+$fixtureStorage = Join-Path 'storage/assets' ([string]$fixtureAsset.id)
+if (-not (Test-Path -LiteralPath $fixtureStorage)) { throw 'Isolated fixture asset file missing' }
+[IO.File]::WriteAllBytes((Resolve-Path -LiteralPath $fixtureStorage).Path,[byte[]](137,80,78,71,13,10,26,10))
 $failedWorkflow = PostJson '/api/workflows' @{ contentId=[string]$failedContent.id }
 $null = PostJson "/api/contents/$($failedContent.id)/voice" @{}
 $failedWorkflow = PostJson "/api/workflows/$($failedWorkflow.id)/resume" @{}

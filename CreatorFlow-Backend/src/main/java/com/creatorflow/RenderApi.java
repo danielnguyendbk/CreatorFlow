@@ -28,12 +28,13 @@ public class RenderApi {
     private final JdbcTemplate db;
     private final ObjectMapper json;
     private final String ffmpeg;
+    private final MediaValidator validator;
     private final Path root;
     private final TransactionTemplate transactions;
     private final Map<UUID,Process> processes=new ConcurrentHashMap<>();
-    RenderApi(JdbcTemplate db,ObjectMapper json,PlatformTransactionManager transactionManager,@Value("${FFMPEG_PATH:ffmpeg}") String ffmpeg,
+    RenderApi(JdbcTemplate db,ObjectMapper json,PlatformTransactionManager transactionManager,MediaValidator validator,@Value("${FFMPEG_PATH:ffmpeg}") String ffmpeg,
               @Value("${CREATORFLOW_STORAGE_DIR:storage/assets}") String assetRoot) throws Exception {
-        this.db=db;this.json=json;this.transactions=new TransactionTemplate(transactionManager);this.ffmpeg=ffmpeg;this.root=Path.of(assetRoot).toAbsolutePath().normalize();Files.createDirectories(root);
+        this.db=db;this.json=json;this.validator=validator;this.transactions=new TransactionTemplate(transactionManager);this.ffmpeg=ffmpeg;this.root=Path.of(assetRoot).toAbsolutePath().normalize();Files.createDirectories(root);
     }
     private static final String SELECT="select r.id,r.content_id as \"contentId\",c.title as \"contentTitle\",r.status,r.progress_percent as \"progressPercent\",r.started_at as \"startedAt\",r.completed_at as \"completedAt\",r.worker,r.retry_count as \"retryCount\",r.max_retries as \"maxRetries\",r.error,r.output_asset_id as \"outputAssetId\",r.logs,r.created_at as \"createdAt\",r.updated_at as \"updatedAt\" from render_jobs r join contents c on c.id=r.content_id";
     private Map<String,Object> shape(Map<String,Object> row){
@@ -111,15 +112,16 @@ public class RenderApi {
     private static String srtTime(int sec){return String.format("%02d:%02d:%02d,000",sec/3600,(sec/60)%60,sec%60);}
     private void render(UUID job,UUID contentId) throws Exception {
         Path work=Files.createDirectories(root.resolve("render-"+job));Path log=work.resolve("ffmpeg.log");
-        var scenes=db.queryForList("select s.scene_number,s.duration_sec,s.narration,a.storage_path,a.asset_type from scenes s join storyboards b on b.id=s.storyboard_id join assets a on a.id=s.asset_id where b.content_id=? order by s.scene_number",contentId);
+        var scenes=db.queryForList("select s.scene_number,s.duration_sec,s.narration,a.storage_path,a.asset_type,a.mime_type from scenes s join storyboards b on b.id=s.storyboard_id join assets a on a.id=s.asset_id where b.content_id=? order by s.scene_number",contentId);
         if(scenes.isEmpty()) throw new IllegalStateException("No scene assets");
-        var audio=db.queryForList("select storage_path from assets where content_id=? and asset_type='AUDIO' order by created_at desc limit 1",contentId);
+        var audio=db.queryForList("select storage_path,mime_type from assets where content_id=? and asset_type='AUDIO' order by created_at desc limit 1",contentId);
         if(audio.isEmpty()) throw new IllegalStateException("Voice audio missing");
         var concat=new StringBuilder();var subtitles=new StringBuilder();int elapsed=0,n=0;
         for(var scene:scenes){
             n++;int duration=((Number)scene.get("duration_sec")).intValue();
             Path source=Path.of((String)scene.get("storage_path")).toAbsolutePath().normalize();
             if(!source.startsWith(root) || !Files.isRegularFile(source)) throw new IllegalStateException("Scene asset file missing");
+            validator.validate(source,(String)scene.get("mime_type"));
             Path segment=work.resolve("segment-"+n+".mp4");
             var args=new ArrayList<String>();
             if("IMAGE".equals(scene.get("asset_type"))) {args.addAll(List.of("-loop","1","-framerate","25"));}
@@ -134,6 +136,9 @@ public class RenderApi {
             db.update("update render_jobs set progress_percent=?,updated_at=now() where id=?",Math.min(80,n*80/scenes.size()),job);
         }
         Path list=work.resolve("concat.txt"),subtitle=work.resolve("subtitle.srt"),silent=work.resolve("silent.mp4"),output=root.resolve(job+".mp4");
+        Path voice=Path.of((String)audio.getFirst().get("storage_path")).toAbsolutePath().normalize();
+        if(!voice.startsWith(root)) throw new IllegalStateException("Voice asset path invalid");
+        validator.validate(voice,(String)audio.getFirst().get("mime_type"));
         Files.writeString(list,concat.toString(),StandardCharsets.UTF_8);Files.writeString(subtitle,subtitles.toString(),StandardCharsets.UTF_8);
         run(job,List.of("-f","concat","-safe","0","-i",list.toString(),"-c","copy",silent.toString()),log);
         run(job,List.of("-i",silent.toString(),"-i",(String)audio.getFirst().get("storage_path"),"-i",subtitle.toString(),"-map","0:v:0","-map","1:a:0","-map","2:s:0","-c:v","copy","-c:a","aac","-c:s","mov_text","-t",Integer.toString(elapsed),"-movflags","+faststart",output.toString()),log);

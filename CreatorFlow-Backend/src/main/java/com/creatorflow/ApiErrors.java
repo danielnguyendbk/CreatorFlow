@@ -15,6 +15,10 @@ import org.slf4j.LoggerFactory;
 @RestControllerAdvice
 public class ApiErrors {
     private static final Logger log=LoggerFactory.getLogger(ApiErrors.class);
+    @ExceptionHandler(MediaValidator.InvalidMedia.class)
+    ResponseEntity<Map<String,Object>> invalidMedia(MediaValidator.InvalidMedia e) {
+        return ResponseEntity.status(e.status).body(Map.of("code",e.code,"error",e.getMessage()));
+    }
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<Map<String,Object>> invalid(MethodArgumentNotValidException e) {
         return ResponseEntity.badRequest().body(Map.of("error", "Invalid request: " + e.getFieldErrors().getFirst().getField()));
