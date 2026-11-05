@@ -18,6 +18,8 @@ Current gaps: the current identity model is a local shared bearer token; remote 
 
 Current implementation commits: `e085518` (migration), `d0f8def` (recovery), `b1aaf9b` (frontend/contract). `docs/FRONTEND_API_CONTRACT.md` has a follow-up browser-evidence update pending the handoff commit.
 
+Branch `feat/v2-p0-reliability` was pushed to `origin`. Draft PR creation targeting `feat/v2-p0-hardening` was attempted through the GitHub connector and returned HTTP 403 `Resource not accessible by integration`; no PR exists. Manual PR URL: https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p0-hardening...feat/v2-p0-reliability?expand=1
+
 ## Verified this cycle
 
 | Area | Status | Evidence |

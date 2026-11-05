@@ -1,6 +1,6 @@
 ﻿{
     "schemaVersion":  1,
-    "generatedAtUtc":  "2026-11-05T01:54:07Z",
+    "generatedAtUtc":  "2026-11-05T01:55:39Z",
     "branch":  "feat/v2-p0-reliability",
     "sourceBranch":  "origin/feat/v2-p0-hardening",
     "sourceCommit":  "86f0ceeadd9f300e412438a742dfbc8e137f13f2",
@@ -84,7 +84,7 @@
                      "TikTok/Instagram/Facebook publishing adapters absent",
                      "Production user identity and authenticated media delivery not implemented",
                      "Full browser mutation click-through not completed",
-                     "GitHub draft PR permission previously returned 403; recheck once after push"
+                     "Draft PR creation for feat/v2-p0-reliability into feat/v2-p0-hardening returned GitHub connector 403 Resource not accessible by integration; no PR exists"
                  ],
     "architectureDecisions":  [
                                   "Preserve all historical publication rows and post IDs; one canonical target per content/platform",
@@ -95,5 +95,6 @@
     "nextCycle":  {
                       "firstTask":  "V2-P0-07",
                       "instructions":  "Verify branch/head/runtime, then validate media decodability before scene assignment. Finish browser mutation click-through and operator reconciliation procedure. No live social upload without explicit authorization."
-                  }
+                  },
+    "manualPrUrl":  "https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p0-hardening...feat/v2-p0-reliability?expand=1"
 }
