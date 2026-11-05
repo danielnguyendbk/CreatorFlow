@@ -69,7 +69,7 @@ export function UploadAssetModal({ open, onClose }: UploadAssetModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept="video/*,audio/*,image/*,.srt,.vtt"
+            accept="video/mp4,video/webm,audio/wav,audio/mpeg,image/png,image/jpeg,image/gif,.srt,.vtt"
             className="hidden"
             onChange={handleFileChange}
             disabled={uploadMutation.isPending}
@@ -83,7 +83,7 @@ export function UploadAssetModal({ open, onClose }: UploadAssetModalProps) {
           <p className="mt-1 text-xs text-zinc-500">
             {selectedFile
               ? `${formatBytes(selectedFile.size)} • Ready`
-              : 'Supports MP4, MOV, MP3, PNG, JPG, SRT up to 500MB'}
+              : 'Supports MP4, WebM, WAV, MP3, PNG, JPG, GIF, SRT, VTT up to 250MB'}
           </p>
         </div>
 

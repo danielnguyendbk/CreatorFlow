@@ -45,7 +45,7 @@ interface GenerateIdeasModalProps {
 }
 
 export function GenerateIdeasModal({ open, onClose }: GenerateIdeasModalProps) {
-  const { mutateAsync, isPending, isSuccess, reset } = useGenerateIdeas();
+  const { mutateAsync, isPending, isSuccess, isError, error, reset } = useGenerateIdeas();
 
   const {
     register,
@@ -73,8 +73,8 @@ export function GenerateIdeasModal({ open, onClose }: GenerateIdeasModalProps) {
         reset();
         onClose();
       }, 1200);
-    } catch {
-      notify.error('Generation failed', 'Could not generate ideas. Try again.');
+    } catch (failure) {
+      notify.error('Generation failed', failure instanceof Error ? failure.message : 'Could not generate ideas. Try again.');
     }
   }
 
@@ -165,11 +165,11 @@ export function GenerateIdeasModal({ open, onClose }: GenerateIdeasModalProps) {
             id="generate-style"
           />
 
+          {isError && <p role="alert" className="text-sm text-red-400">{error instanceof Error ? error.message : 'Generation failed'}</p>}
           <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-3">
             <p className="text-xs text-zinc-600">
-              Ideas will be generated using Gemini and added to your backlog with{' '}
-              <span className="text-zinc-400">NEW</span> status. Generation takes ~1.5 seconds with
-              mock data.
+              Ideas will be generated and added to your backlog with{' '}
+              <span className="text-zinc-400">NEW</span> status.
             </p>
           </div>
         </div>
