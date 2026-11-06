@@ -1,8 +1,19 @@
 # CreatorFlow next tasks
 
-Updated: 2026-11-06. Read `AGENTS.md` and `.creatorflow/handoffs/latest.json`, then verify Git and runtime. Current branch `feat/v2-p1-account-manager`; implementation `ef51627`, baseline `70ad208`. P0-06 remaining asset/settings mutations, P0-07/08 regressions and V2-P1-01 are implemented/tested within the scope in `PROJECT_STATUS.md` and `P0_ACCEPTANCE_20261106.md`.
+Updated: 2026-11-06. Current branch `feat/v2-p1-local-agent`, baseline `05afbd6`. V2-P1-02 is IMPLEMENTED/TESTED within the local fixture scope in [LOCAL_AGENT.md](LOCAL_AGENT.md). Account Manager was not reimplemented. Read AGENTS.md and the latest handoff, then verify Git/remote/runtime before new work.
 
-## Immediate next task: V2-P1-02 Windows Local Agent
+## Immediate next task: V2-P2-01 / V2-P2-02
+
+1. Create a clean feature branch from the verified remote local-agent head. Preserve the existing V1/Account Manager/Monitoring routes and separate browser versus agent authentication.
+2. Implement PostgreSQL dependency tasks and durable checkpoints over the existing session/attempt/lease queue. Initially use the three existing safe fixture kinds; do not introduce arbitrary shell, Telegram, autonomous coding or live publication.
+3. Persist checkpoint/artifact evidence and generate handoff/navigation from committed task state. Add transactional event delivery/outbox only with explicit deduplication and restart tests; current events are stored transactionally without a dispatcher.
+4. Test dependency concurrency, duplicate delivery, bounded retries, cancellation and agent/backend restart. Keep Windows Job Objects and OS writer locks; do not reuse a coding worktree for simultaneous writers.
+5. Define agent artifact retention and credential rotation/operator lifecycle before longer-lived deployment. A Windows service installer, remote agent transport and multi-user identity need separate authorization/scope.
+6. Run Maven package, real Windows fixtures/recovery, frontend build and Playwright. Update status/next tasks/handoff, commit and push. Do not merge main, deploy or expose APIs publicly.
+
+Latest task/implementation/test details: PROJECT_STATUS.md, LOCAL_AGENT.md and `.creatorflow/handoffs/latest.json`. Implementation branch was pushed and remote SHA verified. GitHub draft PR creation returned 403 `Resource not accessible by integration`; no PR exists. [Create PR manually](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p1-account-manager...feat/v2-p1-local-agent?expand=1).
+
+## Previous cycle plan: V2-P1-02 (completed in the current cycle)
 
 1. Create a new branch from the verified remote `feat/v2-p1-account-manager` head in a clean worktree. Git metadata needs approved execution in this sandbox; do not change ACLs or retry fetch when heads already match.
 2. Implement scoped agent identity, loopback transport, heartbeat and PostgreSQL leases. Backend remains authoritative; discover provider capabilities on the agent host.

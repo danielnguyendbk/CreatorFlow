@@ -1,6 +1,14 @@
 # CreatorFlow V2 architecture
 
-Status: **DESIGN**, except the V1 components explicitly identified below. Updated 2026-11-05.
+Updated 2026-11-06. P0, Account Manager and V2-P1-02 local fixture agent are **IMPLEMENTED**, with scoped actual tests recorded in PROJECT_STATUS.md. Dependency graphs, outbox delivery, Telegram and autonomous coding below remain **DESIGNED**.
+
+## Implemented local agent boundary
+
+`React /agents -> Spring AgentApi/AgentQueue -> PostgreSQL V9 <- independently running Windows Python agent` is implemented. Registration uses a separate enrollment secret, followed by a scoped agent credential whose hash/metadata alone live in PostgreSQL; its local copy is Windows DPAPI encrypted. The browser token cannot claim tasks; the agent token cannot call browser/operator APIs. No provider auth cache is opened or copied.
+
+V9 owns `local_agents`, `agent_credentials`, `agent_tasks` and `agent_task_events`. Atomic `SKIP LOCKED` claim, per-agent/worktree partial unique indexes, session/attempt/lease fencing, idempotency keys, cancellation and bounded expired-lease recovery are implemented. Task transition events commit transactionally; an outbox dispatcher is not implemented. The first runtime executes one targeted fixed fixture task per agent, with filesystem writer locks and Windows Job Object process-tree cleanup. Only Git fixture, FFmpeg fixture and capability probe are supported. There is no general command executor or coding worktree writer.
+
+Actual Windows process tests and E2E (including agent/backend restarts) passed; see [LOCAL_AGENT.md](LOCAL_AGENT.md) for commands, protocol, evidence and limits. Keep transport on loopback. A Windows service installer, remote/multi-tenant identity, arbitrary coding tasks and checkpointed dependency execution are not implemented.
 
 ## Existing boundary
 
@@ -22,7 +30,7 @@ flowchart LR
 
 The first V2 deployment remains one backend process plus one optional local agent. The backend assigns a lease with `task_id`, `attempt`, `lease_expires_at` and `idempotency_key`; the agent heartbeats and checkpoints progress. A lease claim uses `FOR UPDATE SKIP LOCKED`. Every task result is compared with its attempt number so a late result cannot overwrite a newer attempt. Events are written in the same transaction as task transitions and delivered from an outbox. All command, media and publication operations are bounded and auditable.
 
-## Account and execution model
+## Target account and execution model (deployed contracts are in ACCOUNT_MANAGER.md and LOCAL_AGENT.md)
 
 `provider_accounts` stores provider, display label, capabilities, connection state, expiry and encrypted token reference when permitted. Raw credentials never appear in task payloads, frontend responses, logs or handoffs. Reconnect opens an official provider flow. Capability probes return `SUPPORTED`, `UNSUPPORTED` or `UNKNOWN` per installed tool/version. The local agent may use an existing user-authenticated CLI session only through documented supported commands; backend never copies CLI auth caches or silently swaps profiles. Gemini CLI's documented headless mode uses cached auth or configured API key/Vertex credentials; Codex exposes supported automation surfaces, including `codex exec`, SDK and app-server. These facts do not establish multi-account switching. See [Gemini CLI authentication](https://github.com/google-gemini/gemini-cli/blob/main/docs/get-started/authentication.mdx) and [Codex platform guidance](https://developers.openai.com/blog/codex-as-a-platform).
 
@@ -44,7 +52,7 @@ Keep the existing YouTube OAuth implementation behind `CREATORFLOW_ENABLE_REAL_P
 
 The five-hour schedule is optional and disabled by default. A unique cycle key prevents overlap across restarts. Each cycle writes a handoff after its tasks settle or block. The handoff is a navigation aid; PostgreSQL, Git and test artifacts remain the evidence sources.
 
-## Current risks to close before V2 agent work
+## Historical P0 risks (superseded by current P0 acceptance and LOCAL_AGENT.md)
 
 - V1 auth is a single local bearer token, with no per-user roles or audit actor. Do not expose the backend or Vite proxy publicly.
 - Publication scheduling currently ignores `FAILED` jobs in its duplicate lookup; P0 must reconcile that path before any live provider enablement.

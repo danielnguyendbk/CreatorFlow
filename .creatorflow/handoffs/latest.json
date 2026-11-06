@@ -1,119 +1,153 @@
 {
     "schemaVersion":  1,
-    "generatedAtUtc":  "2026-11-06T03:07:13Z",
-    "branch":  "feat/v2-p1-account-manager",
-    "sourceBranch":  "feat/v2-p0-media-ai",
-    "sourceCommit":  "70ad2088aa4a492cd19f1ad58b547eb80e0abb8c",
-    "lastImplementationCommit":  "ef51627484552ba803f9e65d0e73640b4d8b6513",
+    "generatedAtUtc":  "2026-11-06T04:26:58Z",
+    "branch":  "feat/v2-p1-local-agent",
+    "sourceBranch":  "origin/feat/v2-p1-account-manager",
+    "sourceCommit":  "05afbd6a479099afe10174b74f463084fc1ee682",
+    "lastImplementationCommit":  "f21af0bb5894009bc045c5a9009f7def8005fa38",
     "completedTasks":  [
                            {
                                "status":  "TESTED",
-                               "result":  "Remaining asset/settings browser mutations passed; committed fix distinguishes assignment success from resume failure.",
-                               "id":  "V2-P0-06"
+                               "result":  "Separate enrollment/runtime authentication, SHA-256 credential metadata, Windows current-user DPAPI, no-store enrollment response; browser/agent cross-role, spoofing and revocation tests passed.",
+                               "id":  "V2-P1-02-identity"
                            },
                            {
                                "status":  "TESTED",
-                               "result":  "Actual FFmpeg valid/corrupt media regression, upload 422/no readiness mutation and 15-second video E2E passed.",
-                               "id":  "V2-P0-07"
+                               "result":  "V9 fresh/upgrade/no-op migration; atomic claim, session/attempt/lease fencing, idempotency collision/retransmission, 8-way concurrency/one writer, events, cancellation and bounded recovery passed.",
+                               "id":  "V2-P1-02-queue"
                            },
                            {
                                "status":  "TESTED",
-                               "result":  "Five AI reliability integration regressions passed; provider responses MOCK_ONLY, no live call.",
-                               "id":  "V2-P0-08"
+                               "result":  "Independent Windows process ran real Git/FFmpeg/capability fixtures. Five Python tests passed including DPAPI, environment exclusion, cross-process locks, timeout/cancel and child/grandchild cleanup on abrupt owner death.",
+                               "id":  "V2-P1-02-process"
                            },
                            {
                                "status":  "TESTED",
-                               "result":  "Metadata V8, Account API, local CLI discovery, official reconnect intent and React page implemented; DB/API/browser/build passed. Switching unsupported; no auth-cache access.",
-                               "id":  "V2-P1-01"
+                               "result":  "Playwright Dashboard-to-Monitoring clicks queued all three kinds and displayed real persisted results. Cancel, OFFLINE and ONLINE observed; final reloaded console 0 errors, 1 React Router warning.",
+                               "id":  "V2-P1-02-monitoring"
+                           },
+                           {
+                               "status":  "TESTED",
+                               "result":  "Actual agent/backend process E2E passed; both interrupted FFmpeg tasks recovered at attempt 2, DPAPI identity reused, earlier Git result unchanged. Full harness passed again after startup readiness fix.",
+                               "id":  "V2-P1-02-recovery"
                            }
                        ],
     "incompleteTasks":  [
-                            "V2-P1-02 Windows Local Agent implementation",
-                            "Live provider health and official OAuth completion remain unverified",
-                            "Draft PR blocked by GitHub integration 403",
-                            "Historical publication conflict operator reconciliation before live publishing"
+                            "V2-P2-01/02 dependency engine, durable checkpoints and handoff generation",
+                            "Draft PR creation blocked by connected GitHub integration HTTP 403"
                         ],
     "changedFiles":  [
                          ".creatorflow/handoffs/latest.json",
-                         "CreatorFlow-Backend/src/main/java/com/creatorflow/AccountApi.java",
-                         "CreatorFlow-Backend/src/main/java/com/creatorflow/AccountDiscovery.java",
-                         "CreatorFlow-Backend/src/main/resources/db/migration/V8__account_metadata.sql",
-                         "CreatorFlow-Backend/src/test/java/com/creatorflow/AccountApiIntegrationTest.java",
+                         ".gitignore",
+                         "CreatorFlow-Agent/agent.py",
+                         "CreatorFlow-Agent/smoke_e2e.py",
+                         "CreatorFlow-Agent/test_agent.py",
+                         "CreatorFlow-Agent/windows_process.py",
+                         "CreatorFlow-Backend/src/main/java/com/creatorflow/AgentApi.java",
+                         "CreatorFlow-Backend/src/main/java/com/creatorflow/AgentIdentity.java",
+                         "CreatorFlow-Backend/src/main/java/com/creatorflow/AgentQueue.java",
+                         "CreatorFlow-Backend/src/main/java/com/creatorflow/SecurityConfig.java",
+                         "CreatorFlow-Backend/src/main/resources/db/migration/V9__local_agent_queue.sql",
+                         "CreatorFlow-Backend/src/test/java/com/creatorflow/AgentQueueIntegrationTest.java",
                          "CreatorFlow-Backend/src/test/java/com/creatorflow/PublicationMigrationIntegrationTest.java",
-                         "CreatorFlow-Frontend/src/api/accountApi.ts",
+                         "CreatorFlow-Frontend/src/api/agentApi.ts",
                          "CreatorFlow-Frontend/src/components/layout/Sidebar.tsx",
-                         "CreatorFlow-Frontend/src/features/accounts/AccountManagerPage.tsx",
-                         "CreatorFlow-Frontend/src/features/assets/useAssets.ts",
+                         "CreatorFlow-Frontend/src/features/agents/AgentMonitoringPage.tsx",
                          "CreatorFlow-Frontend/src/routes/index.tsx",
                          "CreatorFlow-Frontend/src/types/index.ts",
-                         "docs/ACCOUNT_MANAGER.md",
+                         "docs/ARCHITECTURE.md",
+                         "docs/LOCAL_AGENT.md",
                          "docs/NEXT_TASKS.md",
-                         "docs/P0_ACCEPTANCE_20261106.md",
                          "docs/PROJECT_STATUS.md"
                      ],
     "implementationCommits":  [
-                                  "bbe9123",
-                                  "ef51627"
+                                  "f381e1c",
+                                  "ac981b1",
+                                  "a046cd7",
+                                  "0fb4e81",
+                                  "f21af0b"
                               ],
     "tests":  [
-                  "\u0026 D:/DevTools/apache-maven-3.9.12/bin/mvn.cmd -Dmaven.repo.local=C:/Users/Admin/AppData/Local/codex-with-chatgpt/maven-repo-phase2b package -q: PASS, 25 tests, 0 failures/errors/skips; test DB and FFMPEG_PATH set",
-                  "Fresh PostgreSQL creatorflow_p1_acceptance_20261106: Flyway V1-V8 all success=true; isolated upgrade/no-op rerun passed",
-                  "npm run build with VITE_API_BASE_URL=http://127.0.0.1:5173: PASS; bundle warning",
-                  "CreatorFlow-Backend/scripts/smoke-e2e.ps1 -Ffprobe \u003cinstalled-ffmpeg-bin\u003e/ffprobe.exe -EvidenceFile storage/e2e-evidence-v2-p1.json: PASS, actual 15.000000s MP4 video/audio/subtitle; retry 1/cancel CANCELLED",
-                  "ffmpeg -nostdin -v error -i storage/e2e-output.mp4 -f null NUL: PASS exit 0",
-                  "CreatorFlow-Backend/scripts/smoke-contract.ps1 -EvidenceFile storage/e2e-evidence-v2-p1.json: PASS, 11 routes plus auth/validation/storyboard/media",
-                  "Playwright CLI creatorflow-p1: actual upload and completed/waiting/missing-voice assignment, settings save persisted in DB, actual local voice, expected disabled Gemini error; final success console 0 errors, 1 React Router warning",
-                  "Playwright CLI: Account Manager refresh detects both CLIs, Codex local login present, Gemini Unknown, official Codex/Gemini reconnect instructions rendered",
-                  "AccountApiIntegrationTest: 2 tests passed; auth, metadata allowlist, secret-free schema, expired fixture, reconnect persistence, no switching/CLI execution from reconnect/default",
-                  "git ls-remote baseline and implementation branch: matched local; branch push confirmed"
+                  "\u0026 D:/DevTools/apache-maven-3.9.12/bin/mvn.cmd -Dmaven.repo.local=C:/Users/Admin/AppData/Local/codex-with-chatgpt/maven-repo-phase2b -Dtest=AgentQueueIntegrationTest test -q: PASS, four DB/security/concurrency tests",
+                  "Same Maven command with package -q: PASS 29 tests, 0 failures/errors/skips; CREATORFLOW_TEST_DB_URL=jdbc:postgresql://127.0.0.1:55432/creatorflow_agent_test_20261106 and FFMPEG_PATH set",
+                  "Fresh creatorflow_agent_e2e_20261106: Flyway V1-V9 all success=true; isolated V1-V4 to V9 upgrade and no-op rerun passed",
+                  "python -m unittest -v test_agent from CreatorFlow-Agent: PASS five real Windows process tests, no skips",
+                  "npm run build with VITE_API_BASE_URL=http://127.0.0.1:5174: PASS TypeScript/Vite; existing bundle warning",
+                  "python CreatorFlow-Agent/smoke_e2e.py --root storage/agent-runtime-e2e --backend-pid \u003cverified-acceptance-pid\u003e --backend-jar storage/agent-backend.jar --evidence storage/agent-e2e-evidence.json: PASS actual Git/FFmpeg, idempotent enqueue, cancellation, timeout, offline, agent restart and backend restart",
+                  "Final harness rerun PASS after agent startup readiness fix; both interrupted tasks at attempt 2",
+                  "Playwright CLI creatorflow-agent: Dashboard -\u003e Monitoring -\u003e Run Git fixture / FFmpeg fixture / Capability probe; SQL dashboard-fixture tasks SUCCEEDED, commit/hash/bytes displayed; Cancel 20-second FFmpeg -\u003e CANCELLED",
+                  "Playwright: stopped exact worker -\u003e OFFLINE, restart same DPAPI identity -\u003e ONLINE; final reload 0 console errors, 1 existing Router warning",
+                  "Actual startup before Spring ready: Waiting for local backend readiness followed by successful agent session; no identity discarded",
+                  "Credential hash/scope metadata query valid; no password/cookie/token/secret columns in public agent/task/event tables; changed-file secret-pattern scan checked before final commit",
+                  "Git baseline/implementation remote heads matched; feature branch push confirmed"
               ],
     "environment":  {
-                        "frontend":  "127.0.0.1:5173",
+                        "maven":  "3.9.12",
+                        "frontend":  "127.0.0.1:5174",
+                        "windows":  true,
+                        "backend":  "127.0.0.1:8082",
+                        "testDatabase":  "creatorflow_agent_test_20261106",
+                        "postgresql":  "18.3",
+                        "java":  "25",
+                        "python":  "3.13",
                         "realPublishing":  "disabled",
                         "providerCalls":  "disabled",
-                        "postgresql":  "18.3",
-                        "database":  "127.0.0.1:55432",
-                        "java":  "25",
-                        "backend":  "127.0.0.1:8080",
-                        "maven":  "3.9.12"
+                        "acceptanceDatabase":  "creatorflow_agent_e2e_20261106",
+                        "ffmpeg":  "8.1.2"
                     },
     "localEvidence":  [
-                          "storage/p1-tests.log",
-                          "storage/p1-frontend-build.log",
-                          "storage/p1-e2e.log",
-                          "storage/p1-contract.log",
-                          "storage/e2e-evidence-v2-p1.json",
-                          "storage/assignment-no-voice-pass.txt",
-                          "storage/assignment-ready-pass.txt",
+                          "storage/agent-package.log",
+                          "storage/agent-process-tests.log",
+                          "storage/agent-e2e-evidence.json",
+                          "storage/agent-e2e.log",
+                          "storage/agent-browser-success.txt",
+                          "storage/agent-browser-cancel-pass.txt",
+                          "storage/agent-browser-offline.txt",
+                          "storage/agent-browser-online.txt",
+                          "storage/agent-browser-final.txt",
+                          "storage/agent-worker-out.log",
                           ".playwright-cli/"
                       ],
     "blockers":  [
-                     "GitHub create_pull_request returned HTTP 403 Resource not accessible by integration; no PR exists",
-                     "Live Gemini/OpenRouter/OAuth/Telegram/publication not tested",
-                     "Gemini CLI official noninteractive auth probe not established; remains UNKNOWN",
-                     "All current provider default/switching capabilities UNSUPPORTED",
-                     "Flyway warns PostgreSQL 18 exceeds tested range; bundle-size warning remains"
+                     "GitHub create_pull_request returned HTTP 403 Resource not accessible by integration; no PR exists"
                  ],
+    "limits":  [
+                   "Windows standalone supervised process; no service installer or automatic startup",
+                   "Loopback single-operator transport; remote/multi-tenant identity not implemented",
+                   "Only isolated Git/FFmpeg/capability fixtures; no arbitrary shell or coding worktrees",
+                   "Credential rotation UI and artifact retention cleanup remain future work",
+                   "PostgreSQL 18 exceeds Flyway tested range; Vite bundle warning remains",
+                   "Browser polling during intentional backend shutdown produced transient proxy errors; final success console checked after reload",
+                   "No provider auth-cache access, Telegram, autonomous coding, live AI/OAuth/publication, main merge, deployment or public exposure"
+               ],
+    "resolvedFailures":  [
+                             "Terminal result JSON numeric normalization fixed after regression failed",
+                             "Locked-byte read moved to fstat metadata check before byte-range lock acquisition",
+                             "Fixture UUID cast corrected",
+                             "Old acceptance backend JAR lock released only after verifying exact process; copied JAR used afterward",
+                             "Already-running PostgreSQL refused duplicate startup; no PID/lock file deleted",
+                             "Final rerun exposed agent startup before Spring readiness; agent now waits and full harness passed again"
+                         ],
     "architectureDecisions":  [
-                                  "Retain Spring modular monolith and existing React routes/layout; add /accounts sidebar route",
-                                  "Persist metadata and intents only; never read/copy provider auth caches or store passwords/cookies",
-                                  "CONNECTED means Codex local login status only, explicitly not live verified; nonzero probe stays UNKNOWN",
-                                  "Reconnect is AWAITING_USER_OFFICIAL_FLOW with fixed terminal instructions; does not launch login or change identity",
-                                  "Reject unsupported default selection with 409; no fabricated multi-account support",
-                                  "Git sandbox boundary handled using approved execution without ACL changes or unnecessary fetch",
-                                  "Asset assignment success remains committed even if later auto-resume fails; surface a separate warning"
+                                  "Keep existing Spring/React contracts; Account Manager not reimplemented",
+                                  "Separate browser/operator, enrollment and agent-runtime credentials; only metadata/hash in DB and DPAPI on agent",
+                                  "Targeted PostgreSQL SKIP LOCKED queue with transactional events, one active task per agent/worktree and fenced leases",
+                                  "Task kinds and parameters fixed; attempt-specific private fixture directories; no supplied executable/path/shell",
+                                  "Windows child suspended before Job assignment; kill-on-close cleans descendants even if agent is killed; OS byte-range writer/instance locks",
+                                  "Lost renewal kills local execution and never submits unfenced result; backend reaper owns bounded recovery",
+                                  "Events stored transactionally; dependency engine, checkpoints and dispatcher remain P2"
                               ],
     "git":  {
                 "implementationRemoteVerified":  true,
-                "finalDocumentation":  "Separate commit follows; verify remote HEAD at next cycle",
+                "finalDocumentation":  "Separate commit follows; verify final remote HEAD next cycle",
                 "push":  "CONFIRMED",
                 "pullRequest":  "BLOCKED_403",
                 "baselineRemoteVerified":  true,
-                "implementationRemoteSha":  "ef51627484552ba803f9e65d0e73640b4d8b6513"
+                "implementationRemoteSha":  "f21af0bb5894009bc045c5a9009f7def8005fa38"
             },
     "nextCycle":  {
-                      "firstTask":  "V2-P1-02",
-                      "instructions":  "Verify latest feature remote/local heads and clean worktree. Implement scoped Windows agent identity, heartbeat, leased allowlisted Git/FFmpeg tasks, timeouts, single-writer worktrees and restart recovery. See docs/ACCOUNT_MANAGER.md. No public exposure, main merge or real social publishing."
+                      "firstTask":  "V2-P2-01 / V2-P2-02",
+                      "instructions":  "Verify latest local-agent feature head and clean worktree, then build dependency engine/checkpoints/handoff generation over existing fixed task queue. Preserve agent auth/fencing/Job Objects and single writer. See LOCAL_AGENT.md and NEXT_TASKS.md. No Telegram/autonomous coding/live publishing in this completed cycle."
                   },
-    "manualPrUrl":  "https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p0-media-ai...feat/v2-p1-account-manager?expand=1"
+    "manualPrUrl":  "https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p1-account-manager...feat/v2-p1-local-agent?expand=1"
 }

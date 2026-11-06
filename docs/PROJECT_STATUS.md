@@ -1,8 +1,23 @@
 # CreatorFlow project status
 
-Updated: 2026-11-06. Current branch: `feat/v2-p1-account-manager`, baseline `feat/v2-p0-media-ai` at `70ad2088aa4a492cd19f1ad58b547eb80e0abb8c`. Current results below supersede the historical records later in this file.
+Updated: 2026-11-06. Current branch: `feat/v2-p1-local-agent`, baseline `origin/feat/v2-p1-account-manager` at `05afbd6a479099afe10174b74f463084fc1ee682`. Current results below supersede prior cycle records.
 
-## Current cycle: P0 closeout and V2-P1-01
+## Current cycle: V2-P1-02 Windows Local Agent
+
+- Identity/authentication: IMPLEMENTED, TESTED. Separate enrollment and per-agent runtime credential; backend stores hash/scope/revocation metadata, agent stores current-user DPAPI ciphertext. Browser credentials cannot register/claim; agent credentials cannot call browser/operator routes. Cross-agent spoofing/revocation and no-store enrollment response tested. No Account Manager implementation changes.
+- Queue/V9: IMPLEMENTED, TESTED. Fresh V1-V9, targeted fixed-kind queue, atomic SKIP LOCKED claim, session/attempt/lease fencing, unique idempotency key, one active agent/worktree writer, transactional events, cancellation and bounded expired-lease recovery. Eight concurrent claims yielded one writer; stale attempts/sessions/results were rejected. Equivalent terminal result retransmission passed.
+- Independent Windows process: IMPLEMENTED, TESTED. Real Git commit, synthetic FFmpeg MP4 and full decode, fixed capability probes, sanitized child environment, OS instance/worktree locks and suspended-child Windows Job Object assignment. Five Python tests passed, including real cross-process lock contention, timeout/cancel and child/grandchild cleanup on abrupt owner death.
+- Recovery E2E: TESTED with actual independent backend/agent processes. Cancellation/timeout/offline/DPAPI identity reuse passed. Killing the agent and restarting the backend each interrupted a running FFmpeg task; both recovered at attempt 2. Old Git result persisted unchanged. Backend-unavailable renewal stops local execution; it never submits an unfenced success.
+- Monitoring UI: IMPLEMENTED, TESTED. Playwright navigated Dashboard -> Agent Monitoring, created Git/FFmpeg/capability tasks and observed real results persisted in PostgreSQL. Git returned a commit and 34-byte artifact; FFmpeg returned a 1203-byte MP4/hash; capability flags were true. Cancelled a running 20-second FFmpeg task, observed OFFLINE after stopping the agent and ONLINE after restarting it. Successful browser console: zero errors, one existing React Router warning.
+- Build: TESTED. Maven package 29 tests, zero failures/errors/skips; Python five tests, no skips; frontend TypeScript/Vite build passed. Flyway PostgreSQL 18 support-range and Vite bundle warnings remain. Separate fresh acceptance DB, backend/frontend on loopback 8082/5174; provider calls and real publishing disabled.
+
+Implementation commits: `f381e1c` (identity/V9/queue/security/concurrency), `ac981b1` (Windows runtime/fixtures/process tests), `a046cd7` (Monitoring UI), `0fb4e81` (no-store credentials, accurate lease-loss logs, integer validation), `f21af0b` (wait for actual backend readiness). Full process E2E and Python tests passed again after the startup fix. Exact commands/evidence, protocol and limits: [LOCAL_AGENT.md](LOCAL_AGENT.md).
+
+Git: feature branch implementation pushed and remote SHA matched local. Draft PR creation targeting `feat/v2-p1-account-manager` returned GitHub connector HTTP 403 `Resource not accessible by integration`; no PR exists. [Create PR manually](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p1-account-manager...feat/v2-p1-local-agent?expand=1). Final handoff documentation is committed/pushed separately.
+
+Remaining scope: no Windows service installation/automatic startup, remote multi-user agents, credential rotation UI, artifact cleanup policy or arbitrary coding worktrees. Next: V2-P2-01/02 dependency engine/checkpoints/handoff generation. Telegram, autonomous coding and live publishing were not implemented or tested. No main merge, production deployment or public exposure.
+
+## Previous cycle: P0 closeout and V2-P1-01
 
 - V2-P0-06: IMPLEMENTED, TESTED for the remaining asset/settings browser mutations. Actual upload, content/scene selection, assignment, settings save/persistence and local voice test passed. Fixed assignment success being reported as failure after invalid auto-resume. Completed workflows no longer resume; missing voice produces a separate warning; a ready WAITING workflow became RUNNING in PostgreSQL. Deliberate Gemini-disabled/missing-voice HTTP errors were expected; final successful assignment browser run had zero console errors and one React Router future warning.
 - V2-P0-07/08: IMPLEMENTED in baseline, TESTED this cycle. Maven package ran 25 tests, zero failures/errors/skips, including actual FFmpeg corrupt/valid media regressions and five AI reliability integration tests. Provider fixtures remain MOCK_ONLY.
