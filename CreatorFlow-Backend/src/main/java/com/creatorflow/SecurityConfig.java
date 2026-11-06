@@ -26,7 +26,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class SecurityConfig {
     @Bean
     SecurityFilterChain security(HttpSecurity http, @Value("${creatorflow.api-token:}") String token,
-            @Value("${CREATORFLOW_FRONTEND_ORIGIN:http://127.0.0.1:5173}") String origin) throws Exception {
+            @Value("${CREATORFLOW_FRONTEND_ORIGIN:http://127.0.0.1:5173}") String origin,
+            @Value("${CREATORFLOW_AGENT_ENROLLMENT_TOKEN:}") String enrollment, AgentIdentity agents) throws Exception {
         if (token.isBlank()) throw new IllegalStateException("CREATORFLOW_API_TOKEN is required");
         var cors = new CorsConfiguration();
         cors.setAllowedOrigins(List.of(origin));
@@ -42,6 +43,20 @@ public class SecurityConfig {
                 @Override protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
                         throws ServletException, IOException {
                     String path = req.getRequestURI();
+                    if (path.startsWith("/api/v2/agent-runtime/")) {
+                        Object principal;
+                        if (path.equals("/api/v2/agent-runtime/register") && req.getMethod().equals("POST")) {
+                            if (enrollment.length()<32 || enrollment.equals(token) || !AgentIdentity.equal(enrollment,req.getHeader("X-Agent-Enrollment"))) {
+                                res.setStatus(401); return;
+                            }
+                            principal="agent-enrollment";
+                        } else {
+                            principal=agents.authenticate(req.getHeader("X-Agent-Id"),req.getHeader("Authorization"));
+                            if(principal==null) {res.setStatus(401); return;}
+                        }
+                        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(principal,null,List.of()));
+                        chain.doFilter(req,res); return;
+                    }
                     if (path.startsWith("/actuator/health") || path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui") || path.equals("/api/social/youtube/callback")) {
                         chain.doFilter(req, res); return;
                     }
