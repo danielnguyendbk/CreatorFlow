@@ -9,6 +9,40 @@
 
 export type ID = string;
 
+export type AgentTaskKind = 'GIT_FIXTURE' | 'FFMPEG_FIXTURE' | 'CAPABILITY_PROBE';
+export interface LocalAgent {
+  id: string;
+  name: string;
+  version: string;
+  status: 'ONLINE' | 'OFFLINE';
+  capabilities: AgentTaskKind[];
+  lastHeartbeatAt: string | null;
+  sessionId: string | null;
+}
+export interface AgentTask {
+  id: string;
+  agentId: string;
+  kind: AgentTaskKind;
+  state: 'QUEUED' | 'RUNNING' | 'CANCEL_REQUESTED' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED';
+  attempt: number;
+  maxAttempts: number;
+  leaseExpiresAt: string | null;
+  worktreeKey: string;
+  timeoutSec: number;
+  durationSec: number;
+  errorCode: string | null;
+  result: {
+    exitCode: number;
+    artifactSha256: string | null;
+    bytes: number | null;
+    gitCommit: string | null;
+    gitAvailable: boolean | null;
+    ffmpegAvailable: boolean | null;
+    errorCode: string | null;
+  } | null;
+}
+export interface AgentTaskEvent { id: number; attempt: number; type: string; createdAt: string }
+
 export interface ProviderAccount {
   provider: string;
   displayName: string;

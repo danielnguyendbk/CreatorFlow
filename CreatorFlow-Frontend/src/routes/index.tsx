@@ -13,6 +13,7 @@ import { PublicationQueuePage } from '@/features/publishing/PublicationQueuePage
 import { ActivityPage } from '@/features/activity/ActivityPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { AccountManagerPage } from '@/features/accounts/AccountManagerPage';
+import { AgentMonitoringPage } from '@/features/agents/AgentMonitoringPage';
 import { NotFoundPage } from '@/features/common/NotFoundPage';
 
 export const router = createBrowserRouter([
@@ -75,6 +76,10 @@ export const router = createBrowserRouter([
       {
         path: 'accounts',
         element: <AccountManagerPage />,
+      },
+      {
+        path: 'agents',
+        element: <AgentMonitoringPage />,
       },
       {
         path: '*',
