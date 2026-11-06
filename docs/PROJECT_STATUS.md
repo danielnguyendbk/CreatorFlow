@@ -1,3 +1,15 @@
+# V2-P5-01 current delivery (2026-11-06)
+
+Implementation milestones `f54c81d`, `01da0c2`, `01f6713`, `ea75ccf` are pushed; remote confirmed UI HEAD `ea75ccf95d97b59d167ff954133c22be3f5f3d17`. Draft PR is BLOCKED_403 (`Resource not accessible by integration`), not created. [Manual PR into P4](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p4-content-approval...feat/v2-p5-worktree-foundation?expand=1). Final navigation handoff is committed/pushed separately.
+
+Branch `feat/v2-p5-worktree-foundation`, clean verified P4 baseline local/remote `fd65617ce5d7111b61053c5fed9b5c3550c961bf`. P5-01A-E IMPLEMENTED/TESTED: V17/V18 hashed credential lifecycle/operator-opened enrollment/DPAPI interrupted rotation, independently verified repository allowlist, exact-commit isolated worktree ownership/writer lock/checkpoints/reconciliation, strict fixed contracts with executors NOT_ENABLED, bounded quota/budget admission including offline/revoked denial. No previous phase was reimplemented.
+
+P5-01F/G IMPLEMENTED/TESTED: real backend Coding Workspaces UI; Playwright repository registration, agent verification, prepare/inspect, UNKNOWN -> OPERATOR_REQUIRED, Gemini unsupported and confirmed rotation. Actual process E2E passed agent/backend restart, lost rotation response recovery generation 3, stale-key/late-checkpoint rejection, orphan quarantine, real FFmpeg and controlled cleanup without changing fixture main, then emergency revoke. The fixture agent is intentionally REVOKED and one interrupted allocation remains NEEDS_RECONCILIATION, not a hidden success.
+
+Final Maven `package -q` with PostgreSQL and FFMPEG_PATH: **73 tests, zero failures/errors/skips**. Python from `CreatorFlow-Agent`: **17 passed**. Frontend `npm run build` passed (existing bundle-size warning). Flyway fresh V1-V18, historical V14-V18 and actual V16-V18/restart no-op passed. P0 media/AI, P2 workflow/checkpoint/usage, P3 mock Telegram and P4 publication safety regressions passed; a new actual 15-second workflow render also succeeded. Windows junction/second writer/timeout/cancel/process-tree crash and DPAPI tests ran on Windows, not mocked OS behavior.
+
+Retention is a configurable durable policy with preservation of referenced evidence; automatic sweeping is NOT_IMPLEMENTED. Admission reservations are planned wall-clock capacity, not token or monetary usage. No new authenticated live quota claim; readiness cases are database fixtures. Public version detection does not establish account login. Provider execution, live Telegram/social publication, account switching, main merge/deployment and five-hour schedules remain disabled/out of scope. Exact contracts, commands/evidence and limits: [P5_WORKTREE_FOUNDATION.md](P5_WORKTREE_FOUNDATION.md). Earlier snapshots below are historical.
+
 # CreatorFlow project status
 
 ## Current cycle: V2-P4 content manifest and safe publication (2026-11-06)

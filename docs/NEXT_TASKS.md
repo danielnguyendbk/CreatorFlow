@@ -1,3 +1,18 @@
+# Current boundary after V2-P5-01 (2026-11-06)
+
+Implementation push confirmed at `ea75ccf`; draft PR BLOCKED_403. [Create PR into P4 manually](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p4-content-approval...feat/v2-p5-worktree-foundation?expand=1). No PR exists from this run.
+
+P5-01A-G are implemented with scoped acceptance on `feat/v2-p5-worktree-foundation`, baseline P4 `fd65617`. Read [P5_WORKTREE_FOUNDATION.md](P5_WORKTREE_FOUNDATION.md), latest handoff and verify Git/remote before a new cycle. Final Maven 73/zero skips, Python 17, frontend build, Playwright and actual Windows agent/backend restart/rotation/worktree/FFmpeg E2E passed. Retention policy has no automatic sweep; fixture orphan is explicitly retained for reconciliation.
+
+1. Operator review/draft PR into `feat/v2-p4-content-approval`; no main merge. Check exact final remote SHA and PR result in latest handoff.
+2. **NEXT V2-P5-02 (not implemented):** verify installed official Codex/Gemini execution protocols, explicit per-task operator authority and allowed repository/workspace. Never use a stale historical READY decision as an execution grant.
+3. Revalidate credentials/session, agent capability, quota identity/freshness/windows and reservation/budget at admission, claim and execution; WAIT_FOR_RESET must wait, unknown quota requires an operator. Keep Gemini unsupported until official quota evidence exists; no automatic account switch.
+4. Execute only inside proven worktrees with real file/process/network boundaries, bounded Windows Job Objects, durable checkpoint/cancel/recovery and one writer. Preserve role separation and enforce reviewer/test/operator gates before draft PR; no auto push/merge/deploy.
+5. Reconcile retained fixture orphans with ownership evidence before reuse/cleanup. Design a dry-run/reference-aware retention sweep and approval/handoff reference graph before enabling automatic deletion. Current logs/worktrees/artifact policy is configuration only.
+6. P4 unknown-result reconciliation and live provider setup remain separate explicit authorization tasks. No live Telegram, social upload, provider login or five-hour automation is authorized by this handoff.
+
+Older cycle plans below are historical and do not supersede this boundary.
+
 # CreatorFlow next tasks
 
 ## Current boundary after V2-P4 (2026-11-06)

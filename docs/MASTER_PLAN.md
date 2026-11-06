@@ -1,3 +1,9 @@
+# V2-P5-01 delivered boundary (2026-11-06)
+
+Isolated worktree/admission foundation is IMPLEMENTED with scoped TESTED acceptance: credential generations and recoverable DPAPI rotation, operator-opened enrollment/revoke/audit, V17/V18 registry and independently verified Git allowlist, exact-commit worktrees with durable ownership/fencing/checkpoints, fixed validated task schemas, bounded quota admission and real UI. Maven 73/zero skipped, Python 17, frontend build, Playwright, actual restart/recovery/FFmpeg and 15-second render passed. See [P5_WORKTREE_FOUNDATION.md](P5_WORKTREE_FOUNDATION.md).
+
+AI executors remain NOT_ENABLED. Retention policy is durable/configurable but no automatic deletion sweep exists. P5-02 is NEXT: official execution protocol, explicit operator authority, quota/budget revalidation and isolated executor with review/test gates. No main merge, autonomous coding, live provider publishing/Telegram, login/account switching or five-hour schedule is introduced. Previous plan entries are historical context.
+
 # CreatorFlow V2 master plan
 
 ## Current: V2-P4 content manifest and safe publication (2026-11-06)

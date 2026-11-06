@@ -1,3 +1,13 @@
+# P5-01 foundation extension (2026-11-06)
+
+The modular Spring/PostgreSQL/Windows Agent architecture is preserved. V17 stores credential generations, hash-only recoverable rotation intents and operator enrollment/retention policy. The Windows agent generates runtime secrets locally, persists bootstrap/next/current identities with current-user DPAPI and atomic replacement, and sends only hashes during enrollment/rotation. Operator HTTP authority is distinct from agent identity; current proof is rechecked under the agent transaction lock. Revoke fences sessions and active work without touching provider auth caches.
+
+V18 stores an operator-approved repository registry, agent attestation of exact refs/origin, fixed contracts, workspaces/checkpoints/events and quota admission reservations. Backend-generated UUID branch/path allocation is consumed only by the assigned Windows agent beneath separately configured repository/storage roots. Fixed Git argv disables hooks/filters/fsmonitor/external credentials, rejects reparse paths and verifies Git ownership. DB session/attempt/lease fencing plus local journals/OS locks/Windows Job Objects control one writer and recover conservatively. Expired/orphaned allocations require reconciliation; no blind retry or force deletion.
+
+`/api/v2/coding` is operator inventory/configuration/admission; `/api/v2/agent-runtime/coding/*` only exposes assigned configuration and fenced results. Existing fixture/DAG APIs cannot enable an AI executor. READY means fresh same-agent supported Codex quota plus operator/capacity policy and connected non-revoked agent; it never enables execution. WAIT_FOR_RESET/OPERATOR_REQUIRED/PROVIDER_UNSUPPORTED/DISABLED remain explicit. Reservations measure planned seconds with a 60-second expiry; historical idempotent decisions are not reusable execution grants. Gemini quota remains unsupported. No inference is used for admission or capability probes.
+
+Coding Workspaces reuses the existing sidebar/design/API and UsageWidget with backend state. Retention is policy metadata and controlled cleanup only, with referenced immutable evidence retained; a reference-aware automatic sweep is future work. Full boundaries, official Git references and actual acceptance: [P5_WORKTREE_FOUNDATION.md](P5_WORKTREE_FOUNDATION.md).
+
 # CreatorFlow V2 architecture
 
 ## Current implemented P4 boundary (2026-11-06)
