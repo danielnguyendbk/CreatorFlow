@@ -65,6 +65,19 @@ class ExecutionTest(unittest.TestCase):
         with patch.object(runner,'probe',return_value=False),patch('codex_executor.capture') as process:
             with self.assertRaisesRegex(TaskError,'SANDBOX_NOT_VERIFIED'):runner.run(self.path,['README.md'],'fixture',5,lambda:None,lambda _:None)
             process.assert_not_called()
+    def test_native_json_adapter_requires_completed_turn_and_rejects_unexpected_tools(self):
+        runner=CodexRunner(self.fixture.root)
+        def invoke(code,output):
+            runner.prepared=(str(self.path),('README.md',),time.monotonic()+15)
+            with patch('codex_executor.capture',return_value=(code,output)) as native:
+                runner.run(self.path,['README.md'],'fixture-only objective',5,lambda:None,lambda _:None)
+                argv=native.call_args.args[0]
+                self.assertIn('--ignore-user-config',argv);self.assertNotIn('fixture-only objective',argv)
+        invoke(0,json.dumps({'type':'turn.completed'})+'\n')
+        with self.assertRaisesRegex(TaskError,'PROVIDER_FAILED'):invoke(0,json.dumps({'type':'turn.failed'})+'\n')
+        with self.assertRaisesRegex(TaskError,'PROVIDER_FAILED'):invoke(1,json.dumps({'type':'turn.completed'})+'\n')
+        events=json.dumps({'type':'item.completed','item':{'type':'mcp_tool_call'}})+'\n'+json.dumps({'type':'turn.completed'})+'\n'
+        with self.assertRaisesRegex(TaskError,'UNEXPECTED_TOOL_USE'):invoke(0,events)
 
 
 if __name__=='__main__':unittest.main()
