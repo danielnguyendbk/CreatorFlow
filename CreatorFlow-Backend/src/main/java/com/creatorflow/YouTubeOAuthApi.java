@@ -81,7 +81,7 @@ public class YouTubeOAuthApi {
         JsonNode response=tokenRequest(Map.of("client_id",clientId,"client_secret",clientSecret,"redirect_uri",redirectUri,"code",code,"grant_type","authorization_code"));
         String refresh=response.path("refresh_token").asText();
         String scopes=response.path("scope").asText();
-        if(refresh.isBlank() || !scopes.contains(SCOPE)) throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"YouTube did not grant offline upload scope");
+        if(refresh.isBlank() || !java.util.Set.of(scopes.split("\\s+")).contains(SCOPE)) throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"YouTube did not grant offline upload scope");
         db.update("insert into social_connections(id,platform,status,encrypted_refresh_token,scopes,expires_at) values (?,'YOUTUBE_SHORTS','CONFIGURED',?,?,now()+interval '1 hour') on conflict(platform) do update set status='CONFIGURED',encrypted_refresh_token=excluded.encrypted_refresh_token,scopes=excluded.scopes,revoked_at=null,updated_at=now()",
             UUID.randomUUID(),encrypt(refresh),new String[]{SCOPE});
         return Map.of("status","CONFIGURED");
@@ -103,6 +103,18 @@ public class YouTubeOAuthApi {
         String access=result.path("access_token").asText();
         if(access.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"YouTube access token missing");
         return access;
+    }
+    boolean publicationConfigured() {return !clientId.isBlank() && !clientSecret.isBlank() && !redirectUri.isBlank() && !keyBase64.isBlank();}
+    String accessToken(UUID connection,UUID revision) throws Exception {
+        configured();
+        var rows=db.queryForList("select encrypted_refresh_token,scopes from social_connections where id=? and connection_revision=? and platform='YOUTUBE_SHORTS' and status='CONFIGURED' and revoked_at is null",connection,revision);
+        if(rows.size()!=1) throw ContentManifests.blocked("CONNECTION_REVOKED_OR_CHANGED");
+        var row=rows.getFirst();
+        if(!java.util.Arrays.asList((String[])((java.sql.Array)row.get("scopes")).getArray()).contains(SCOPE)) throw ContentManifests.blocked("UPLOAD_SCOPE_MISSING");
+        String refresh=decrypt((byte[])row.get("encrypted_refresh_token"));
+        var result=tokenRequest(Map.of("client_id",clientId,"client_secret",clientSecret,"grant_type","refresh_token","refresh_token",refresh));
+        if(result.has("scope") && !java.util.Arrays.asList(result.path("scope").asText().split("\\s+")).contains(SCOPE)) throw ContentManifests.blocked("UPLOAD_SCOPE_MISSING");
+        String access=result.path("access_token").asText();if(access.isBlank()) throw ContentManifests.blocked("ACCESS_TOKEN_UNAVAILABLE");return access;
     }
     @PostMapping("/revoke") void revoke() throws Exception {
         var rows=db.queryForList("select encrypted_refresh_token from social_connections where platform='YOUTUBE_SHORTS' and status='CONFIGURED' and revoked_at is null");
