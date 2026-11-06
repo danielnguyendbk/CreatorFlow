@@ -1,3 +1,13 @@
+# V2-P5-02B current boundary (2026-11-07)
+
+Fix/test push CONFIRMED `60e31f3`; draft PR BLOCKED_403/no PR created. [Manual comparison into P5-02](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p5-ai-executor...feat/v2-p5-ai-executor-sandbox?expand=1). Final navigation commit follows separately.
+
+Baseline `cba60df3f67bf5e6aa9537939060e4b00f3c937b` local/remote verified; branch `feat/v2-p5-ai-executor-sandbox`. MXC environment root cause CONFIRMED by A/B. Minimal change preserves validated SYSTEMDRIVE in child_environment and explicitly forwards only validated SYSTEMDRIVE/LOCALAPPDATA through Codex inherit-none settings. No policy/ACL/global configuration, migration, executor, quota or UI reimplementation.
+
+**SANDBOX_VERIFIED**: exact write allowed; sibling/outside writes, private read and loopback connection denied; native MXC descendants killed on Job cancel/timeout; canary remains green after actual backend/agent restart. Maven **80**, Python **28**, build, Flyway/current-V19 restart, P0-P5/real FFmpeg and actual Playwright readiness PASS. Official authentication and fresh real agent-bound 5-hour/weekly quota READY; no inference.
+
+Pilot `1ef8ace5-d234-456f-ae16-3f668adaf633`, disposable workspace `824f67ed-8aed-4f00-8019-133c8bc78699`, exact README.md-only append, 60s/one attempt, 5-minute authority is displayed on the local Dashboard. **AWAITING_OPERATOR_APPROVAL**: the assistant did not issue authorization; chat intent to review does not qualify. P5-02 live DoD remains BLOCKED/not LIVE_VERIFIED until direct exact approval and actual real coding evidence. Details: [P5_AI_EXECUTOR.md](P5_AI_EXECUTOR.md). Older sections below are historical.
+
 # V2-P5-02 current boundary (2026-11-06/07)
 
 Implementation/test milestones `85cfa72`, `9f651b9`, `f5b8283` are pushed; remote confirmed `f5b82831116534d21d0acb43e9fbcfc2ef8762d1`. Draft PR creation BLOCKED_403; no PR exists from this run. [Manual draft PR into P5-01](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p5-worktree-foundation...feat/v2-p5-ai-executor?expand=1). Final navigation commit follows separately.

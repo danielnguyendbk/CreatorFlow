@@ -1,5 +1,36 @@
 # V2-P5-02 Codex coding executor
 
+## P5-02B current gate (2026-11-07)
+
+Branch `feat/v2-p5-ai-executor-sandbox`, clean local/remote baseline verified `cba60df3f67bf5e6aa9537939060e4b00f3c937b`. Minimal fix is IMPLEMENTED/TESTED; **SANDBOX_VERIFIED** is now established on this Windows host. Coding inference is still **AWAITING_OPERATOR_APPROVAL**, not LIVE_VERIFIED. Current section supersedes the historical P5-02 blocker below.
+
+Root cause is **CONFIRMED by local A/B**, consistent with the report in [Codex issue 53188](https://github.com/openai/codex/issues/53188) and related [upstream startup-environment change](https://github.com/openai/codex/pull/54027). Those upstream references do not prove inclusion in the installed 0.162.1 binary; the local probes establish this fix:
+
+- Host SystemDrive exists and matches GetWindowsDirectoryW. Original child environment omitted it. ProgramData resolution then returned `0x80070003`, while ProgramFiles/ProgramFilesX86 resolved. Adding only the validated host drive made all three resolve, but did not fix the nested MXC launch.
+- With `shell_environment_policy.inherit="none"`, forwarding only SystemDrive still failed; the next isolated launch error was 203. Forwarding only LocalAppData also failed. Forwarding exactly the validated **SYSTEMDRIVE + LOCALAPPDATA** made the same deny-root/exact-file/no-network canary pass. A sandboxed Python process reported both variables present using booleans only. No environment values or provider account identifiers were dumped.
+- `child_environment()` now adds only SYSTEMDRIVE, validated against the native Windows directory drive. The Codex-only settings explicitly forward the two startup paths, with LocalAppData validated against SHGetKnownFolderPath. Invalid/missing/mismatched host values fail closed. LOCALAPPDATA is not added to the general Git/FFmpeg child allowlist. `inherit="none"`, MXC, deny-root, exact files and network denial remain unchanged. No token/cache/cookie/DB key is added, and no ACL/firewall/user/group/global sandbox configuration is modified.
+
+Actual checks for this branch:
+
+- Native MXC canary: allowed exact file write PASS; sibling write denied PASS; outside private read denied PASS; outside write denied PASS; connection to listening loopback socket denied PASS. Both fresh-process probes and actual agent/backend restart kept the canary green. This is **SANDBOX_VERIFIED**, beyond STARTUP_ONLY.
+- Real MXC foreground/child/grandchild processes were observed running, then killed by closing the owning Windows Job and by the timeout path. Both cleanup checks PASS; no orphan process was adopted or force-killed by guessed PID.
+- Maven package **80 tests, zero failures/errors/skips**; Windows Python **28 tests passed**, including four new environment/native-canary/Job tests; frontend build PASS with the existing bundle-size warning. Flyway fresh/historical upgrade through V19 and current V19 no-op restart passed; no migration, adapter/queue/UI redesign or P5-03 work was added. P0-P5 regressions ran.
+- Actual restart preserved the exact unapproved pilot contract and its clean checkpoint, refreshed the agent session and SANDBOX_VERIFIED evidence, and ran real FFmpeg fixture `a65ea33d-5ed7-43d7-acd3-8970fe8115bf`. P5-01 revoked identity and NEEDS_RECONCILIATION orphan remain untouched.
+- Official `codex login status` returned authenticated, and the existing read-only App Server collector produced fresh real 300-minute and 10080-minute windows on the authenticated agent; backend readiness is READY. No inference, automatic login/account switch, auth-cache copying or fixture quota was used. Full raw login/provider responses were not retained.
+- Playwright opened the actual operator Dashboard with a checked-false confirmation and disabled authorize button. Actual UI showed LIVE quota and a successful native canary, with zero console errors. Browser authentication was transferred from the app's existing DPAPI bundle into memory only. The assistant did not check confirmation or click authorize.
+
+Prepared exact pilot, still unapproved:
+
+- Execution `1ef8ace5-d234-456f-ae16-3f668adaf633`; provider CODEX_CLI, installed version 0.162.1; actor must authorize directly on [local Dashboard](http://127.0.0.1:5174/coding-workspaces).
+- Disposable repository `887ce432-643a-4bf5-af3a-f0f06ab06a68`, fixture directory `fixture-p502b-5c101b18`; base `c7d0c0cc1386700523ccd30c05f6d1d80ff6d44e`; new workspace `824f67ed-8aed-4f00-8019-133c8bc78699`.
+- Objective: append one line `CreatorFlow MXC live pilot verified.` to README.md, preserving existing text and changing no other file or running commands. Exact allowed file: `README.md`.
+- Budget policy `084a915e-ee9c-4d57-b46d-8c50f1940e03`: one concurrent reservation, 60 planned wall-clock seconds, one attempt; 5-minute approval lifetime measured when issued. This is capacity policy, not a token/currency guarantee.
+- Exact fingerprint `9da493e4ed893552d6201363643d4aae9d97c55f906de582c2f6122c3d139e38`. A reply saying the operator will review is not authorization; only the persisted exact Dashboard action permits execution. The acceptance backend process is configured for execution after all canaries passed and no outstanding authorized tasks existed. There is still no authority to execute this DRAFT.
+
+Local sanitized evidence: `storage/p502b-root-cause.json`, `p502b-forwarding.json`, `p502b-minimize.json`, `p502b-child-env.json`, `p502b-focused.log`, `p502b-python.log`, `p502b-package.log`, `p502b-frontend.log`, `p502b-restart.json`, `p502b-pilot.json`, `p502b-dashboard.json`, `p502b-pilot-progress.json`, `p502b-awaiting-operator.png`. These snapshots do not replace rechecking authority/quota before a live attempt. Actual coding result/diff/checkpoint/UI, live restart evidence and live pilot cancellation are not claimed. Full P5-02 DoD remains BLOCKED pending direct operator approval and real acceptance. P5-03 remains out of scope.
+
+Fix/test milestone `60e31f3ec4430912311ca464293ab6dfd519bce7` was pushed and matched `git ls-remote`. Actual operator/enrollment/current-agent secret values were compared in memory against 253 tracked/nonignored files: no matches, no secret printed. Draft PR creation returned connector HTTP403 `Resource not accessible by integration`; no PR was created. [Manual compare / draft PR](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p5-ai-executor...feat/v2-p5-ai-executor-sandbox?expand=1). Documentation/handoff is pushed separately and final remote SHA/clean tree checked after writing.
+
 Cycle: 2026-11-06/07. Branch `feat/v2-p5-ai-executor`, verified clean P5-01 local/remote baseline `28cfb0d0ecfc22ba13cf5ed7c6a5f730ff1182bb`. P5-01 remains complete and is reused. **Implementation and scoped tests are delivered; real Codex inference acceptance is BLOCKED, not LIVE_VERIFIED. The full DoD is not achieved.**
 
 ## Installed protocol and sandbox review

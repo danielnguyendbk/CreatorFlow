@@ -1,3 +1,15 @@
+# Current boundary: P5-02B AWAITING_OPERATOR_APPROVAL (2026-11-07)
+
+Fix/test milestone `60e31f3` pushed/remote-confirmed; draft PR BLOCKED_403. [Manual comparison](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p5-ai-executor...feat/v2-p5-ai-executor-sandbox?expand=1). No PR was created.
+
+MXC strict canary is SANDBOX_VERIFIED after the minimal validated Windows startup-path fix; root cause CONFIRMED. Maven80/Python28/build/Flyway, real native timeout/cancel/process-tree cleanup, restart/FFmpeg and Playwright readiness passed. Fresh authenticated same-agent Codex quota is READY. See [P5_AI_EXECUTOR.md](P5_AI_EXECUTOR.md).
+
+1. Operator reviews exact draft `1ef8ace5-d234-456f-ae16-3f668adaf633` on the existing Dashboard and directly checks confirmation/authorizes only if desired. Only README.md in new disposable workspace `824f67ed-8aed-4f00-8019-133c8bc78699`; append the displayed pilot line, 60s/one attempt, authority expires 5 minutes after issuance. Chat intent to review is not approval. Never auto-authorize or reuse the old cancelled task/orphan.
+2. After a valid direct approval, recheck actual current credential/session/generation, fresh real quota and sandbox; observe the existing single-use execution pipeline. Verify real Codex-only diff/hash/checkpoint/REVIEW_REQUIRED, source/main unchanged, actual UI and restart evidence. Do not infer live success from the canary, quota or mock tests. Cancellation/process cleanup tests already passed at the native canary/API level; a live coding cancellation is not yet claimed.
+3. Until then keep P5-02 full DoD BLOCKED and inference NOT_RUN / AWAITING_OPERATOR_APPROVAL. The test backend process is configured but no DRAFT has execution authority. P5-03, Telegram, publication, account switching and five-hour schedules remain out of scope.
+
+Older blocker reports below are historical; do not repeat P5-01/V19/adapter/UI implementation.
+
 # Current boundary: V2-P5-02 live acceptance BLOCKED (2026-11-06/07)
 
 Implementation push confirmed at `f5b8283`. Draft PR BLOCKED_403; [manual comparison into P5-01](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p5-worktree-foundation...feat/v2-p5-ai-executor?expand=1). No PR was created.

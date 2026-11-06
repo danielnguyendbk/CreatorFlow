@@ -1,167 +1,169 @@
 {
-  "schemaVersion": 1,
-  "generatedAtUtc": "2026-11-06T17:08:02.122395+00:00",
-  "branch": "feat/v2-p5-ai-executor",
-  "sourceBranch": "origin/feat/v2-p5-worktree-foundation",
-  "sourceCommit": "28cfb0d0ecfc22ba13cf5ed7c6a5f730ff1182bb",
-  "lastImplementationCommit": "f5b82831116534d21d0acb43e9fbcfc2ef8762d1",
-  "overallStatus": "BLOCKED",
-  "definitionOfDoneAchieved": false,
-  "liveVerification": "NOT_VERIFIED",
-  "completedTasks": [
-    {
-      "id": "V2-P5-02-PROTOCOL",
-      "status": "TESTED",
-      "result": "Installed Codex0.162.1 public help/features/schema inspected without inference; shipped exec argv pinned. Official MXC startup-only probe returned MXC_OK/exit0; this is not task isolation proof."
-    },
-    {
-      "id": "V2-P5-02-AUTHORITY",
-      "status": "TESTED",
-      "verification": "DB_FIXTURES",
-      "result": "V19 immutable exact contracts, expiring operator authority bound to generation/base/checkpoint/exact files/provider/budget fingerprint, fresh claim/start gates, single-use start, one writer/cancel/recovery/evidence. Tests include quota exhaustion/stale snapshot, old READY refusal, budget mutation, stale identity/sandbox, concurrent claim and diff replay/scope."
-    },
-    {
-      "id": "V2-P5-02-AGENT",
-      "status": "IMPLEMENTED",
-      "verification": "MOCK_ONLY_EXECUTION",
-      "result": "Fixed native Codex exec adapter with OS Job Object, exact-file profile, allow/deny/network canary, stripped child environment, no user config/rules/MCP/hooks/apps/plugins/shell, start journal and scoped diff evidence. Real Git/worktree/process tests passed; actual Codex inference not run."
-    },
-    {
-      "id": "V2-P5-02-UI",
-      "status": "TESTED",
-      "verification": "REAL_BACKEND_DRAFT_CANCEL_AND_MOCK_ONLY_DIFF",
-      "result": "Playwright new agent/repository verification, actual prepare, draft contract/confirmation/cancel without authorize action. Explicit MOCK_ONLY read response tested REVIEW_REQUIRED diff rendering, then restored and confirmed no mock DB row. Zero console errors."
-    },
-    {
-      "id": "V2-P5-02-REGRESSION",
-      "status": "TESTED",
-      "result": "Maven80 zero failures/errors/skips; Python24; frontend build; Flyway V1-V19 and historical upgrade plus actualV18-V19/no-op restart; P0-P5 regressions; actual backend/agent restart/fenced inspect/FFmpeg."
-    }
-  ],
-  "incompleteTasks": [
-    {
-      "id": "V2-P5-02-NATIVE_SANDBOX",
-      "status": "BLOCKED",
-      "result": "Restrictive deny-root/exact-file MXC canary cannot start: launcher cannot locate required Windows platform directory HRESULT0x80070003; canary exit1 SANDBOX_PROBE_DID_NOT_COMPLETE. Filesystem/network/process task boundary is not certified. No ACL/setup/fallback changes performed."
-    },
-    {
-      "id": "V2-P5-02-LIVE_ACCEPTANCE",
-      "status": "BLOCKED",
-      "result": "No explicit operator authorization for a concrete live task was issued. Native inference was not attempted. Feature switch remains false, current fixture quota UNKNOWN; actual authenticated quota and live CLI integration/evidence/REVIEW_REQUIRED E2E remain unverified."
-    },
-    {
-      "id": "DRAFT_PR",
-      "status": "BLOCKED",
-      "result": "GitHub connector create_pull_request HTTP403 Resource not accessible by integration; no PR created."
-    },
-    {
-      "id": "V2-P5-03",
-      "status": "DESIGNED",
-      "result": "Proposed Planner -> operator-authorized isolated Executor -> Reviewer -> fixed Tester checks -> operator-reviewed draft PR only after P5-02 live gates. No automation implemented."
-    }
-  ],
-  "tests": [
-    {
-      "command": "Maven3.9.12 mvn -Dmaven.repo.local=<approved-local-cache> package -q",
-      "cwd": "CreatorFlow-Backend",
-      "environment": "JDK25; PostgreSQL18.3 loopback55432 creatorflow_p5_test_20261106; CREATORFLOW_TEST_DB_URL/USER and actual FFMPEG_PATH",
-      "result": "80 tests, zero failure/error/skip; 17 P5 integration tests; fresh/upgrade throughV19 and P0-P5 including P3 mock/P4 safety",
-      "evidence": "storage/p5-02-package.log; target/surefire-reports"
-    },
-    {
-      "command": "python -m unittest discover -p 'test_*.py' -v",
-      "cwd": "CreatorFlow-Agent",
-      "environment": "Windows Python3.13, FFMPEG_PATH",
-      "result": "24 passed, including7 new mock/JSON-native-adapter tests plus actual Git/DPAPI/Job/junction/usage/media regressions; no inference",
-      "evidence": "storage/p5-02-python.log"
-    },
-    {
-      "command": "npm run build",
-      "cwd": "CreatorFlow-Frontend",
-      "result": "PASS, existing bundle-size warning",
-      "evidence": "storage/p5-02-frontend.log"
-    },
-    {
-      "command": "codex -c windows.sandbox=mxc sandbox --include-managed-config --permission-profile :workspace -- cmd.exe /d /c echo MXC_OK",
-      "result": "MXC_OK exit0, STARTUP_ONLY",
-      "evidence": "storage/p5-02-mxc-probe.log"
-    },
-    {
-      "command": "CodexRunner.capability() with strict exact-file/native MXC canary",
-      "result": "BLOCKED SANDBOX_NOT_VERIFIED; exit1, probe did not complete; no inference",
-      "evidence": "storage/p5-02-sandbox.log; ignored sandbox-capability/probe result JSON"
-    },
-    {
-      "command": "node storage/p5-02-browser-smoke.cjs",
-      "result": "PASS real browser draft/cancel; explicit MOCK_ONLY review response only; no authorize action; zero console errors; actual secrets kept in memory",
-      "evidence": "storage/p5-02-browser-evidence.json; p5-02-browser-real.png; p5-02-review-mock-only.png"
-    },
-    {
-      "command": "python storage/p5-02-restart-smoke.py",
-      "result": "PASS four asserted stages: actual backend/agent restart, durable cancelled unapproved execution/checkpoint, new fenced inspect, real FFmpeg and old revoked/orphan unchanged; restarted worker then stopped",
-      "evidence": "storage/p5-02-restart-evidence.json"
-    },
-    {
-      "command": "python storage/p5-02-secret-scan.py",
-      "result": "PASS actual operator/enrollment/new-agent runtime secrets absent from252 tracked/nonignored files; no secret printed"
-    }
-  ],
-  "evidence": {
-    "agentId": "24ad28d3-9195-4740-8f70-03823531010f",
-    "repositoryId": "22c9e32d-92c0-4022-b176-610c25a2d6d5",
-    "workspaceId": "049f2544-4b59-4ad5-bd17-ead792a382c9",
-    "executionId": "9e77a25d-e457-4d10-9a94-31f0b8e1ba28",
-    "executionState": "CANCELLED_WITHOUT_AUTHORIZATION",
-    "fixtureBaseCommit": "575fbcc62755a0cc09f4c0be878e680f6d059971",
-    "finalCheckpointId": "632c2b2c-ebc8-4a8f-9cf6-67e1cd658b96",
-    "ffmpegTaskId": "8255341d-42ef-454b-b603-b041a627906c",
-    "agentProcess": "STOPPED after acceptance; valid new current-user DPAPI identity retained",
-    "oldP501Identity": "48944794-739a-4c40-892d-c697f92c29e1 remains REVOKED generation4",
-    "oldP501Orphan": "ab410f7a-2aa8-4298-8887-2839ea8e428c remains NEEDS_RECONCILIATION",
-    "backendExecutionEnabled": false
-  },
-  "verificationLimits": [
-    "Full live DoD NOT achieved; no LIVE_VERIFIED inference/quota/account claim.",
-    "Native JSON parsing and review diffs were tested with explicit mocks; native inference command/config behavior remains unverified until sandbox proof and operator approval.",
-    "Startup MXC echo is insufficient; strict canary did not certify filesystem/network boundaries. No permission weakening or legacy fallback.",
-    "Gemini installed package metadata0.62.0 only; runtime version/quota/auth/execution not verified; GEMINI_EXECUTE unsupported.",
-    "Actual unapproved draft cancellation was durable; REVIEW_REQUIRED browser fixture response was labeled MOCK_ONLY and never persisted.",
-    "No old revoked credential reuse, orphan deletion/adoption, provider auth-cache access/login/account switch, live Telegram/publication, automatic code push/merge/deploy or five-hour schedule."
-  ],
-  "architectureDecisions": [
-    "Reuse P5-01 identity/registry/worktree/admission/usage. Execution records share agent serialization with AgentQueue; no new DAG or arbitrary shell endpoint.",
-    "Backend execution switch defaults false; exact per-task authorization is separate from foundation policy/READY.",
-    "Credential generation, checkpoint/config and budget policy fingerprint bind authority; begin is single-use and rechecks current fresh DB quota/budget after native preflight.",
-    "Job Objects/local writer lock/start journal preserve uncertainty; started leases never auto-retry dirty work; results stop at REVIEW_REQUIRED.",
-    "Native exact-file/no-network canary must pass, without mocked production success; no fallback to a weaker sandbox."
-  ],
-  "changedFiles": [
-    ".creatorflow/handoffs/latest.json",
-    "CreatorFlow-Agent/agent.py",
-    "CreatorFlow-Agent/codex_executor.py",
-    "CreatorFlow-Agent/test_codex_executor.py",
-    "CreatorFlow-Backend/src/main/java/com/creatorflow/AgentQueue.java",
-    "CreatorFlow-Backend/src/main/java/com/creatorflow/CodingExecutions.java",
-    "CreatorFlow-Backend/src/main/java/com/creatorflow/CodingWorkspaces.java",
-    "CreatorFlow-Backend/src/main/resources/db/migration/V19__coding_execution_authorization.sql",
-    "CreatorFlow-Backend/src/test/java/com/creatorflow/CodingFoundationIntegrationTest.java",
-    "CreatorFlow-Frontend/src/api/codingApi.ts",
-    "CreatorFlow-Frontend/src/features/coding/CodingExecutionsPanel.tsx",
-    "CreatorFlow-Frontend/src/features/coding/CodingWorkspacesPage.tsx",
-    "CreatorFlow-Frontend/src/types/index.ts",
-    "docs/ARCHITECTURE.md",
-    "docs/MASTER_PLAN.md",
-    "docs/NEXT_TASKS.md",
-    "docs/P5_AI_EXECUTOR.md",
-    "docs/PROJECT_STATUS.md"
-  ],
-  "delivery": {
-    "implementationPush": "CONFIRMED",
-    "remoteImplementationHead": "f5b82831116534d21d0acb43e9fbcfc2ef8762d1",
-    "prStatus": "BLOCKED_403",
-    "prUrl": null,
-    "manualCompareUrl": "https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p5-worktree-foundation...feat/v2-p5-ai-executor?expand=1",
-    "navigationCommit": "This handoff is committed separately; final remote SHA/clean tree verified after push."
-  },
-  "nextTask": "Finish P5-02 native sandbox/integration proof, fresh authenticated quota and explicitly operator-approved harmless live task; only then close P5-02 and review P5-03 proposal."
+    "schemaVersion":  1,
+    "generatedAtUtc":  "2026-11-06T17:37:06.090528+00:00",
+    "branch":  "feat/v2-p5-ai-executor-sandbox",
+    "sourceBranch":  "origin/feat/v2-p5-ai-executor",
+    "sourceCommit":  "cba60df3f67bf5e6aa9537939060e4b00f3c937b",
+    "lastImplementationCommit":  "60e31f3ec4430912311ca464293ab6dfd519bce7",
+    "overallStatus":  "BLOCKED",
+    "definitionOfDoneAchieved":  false,
+    "liveGate":  "AWAITING_OPERATOR_APPROVAL",
+    "sandboxVerification":  "SANDBOX_VERIFIED",
+    "rootCause":  "CONFIRMED",
+    "liveVerification":  "NOT_VERIFIED",
+    "completedTasks":  [
+                           {
+                               "id":  "P5-02B-ROOT_CAUSE",
+                               "status":  "TESTED",
+                               "result":  "A/B: missing SystemDrive caused ProgramData0x80070003; parent restore fixed known folders but inherit-none launch still failed. Removing either forwarded SYSTEMDRIVE or LOCALAPPDATA failed; exactly both native-validated paths passed identical strict canary."
+                           },
+                           {
+                               "id":  "P5-02B-MINIMAL_FIX",
+                               "status":  "TESTED",
+                               "commit":  "60e31f3ec4430912311ca464293ab6dfd519bce7",
+                               "result":  "Only validated SYSTEMDRIVE added to general child env; Codex inherit-none settings explicitly forward exactly validated SYSTEMDRIVE/LOCALAPPDATA. Invalid/missing/mismatched values fail closed. No policy/ACL/global env/CLI update or P5-01/V19/adapter/UI redesign."
+                           },
+                           {
+                               "id":  "P5-02B-SANDBOX",
+                               "status":  "TESTED",
+                               "verification":  "SANDBOX_VERIFIED",
+                               "result":  "Actual MXC exact write allowed; sibling/outside writes/private read/loopback listener connection denied. New native process and actual backend/agent restart preserved canary. Actual nested child/grandchild terminated on Job cancel/timeout. Sandbox child boolean presence confirmed both startup vars; no values dumped."
+                           },
+                           {
+                               "id":  "P5-02B-READINESS",
+                               "status":  "TESTED",
+                               "result":  "Official login status authenticated, native0.162.1 version/protocol, fresh real agent/source AppServer300/10080min quota READY, valid generation/session, clean new fixture worktree and exact unapproved one-file draft shown on Dashboard."
+                           },
+                           {
+                               "id":  "P5-02B-REGRESSION",
+                               "status":  "TESTED",
+                               "result":  "Maven80 zero failure/error/skip, Windows Python28, frontend build, fresh/historical Flyway throughV19 plus currentV19 no-op restart, P0-P5 and real FFmpeg; Playwright readiness zero console errors."
+                           }
+                       ],
+    "incompleteTasks":  [
+                            {
+                                "id":  "P5-02B-LIVE_PILOT",
+                                "status":  "BLOCKED",
+                                "gate":  "AWAITING_OPERATOR_APPROVAL",
+                                "result":  "Operator replied they will review Dashboard, not approval. Actual DB state DRAFT/authorization null. Assistant did not check confirmation or click authorize; no inference. Need exact human Dashboard action then verify real diff/hash/checkpoint/UI/restart and limits."
+                            },
+                            {
+                                "id":  "P5-03",
+                                "status":  "DESIGNED",
+                                "result":  "Out of scope; do not start."
+                            }
+                        ],
+    "tests":  [
+                  {
+                      "command":  "mvn -Dmaven.repo.local=\u003capproved-cache\u003e package -q",
+                      "cwd":  "CreatorFlow-Backend",
+                      "environment":  "JDK25/Maven3.9.12/PostgreSQL18.3 loopback55432 test DB + FFMPEG_PATH",
+                      "result":  "80 tests, zero failure/error/skip; P0-P5/FlywayV1-V19/historical upgrade",
+                      "evidence":  "storage/p502b-package.log"
+                  },
+                  {
+                      "command":  "python -m unittest discover -p \u0027test_*.py\u0027 -v",
+                      "cwd":  "CreatorFlow-Agent",
+                      "environment":  "Windows Python3.13, nativeCodex0.162.1, FFMPEG_PATH",
+                      "result":  "28 passed including4 new Windows environment/nativeMXC/Job tests",
+                      "evidence":  "storage/p502b-python.log"
+                  },
+                  {
+                      "command":  "python -m unittest test_windows_environment -v",
+                      "cwd":  "CreatorFlow-Agent",
+                      "result":  "4 passed; two real strict native canaries and nested descendant cancellation/timeout",
+                      "evidence":  "storage/p502b-focused.log"
+                  },
+                  {
+                      "command":  "npm run build",
+                      "cwd":  "CreatorFlow-Frontend",
+                      "result":  "PASS existing bundle-size warning",
+                      "evidence":  "storage/p502b-frontend.log"
+                  },
+                  {
+                      "command":  "Windows known-folder/MXC A/B + boolean-only sandbox child probe",
+                      "result":  "CONFIRMED; final strict SANDBOX_VERIFIED",
+                      "evidence":  "storage/p502b-root-cause.json; p502b-minimize.json; p502b-child-env.json"
+                  },
+                  {
+                      "command":  "Official CLI login status + existing read-only usage collector",
+                      "result":  "AUTHENTICATED; actual agent-bound fresh300/10080-minute quota READY; no inference",
+                      "evidence":  "storage/p502b-auth-readiness.json; actual ai_usage_snapshots"
+                  },
+                  {
+                      "command":  "Actual backend/agent restart + real FFmpeg",
+                      "result":  "PASS; same DRAFT/hash/checkpoint/no authorization; new authenticated session/canary and quota READY; old revoked/orphan untouched",
+                      "evidence":  "storage/p502b-restart.json"
+                  },
+                  {
+                      "command":  "Playwright operator readiness Dashboard",
+                      "result":  "PASS live data, zero console errors, checkbox false/authorize disabled; direct operator action pending",
+                      "evidence":  "storage/p502b-dashboard.json; p502b-awaiting-operator.png"
+                  }
+              ],
+    "pilot":  {
+                  "executionId":  "1ef8ace5-d234-456f-ae16-3f668adaf633",
+                  "state":  "DRAFT",
+                  "contractHash":  "9da493e4ed893552d6201363643d4aae9d97c55f906de582c2f6122c3d139e38",
+                  "repositoryId":  "887ce432-643a-4bf5-af3a-f0f06ab06a68",
+                  "baseCommit":  "c7d0c0cc1386700523ccd30c05f6d1d80ff6d44e",
+                  "workspaceId":  "824f67ed-8aed-4f00-8019-133c8bc78699",
+                  "objective":  "Append one line \u0027CreatorFlow MXC live pilot verified.\u0027 to README.md. Preserve existing text. Do not edit any other file or run commands.",
+                  "allowedFiles":  [
+                                       "README.md"
+                                   ],
+                  "provider":  "CODEX_CLI",
+                  "budgetPolicyId":  "084a915e-ee9c-4d57-b46d-8c50f1940e03",
+                  "timeoutSec":  60,
+                  "maxAttempts":  1,
+                  "approvalExpirationMinutes":  5,
+                  "operatorApproval":  false,
+                  "authorization":  null,
+                  "liveInference":  false
+              },
+    "readiness":  {
+                      "agentId":  "24ad28d3-9195-4740-8f70-03823531010f",
+                      "generation":  1,
+                      "sessionId":  "630d3190-109c-4fda-bb80-84682eeb8827",
+                      "sandboxVerified":  true,
+                      "cliVersion":  "0.162.1",
+                      "quotaSource":  "CODEX_APP_SERVER",
+                      "quotaFreshness":  "LIVE",
+                      "quotaReadiness":  "READY",
+                      "quotaLastSynced":  "2026-11-06T17:34:43.593206Z",
+                      "executionEnabled":  true,
+                      "fixtureMainUnchanged":  true,
+                      "oldRevokedGeneration4Untouched":  true,
+                      "oldOrphanUntouched":  true
+                  },
+    "architectureDecisions":  [
+                                  "Only native-validated Windows drive/local-app-data path metadata forwarded; retain inherit-none and original MXC deny-root/exact-files/no-network settings.",
+                                  "No cache/password/cookie/token copying or full environment inheritance; no ACL/firewall/user/global policy changes.",
+                                  "Native canary proof and real quota readiness do not authorize inference. Backend configured only in acceptance process after verified gates and no outstanding authorizations.",
+                                  "Only direct operator exact Dashboard authorization qualifies; chat intention and historical READY do not.",
+                                  "Existing adapter/identity/worktree/queue/V19/UI remain; no P5-03, social/Telegram, account switching or five-hour scheduling."
+                              ],
+    "verificationLimits":  [
+                               "No real coding inference/diff/REVIEW_REQUIRED/LIVE_VERIFIED yet.",
+                               "Native Job/process cancellation tested; live AI task cancellation not claimed.",
+                               "Current local Dashboard/agent are available for direct approval; future execution status must be checked from PostgreSQL, never inferred from this snapshot."
+                           ],
+    "changedFiles":  [
+                         ".creatorflow/handoffs/latest.json",
+                         "CreatorFlow-Agent/agent.py",
+                         "CreatorFlow-Agent/codex_executor.py",
+                         "CreatorFlow-Agent/test_windows_environment.py",
+                         "docs/NEXT_TASKS.md",
+                         "docs/P5_AI_EXECUTOR.md",
+                         "docs/PROJECT_STATUS.md"
+                     ],
+    "delivery":  {
+                     "implementationPush":  "CONFIRMED",
+                     "remoteImplementationHead":  "60e31f3ec4430912311ca464293ab6dfd519bce7",
+                     "navigationCommit":  "Separate documentation/handoff commit pushed and remote-verified after writing.",
+                     "prStatus":  "BLOCKED_403",
+                     "prUrl":  null,
+                     "manualCompareUrl":  "https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p5-ai-executor...feat/v2-p5-ai-executor-sandbox?expand=1"
+                 },
+    "nextTask":  "Await direct operator Dashboard authorization for exact pilot, then recheck current gates and observe real acceptance. No P5-03."
 }
