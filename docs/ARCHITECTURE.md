@@ -1,5 +1,15 @@
 # CreatorFlow V2 architecture
 
+## Current implemented P4 boundary (2026-11-06)
+
+V15/V16 add append-only manifest/artifact/audit evidence and separate publication approvals over existing publication jobs. Canonical typed JSON binds successful current render/video, source provenance, SHA/size/decode evidence, metadata, target, explicit visibility, intended schedule and exact connection ID/generation. Credential/scope/status/revocation changes rotate generation. Job metadata changes atomically invalidate approval; historical approved_at and P3 fixture approvals never authorize publishing.
+
+`PublicationSafety` is the sole upload owner for manual/scheduler/retry dispatch and recovery. It validates the real feature flag, provider/scope/account, immutable manifest/approval/expiry, current sources and rehashed media; locks and claims the canonical target, then issues a private-constructor dispatch permit. A bounded hashed OS-locked staged snapshot supplies the upload body, with rechecks before init/after token refresh/before PUT. YouTube uses approved visibility and exact connection revision; confirmation matches post ID and visibility. Pre-transfer failure may retry through the same gate; uncertain transfer/restart without ID quarantines and cannot blindly resend. Known IDs can be confirmed without another upload. All real acceptance flags remain false; mock transport is explicit test construction on loopback, not a frontend/runtime bypass.
+
+The existing Publication Queue links to a real-backend review page with authenticated checksum-checked preview, immutable revision details/diffs, exact approve/reject/revoke/invalidate controls, readiness, reconciliation and audit. Agent identities cannot access publication review; local operator authentication remains single-operator. Telegram fixture routing/approvals remain unchanged and do not gain publication authority. No new live social adapter, public ingress, autonomous executor or schedule is added.
+
+Actual contracts, side-effect call-path audit, tests and conservative reconciliation/approval limits: [P4_CONTENT_APPROVAL.md](P4_CONTENT_APPROVAL.md). Next is an operator-reviewed V2-P5-01 design/implementation cycle for credential lifecycle, isolated coding worktrees, explicit AI task/capability/quota admission and draft-PR review gates; it is not implemented in P4. Older phase snapshots below remain historical context.
+
 Updated 2026-11-06. P0, Account Manager, local agent, P2 dependency cycles/checkpoints/handoff, read-only Codex monitoring and P3 Telegram control/outbox are **IMPLEMENTED**, with scoped tests in PROJECT_STATUS.md. Telegram acceptance is MOCK_ONLY; live bot is NOT_CONFIGURED. Autonomous coding and general AI task execution remain **DESIGNED**.
 
 ## Implemented P3 boundary

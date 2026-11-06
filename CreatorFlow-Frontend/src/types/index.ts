@@ -357,6 +357,29 @@ export interface PublicationJob extends Timestamps {
   supersededBy?: ID | null;
   reconciliationRequired?: boolean;
   failureCategory?: string | null;
+  description?: string;
+  connectionId?: string | null;
+  visibility?: 'private' | 'unlisted' | 'public' | null;
+  activeManifestId?: string | null;
+}
+
+export interface PublicationManifest {
+  manifestId: string; schemaVersion: number; revision: number; publicationId: string;
+  contentId: string; storyboardId: string; storyboardVersion: number; finalRenderJobId: string; finalVideoAssetId: string;
+  fingerprint: string; createdAt: string; targetPlatform: Platform; connectionId: string; connectionRevision: string;
+  visibility: 'private' | 'unlisted' | 'public'; intendedSchedule: string | null; evidenceId: string;
+  media: { sha256: string; sizeBytes: number; durationMillis: number; container: string; codecs: { type: string; codec: string }[] };
+  metadata: { title: string; caption: string; description: string; hashtags: string[]; providerDescription: string };
+  providerSettings: { categoryId: string; selfDeclaredMadeForKids: boolean; notifySubscribers: boolean };
+  artifactReferences: { assetId: string; sha256: string; sizeBytes: number; type: string }[];
+  approval: { id: string; state: string; requiredOperator: string; issuedAt: string; expiresAt: string; decisionActor: string | null; decisionAt: string | null };
+}
+export interface PublicationReview {
+  publicationId: string; activeManifestId: string | null; manifests: PublicationManifest[];
+  readiness: { ready: boolean; reasons: string[]; realPublishEnabled: boolean; adapterMode: string; reconciliationRequired: boolean };
+  renders: { id: string; outputAssetId: string; status: string; completedAt: string | null }[];
+  connections: { id: string; platform: Platform; status: string; revision: string; revokedAt: string | null }[];
+  audit: { id: string; manifestId: string | null; type: string; actor: string; createdAt: string }[];
 }
 
 // ------------------------------------------------------------

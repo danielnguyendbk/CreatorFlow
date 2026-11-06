@@ -10,6 +10,7 @@ import { WorkflowsPage } from '@/features/workflows/WorkflowsPage';
 import { WorkflowDetailPage } from '@/features/workflows/WorkflowDetailPage';
 import { RenderQueuePage } from '@/features/render/RenderQueuePage';
 import { PublicationQueuePage } from '@/features/publishing/PublicationQueuePage';
+import { PublicationReviewPage } from '@/features/publishing/PublicationReviewPage';
 import { ActivityPage } from '@/features/activity/ActivityPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { AccountManagerPage } from '@/features/accounts/AccountManagerPage';
@@ -67,6 +68,7 @@ export const router = createBrowserRouter([
         path: 'publication-queue',
         element: <PublicationQueuePage />,
       },
+      { path: 'publication-jobs/:id/review', element: <PublicationReviewPage /> },
       {
         path: 'activity',
         element: <ActivityPage />,

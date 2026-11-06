@@ -1,5 +1,11 @@
 # CreatorFlow V2 master plan
 
+## Current: V2-P4 content manifest and safe publication (2026-11-06)
+
+Branch `feat/v2-p4-content-approval`, verified clean local/remote P3 baseline `4a41cb2220ac23caae5b341e68cef919cf8c212b`. P4-01 through P4-06 are IMPLEMENTED with actual scoped acceptance: V15/V16 immutable canonical manifests/media provenance, exact separate operator approval, shared upload safety permit, connection generation binding, unknown-outcome quarantine, explicit visibility and real-backend review UI. Maven 63 tests, Python ten, frontend build, Flyway fresh/upgrade, mock provider, real 15-second workflow/render and actual backend restart/Playwright passed. Provider verification is MOCK_ONLY, no live upload/Telegram. See [P4_CONTENT_APPROVAL.md](P4_CONTENT_APPROVAL.md) and latest handoff for commands/limits/delivery. Earlier phase snapshots below are historical.
+
+Next proposal is V2-P5-01 after operator review: credential lifecycle, isolated repository/branch worktree ownership and one writer, fixed AI task schemas/process bounds, verified Codex/Gemini capability and fresh quota/budget/operator admission, secret-safe evidence/checkpoints and reviewer/test-gated draft PR. No P5 implementation, arbitrary shell, account switching, auto merge/deploy or five-hour trigger is included here.
+
 ## Current: V2-P3-01 Telegram control plane (2026-11-06)
 
 Branch `feat/v2-p3-telegram-control`, verified local/remote P2 baseline `f87c6c35d4da70cfe8ef36d7ada722c149cdd07f`. P2 DAG/checkpoint/usage and Windows Agent are reused. V13/V14 implement default-disabled long polling, numeric routing/authority, cycle pause/resume/cancel, fixture approvals, transactional outbox/quarantine and backend-driven Telegram UI. Actual mock/database/concurrency and real Windows fixture/restart acceptance passed; Telegram remains MOCK_ONLY/NOT_CONFIGURED, not LIVE_VERIFIED. See [TELEGRAM_INTEGRATION.md](TELEGRAM_INTEGRATION.md) and latest handoff for commands and delivery evidence. Older phase snapshots below are historical.

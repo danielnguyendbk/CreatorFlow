@@ -20,7 +20,7 @@ import {
 import { publicationStatusConfig } from '@/utils/statusConfig';
 import { formatDateTime, formatRelative } from '@/lib/utils';
 import { notify } from '@/stores/notificationStore';
-import { usePublications, useRetryPublication, usePublishNow } from './usePublishing';
+import { usePublications, useRetryPublication } from './usePublishing';
 import { EditPublicationModal } from './components/EditPublicationModal';
 import type { PublicationJob, Platform } from '@/types';
 
@@ -56,7 +56,7 @@ type StatusTab = 'ALL' | 'SCHEDULED' | 'PUBLISHED' | 'FAILED';
 export function PublicationQueuePage() {
   const { data: publications = [], isLoading, error, refetch } = usePublications();
   const retryMutation = useRetryPublication();
-  const publishNowMutation = usePublishNow();
+
 
   const [search, setSearch] = useState('');
   const [platformFilter, setPlatformFilter] = useState<string>('ALL');
@@ -96,22 +96,10 @@ export function PublicationQueuePage() {
     });
   }, [publications, statusTab, platformFilter, search]);
 
-  const handlePublishNow = async (id: string, platform: string) => {
-    try {
-      await publishNowMutation.mutateAsync(id);
-      notify.success(
-        'Published Successfully',
-        `Dispatched to ${platform.replace(/_/g, ' ')}. Post is now live.`,
-      );
-    } catch (err) {
-      notify.error('Publish failed', err instanceof Error ? err.message : 'Unknown error');
-    }
-  };
-
   const handleRetry = async (id: string) => {
     try {
       await retryMutation.mutateAsync(id);
-      notify.success('Publication Retrying', 'Post will be dispatched to platform API.');
+      notify.success('Publication Retrying', 'Retry queued after backend safety validation.');
     } catch {
       notify.error('Retry failed');
     }
@@ -300,7 +288,6 @@ export function PublicationQueuePage() {
               badgeClass: 'bg-zinc-800 text-zinc-300 border-zinc-700',
             };
             const meta = publicationStatusConfig[pub.status];
-            const isScheduled = pub.status === 'SCHEDULED';
             const isPublished = pub.status === 'PUBLISHED';
             const isFailed = pub.status === 'FAILED';
 
@@ -385,19 +372,9 @@ export function PublicationQueuePage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {isScheduled && (
-                      <Button
-                        variant="brand"
-                        size="sm"
-                        onClick={() => void handlePublishNow(pub.id, pub.platform)}
-                        isLoading={publishNowMutation.isPending}
-                        className="text-xs h-7 px-2.5"
-                      >
-                        <Send className="mr-1 h-3 w-3" />
-                        Publish Now
-                      </Button>
-                    )}
-
+                    <Link to={`/publication-jobs/${encodeURIComponent(pub.id)}/review`} className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500">
+                      Review publication
+                    </Link>
                     {isFailed && (
                       <Button
                         variant="outline"

@@ -1,5 +1,17 @@
 # CreatorFlow project status
 
+## Current cycle: V2-P4 content manifest and safe publication (2026-11-06)
+
+Branch `feat/v2-p4-content-approval`, baseline clean local/remote `4a41cb2220ac23caae5b341e68cef919cf8c212b`. Audited and recorded operator/scheduler/live/mock/OAuth side-effect paths before editing. P0, accounts, Windows Agent and P2/P3 are preserved.
+
+- P4-01 IMPLEMENTED/TESTED: V15 current successful render/artifact/source provenance, bounded actual media decode/probe/hash, compact canonical JSON/fingerprint, immutable versioned manifests/evidence/audit with no paths/secrets. Connection generation prevents reconnecting another account under the same row from inheriting approval.
+- P4-02 IMPLEMENTED/TESTED: V16 publication-specific operator approval/fingerprint/expiry/idempotency/audit, immutable decision bindings, metadata-trigger invalidation, replay/revocation/expiry guards. Legacy approved_at and P3 fixture approvals fail closed. Agent review reads/decisions denied.
+- P4-03/04 IMPLEMENTED/TESTED: shared gate/atomic claim/guard-issued permit for all upload paths; bounded hashed locked snapshot, exact connection/token/scope, explicit approved visibility, pre-PUT rechecks. Mock before/after-transfer timeout/rejection/ambiguous response/concurrency/known-ID confirmation/restart quarantine passed. Unknown results never blindly resend. Other social adapters remain NOT_CONFIGURED.
+- P4-05 IMPLEMENTED/TESTED: real-backend review UI, verified preview, metadata/account/visibility/checksum/provenance, revision/diff, approve/reject/revoke/invalidate, readiness/errors/audit. Removed auto approve-and-publish; disabled/unconfigured publishing cannot show success.
+- P4-06 TESTED: Maven package **63 tests, zero failures/errors/skips**; Python **ten tests**; frontend build; Flyway fresh V1–V16 plus V14 upgrade preserving historical approval without granting new authority, historical/no-op regression; Agent/Workflow/Telegram mock regressions. Actual content/storyboard/PNG/WAV/workflow/render produced 15-second h264/aac/subtitle MP4. Playwright created/approved revision 1, backend restart preserved exact fingerprint/operator/expiry/bytes, title edit invalidated revision 1 and created revision 2/diff, reject persisted; publish stayed disabled. Zero browser console errors, one existing Router warning.
+
+Acceptance used CREATORFLOW_ENABLE_REAL_PUBLISH=false and TELEGRAM_ENABLED=false. Provider tests are MOCK_ONLY; no live social upload or Telegram send, no P5 executor, main merge/deploy, public exposure, account switch or five-hour trigger. Conservative unknown/expired-after-upload reconciliation remains operator review, with no blind resend/clear-quarantine API. Full contracts/evidence/limits: [P4_CONTENT_APPROVAL.md](P4_CONTENT_APPROVAL.md). Milestones `bafbd39`, `239969f`, `d766f37`, `013f805`; final UI/handoff/Git/PR evidence follows in latest.json. Older snapshots below are historical.
+
 ## Current cycle: V2-P3-01 Telegram control plane (2026-11-06)
 
 Branch `feat/v2-p3-telegram-control`; baseline local/remote verified `f87c6c35d4da70cfe8ef36d7ada722c149cdd07f`, clean before branching. P2 operator/source review found missing durable cycle controls and outbound dispatch; those gaps were recorded before implementation. Existing Account Manager, DAG/checkpoint/usage and Windows Agent are preserved.

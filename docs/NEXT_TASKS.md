@@ -1,5 +1,18 @@
 # CreatorFlow next tasks
 
+## Current boundary after V2-P4 (2026-11-06)
+
+P4-01–06 are IMPLEMENTED and scoped TESTED on `feat/v2-p4-content-approval`, verified P3 baseline `4a41cb2`. Exact commands, audit, test evidence and limits: [P4_CONTENT_APPROVAL.md](P4_CONTENT_APPROVAL.md). P0/accounts/Windows Agent/P2/P3 are preserved, not reimplementation tasks. Verify final remote/clean tree and latest handoff before the next cycle. Provider tests remain MOCK_ONLY; real publishing and Telegram are disabled.
+
+1. Operator review of immutable publication contracts and draft PR into `feat/v2-p3-telegram-control`. Live setup/upload requires separate explicit authorization; P4 approval does not enable the feature flag or create credentials.
+2. Proposed **V2-P5-01**, not implemented here: credential enrollment/rotation/revocation/retention and secret-safe child environments; explicit repository/branch allowlists and isolated coding worktree ownership with one writer and recoverable cleanup.
+3. Define fixed validated AI task schemas, Windows process-tree timeout/cancellation, immutable source/evidence/checkpoint ownership. Verify the installed official Codex/Gemini execution protocol before integrating any executor; no arbitrary shell or automatic login/account switch.
+4. Quota admission requires fresh READY plus budget/operator policy; WAIT_FOR_RESET waits, stale/unknown/unsupported quota requires an operator decision. Never switch accounts to bypass limits. Git/FFmpeg/probe remain quota independent.
+5. Planner -> isolated executor -> reviewer/tests -> operator-reviewed draft PR. No auto merge/deploy. Periodic/five-hour automation remains a separate opt-in task after overlap/restart/quota/approval acceptance.
+6. Publication follow-up: separately design evidence/authority for manual unknown-result reconciliation and approval expiry/revocation after a confirmed upload attempt. Current policy conservatively blocks; no arbitrary post-ID attach or blind retry. Bound source/evidence retention requires an approved lifecycle because immutable history restricts deletion.
+
+Earlier cycle plans below are historical navigation; this section takes precedence.
+
 ## Current boundary after V2-P3-01 (2026-11-06)
 
 P3 Telegram control, durable cycle controls/fixture approvals and transactional outbox are IMPLEMENTED and scoped TESTED on `feat/v2-p3-telegram-control`, baseline `f87c6c3`. P2-01/02/03 and the Windows Agent are preserved, not NEXT/reimplementation tasks. Exact commands and limits: [TELEGRAM_INTEGRATION.md](TELEGRAM_INTEGRATION.md). Telegram is MOCK_ONLY/NOT_CONFIGURED, disabled by default; no live bot send has been authorized/performed. Verify Git/remote/latest handoff before another cycle. Older plans below are historical.

@@ -71,7 +71,6 @@ export const publicationApi = {
 
   async publishNow(id: string): Promise<PublicationJob> {
     if (realApi) {
-      await apiRequest(`/api/publication-jobs/${encodeURIComponent(id)}/approve`, { method: 'POST' });
       return apiRequest(`/api/publication-jobs/${encodeURIComponent(id)}/publish-now`, { method: 'POST' });
     }
     await mockDelay(600);
@@ -87,7 +86,7 @@ export const publicationApi = {
 
   async updatePublicationDetails(
     id: string,
-    updates: Partial<Pick<PublicationJob, 'title' | 'caption' | 'hashtags' | 'scheduledAt'>>,
+    updates: Partial<Pick<PublicationJob, 'title' | 'caption' | 'description' | 'hashtags' | 'scheduledAt'>>,
   ): Promise<PublicationJob> {
     if (realApi) return apiRequest(`/api/publication-jobs/${encodeURIComponent(id)}/details`, { method: 'PATCH', body: JSON.stringify(updates) });
     await mockDelay(300);
