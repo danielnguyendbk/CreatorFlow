@@ -13,6 +13,8 @@ dist/
 .next/
 .nuxt/
 coverage/
+__pycache__/
+*.pyc
 .playwright-cli/
 .vite/
 
