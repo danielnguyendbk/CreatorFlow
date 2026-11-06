@@ -13,6 +13,8 @@ P4-01–06 are IMPLEMENTED and scoped TESTED on `feat/v2-p4-content-approval`, v
 
 Earlier cycle plans below are historical navigation; this section takes precedence.
 
+P4 implementation push CONFIRMED at `7846fdc`; PR creation BLOCKED_403. [Create PR into P3 manually](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p3-telegram-control...feat/v2-p4-content-approval?expand=1). Final navigation commit is pushed/remote-verified separately.
+
 ## Current boundary after V2-P3-01 (2026-11-06)
 
 P3 Telegram control, durable cycle controls/fixture approvals and transactional outbox are IMPLEMENTED and scoped TESTED on `feat/v2-p3-telegram-control`, baseline `f87c6c3`. P2-01/02/03 and the Windows Agent are preserved, not NEXT/reimplementation tasks. Exact commands and limits: [TELEGRAM_INTEGRATION.md](TELEGRAM_INTEGRATION.md). Telegram is MOCK_ONLY/NOT_CONFIGURED, disabled by default; no live bot send has been authorized/performed. Verify Git/remote/latest handoff before another cycle. Older plans below are historical.

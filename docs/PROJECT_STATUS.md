@@ -12,6 +12,8 @@ Branch `feat/v2-p4-content-approval`, baseline clean local/remote `4a41cb2220ac2
 
 Acceptance used CREATORFLOW_ENABLE_REAL_PUBLISH=false and TELEGRAM_ENABLED=false. Provider tests are MOCK_ONLY; no live social upload or Telegram send, no P5 executor, main merge/deploy, public exposure, account switch or five-hour trigger. Conservative unknown/expired-after-upload reconciliation remains operator review, with no blind resend/clear-quarantine API. Full contracts/evidence/limits: [P4_CONTENT_APPROVAL.md](P4_CONTENT_APPROVAL.md). Milestones `bafbd39`, `239969f`, `d766f37`, `013f805`; final UI/handoff/Git/PR evidence follows in latest.json. Older snapshots below are historical.
 
+P4 implementation/UI milestone `7846fdc` was pushed and matched `git ls-remote`. Draft PR into `feat/v2-p3-telegram-control` returned GitHub connector HTTP 403 `Resource not accessible by integration`; no PR was created by this run. [Manual PR](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p3-telegram-control...feat/v2-p4-content-approval?expand=1). Navigation handoff is delivered in the following documentation commit.
+
 ## Current cycle: V2-P3-01 Telegram control plane (2026-11-06)
 
 Branch `feat/v2-p3-telegram-control`; baseline local/remote verified `f87c6c35d4da70cfe8ef36d7ada722c149cdd07f`, clean before branching. P2 operator/source review found missing durable cycle controls and outbound dispatch; those gaps were recorded before implementation. Existing Account Manager, DAG/checkpoint/usage and Windows Agent are preserved.
