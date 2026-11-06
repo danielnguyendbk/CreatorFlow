@@ -1,173 +1,167 @@
 {
   "schemaVersion": 1,
-  "generatedAtUtc": "2026-11-06T11:21:45.972688+00:00",
-  "branch": "feat/v2-p5-worktree-foundation",
-  "sourceBranch": "origin/feat/v2-p4-content-approval",
-  "sourceCommit": "fd65617ce5d7111b61053c5fed9b5c3550c961bf",
-  "lastImplementationCommit": "ea75ccf95d97b59d167ff954133c22be3f5f3d17",
+  "generatedAtUtc": "2026-11-06T17:08:02.122395+00:00",
+  "branch": "feat/v2-p5-ai-executor",
+  "sourceBranch": "origin/feat/v2-p5-worktree-foundation",
+  "sourceCommit": "28cfb0d0ecfc22ba13cf5ed7c6a5f730ff1182bb",
+  "lastImplementationCommit": "f5b82831116534d21d0acb43e9fbcfc2ef8762d1",
+  "overallStatus": "BLOCKED",
+  "definitionOfDoneAchieved": false,
+  "liveVerification": "NOT_VERIFIED",
   "completedTasks": [
     {
-      "id": "V2-P5-01A",
+      "id": "V2-P5-02-PROTOCOL",
       "status": "TESTED",
-      "implemented": true,
-      "result": "Hash-only bootstrap/rotation/revoke, generation/session fencing, operator enrollment, DPAPI restart recovery and secret-safe metadata. Retention configured; no automatic sweep."
+      "result": "Installed Codex0.162.1 public help/features/schema inspected without inference; shipped exec argv pinned. Official MXC startup-only probe returned MXC_OK/exit0; this is not task isolation proof."
     },
     {
-      "id": "V2-P5-01B",
+      "id": "V2-P5-02-AUTHORITY",
       "status": "TESTED",
-      "implemented": true,
-      "result": "Operator registry plus independent agent canonical-root/origin/owner/base verification; no task-supplied repository/executable paths or commands."
+      "verification": "DB_FIXTURES",
+      "result": "V19 immutable exact contracts, expiring operator authority bound to generation/base/checkpoint/exact files/provider/budget fingerprint, fresh claim/start gates, single-use start, one writer/cancel/recovery/evidence. Tests include quota exhaustion/stale snapshot, old READY refusal, budget mutation, stale identity/sandbox, concurrent claim and diff replay/scope."
     },
     {
-      "id": "V2-P5-01C",
-      "status": "TESTED",
-      "implemented": true,
-      "result": "Exact-commit isolated worktrees, durable session/attempt/lease/journal/checkpoint, one writer, conservative cleanup and orphan quarantine."
+      "id": "V2-P5-02-AGENT",
+      "status": "IMPLEMENTED",
+      "verification": "MOCK_ONLY_EXECUTION",
+      "result": "Fixed native Codex exec adapter with OS Job Object, exact-file profile, allow/deny/network canary, stripped child environment, no user config/rules/MCP/hooks/apps/plugins/shell, start journal and scoped diff evidence. Real Git/worktree/process tests passed; actual Codex inference not run."
     },
     {
-      "id": "V2-P5-01D",
+      "id": "V2-P5-02-UI",
       "status": "TESTED",
-      "implemented": true,
-      "result": "Bounded strict fixed contracts; four foundation task kinds only; AI executors NOT_ENABLED."
+      "verification": "REAL_BACKEND_DRAFT_CANCEL_AND_MOCK_ONLY_DIFF",
+      "result": "Playwright new agent/repository verification, actual prepare, draft contract/confirmation/cancel without authorize action. Explicit MOCK_ONLY read response tested REVIEW_REQUIRED diff rendering, then restored and confirmed no mock DB row. Zero console errors."
     },
     {
-      "id": "V2-P5-01E",
+      "id": "V2-P5-02-REGRESSION",
       "status": "TESTED",
-      "implemented": true,
-      "result": "READY/WAIT_FOR_RESET/OPERATOR_REQUIRED/provider/disabled, same-agent fresh windows and connected non-revoked identity, bounded concurrent planned-seconds reservations; fixture quota cases only."
-    },
-    {
-      "id": "V2-P5-01F",
-      "status": "TESTED",
-      "implemented": true,
-      "result": "Real Coding Workspaces UI with repository/ownership/locks/checkpoint/quota/admission, explicit lifecycle confirmation; Playwright real backend and Windows agent."
-    },
-    {
-      "id": "V2-P5-01G",
-      "status": "TESTED",
-      "implemented": true,
-      "result": "Full Maven73 zero skips, Python17, build, migrations, real restart/lost-response/orphan/FFmpeg/cleanup/revoke E2E and real15-second render; P0/P2/P3 mock/P4 regressions."
+      "result": "Maven80 zero failures/errors/skips; Python24; frontend build; Flyway V1-V19 and historical upgrade plus actualV18-V19/no-op restart; P0-P5 regressions; actual backend/agent restart/fenced inspect/FFmpeg."
     }
   ],
   "incompleteTasks": [
     {
-      "id": "V2-P5-02",
-      "status": "NEXT",
-      "result": "Official operator-authorized executor inside proven worktrees; revalidate credential/quota/reservation at execution; actual file/process/network boundaries and review/test gates. Not implemented."
+      "id": "V2-P5-02-NATIVE_SANDBOX",
+      "status": "BLOCKED",
+      "result": "Restrictive deny-root/exact-file MXC canary cannot start: launcher cannot locate required Windows platform directory HRESULT0x80070003; canary exit1 SANDBOX_PROBE_DID_NOT_COMPLETE. Filesystem/network/process task boundary is not certified. No ACL/setup/fallback changes performed."
     },
     {
-      "id": "RETENTION_SWEEP",
-      "status": "DESIGNED",
-      "result": "Policy configuration exists; no automatic deletion. Reference-aware dry run/sweep is future work."
+      "id": "V2-P5-02-LIVE_ACCEPTANCE",
+      "status": "BLOCKED",
+      "result": "No explicit operator authorization for a concrete live task was issued. Native inference was not attempted. Feature switch remains false, current fixture quota UNKNOWN; actual authenticated quota and live CLI integration/evidence/REVIEW_REQUIRED E2E remain unverified."
     },
     {
       "id": "DRAFT_PR",
       "status": "BLOCKED",
-      "result": "GitHub connector HTTP403 Resource not accessible by integration; no PR created."
+      "result": "GitHub connector create_pull_request HTTP403 Resource not accessible by integration; no PR created."
+    },
+    {
+      "id": "V2-P5-03",
+      "status": "DESIGNED",
+      "result": "Proposed Planner -> operator-authorized isolated Executor -> Reviewer -> fixed Tester checks -> operator-reviewed draft PR only after P5-02 live gates. No automation implemented."
     }
   ],
   "tests": [
     {
-      "command": "Maven 3.9.12 mvn -Dmaven.repo.local=<local-cache> package -q",
+      "command": "Maven3.9.12 mvn -Dmaven.repo.local=<approved-local-cache> package -q",
       "cwd": "CreatorFlow-Backend",
-      "environment": "JDK25, PostgreSQL18.3 loopback55432 creatorflow_p5_test_20261106, CREATORFLOW_TEST_DB_URL/USER and actual FFMPEG_PATH",
-      "result": "73 tests, zero failures/errors/skips; 10 P5 tests. Fresh/upgrade through V18, P0/P2/P3 mock/P4 safety included.",
-      "evidence": "storage/p5-package.log; target/surefire-reports"
+      "environment": "JDK25; PostgreSQL18.3 loopback55432 creatorflow_p5_test_20261106; CREATORFLOW_TEST_DB_URL/USER and actual FFMPEG_PATH",
+      "result": "80 tests, zero failure/error/skip; 17 P5 integration tests; fresh/upgrade throughV19 and P0-P5 including P3 mock/P4 safety",
+      "evidence": "storage/p5-02-package.log; target/surefire-reports"
     },
     {
       "command": "python -m unittest discover -p 'test_*.py' -v",
       "cwd": "CreatorFlow-Agent",
-      "environment": "Windows Python3.13 with FFMPEG_PATH",
-      "result": "17 passed; DPAPI/Git/junction/hooks/writer/process-tree/cancel/timeout/usage fixtures",
-      "evidence": "storage/p5-python.log"
+      "environment": "Windows Python3.13, FFMPEG_PATH",
+      "result": "24 passed, including7 new mock/JSON-native-adapter tests plus actual Git/DPAPI/Job/junction/usage/media regressions; no inference",
+      "evidence": "storage/p5-02-python.log"
     },
     {
       "command": "npm run build",
       "cwd": "CreatorFlow-Frontend",
-      "result": "PASS; existing bundle-size warning",
-      "evidence": "storage/p5-frontend-build.log"
+      "result": "PASS, existing bundle-size warning",
+      "evidence": "storage/p5-02-frontend.log"
     },
     {
-      "command": "playwright-cli session creatorflow-p5 register/prepare/inspect/policy/admission/confirmed rotation/reload",
-      "result": "PASS real DB/agent; UNKNOWN->OPERATOR_REQUIRED; Gemini unsupported; CLEANED/orphan/revoked metadata; final zero console errors/one existing Router warning",
-      "evidence": "storage/p5-browser-post-restart.txt; storage/p5-workspaces-final.png"
+      "command": "codex -c windows.sandbox=mxc sandbox --include-managed-config --permission-profile :workspace -- cmd.exe /d /c echo MXC_OK",
+      "result": "MXC_OK exit0, STARTUP_ONLY",
+      "evidence": "storage/p5-02-mxc-probe.log"
     },
     {
-      "command": "python CreatorFlow-Agent/smoke_foundation.py [controlled fixture arguments]",
-      "result": "PASS eight stages; actual agent/backend restart, lease quarantine/stale fencing, committed lost-response rotation recovery generation3, FFmpeg, cleanup/main unchanged and revoke401",
-      "evidence": "storage/p5-e2e-evidence.json"
+      "command": "CodexRunner.capability() with strict exact-file/native MXC canary",
+      "result": "BLOCKED SANDBOX_NOT_VERIFIED; exit1, probe did not complete; no inference",
+      "evidence": "storage/p5-02-sandbox.log; ignored sandbox-capability/probe result JSON"
     },
     {
-      "command": "python storage/p5-media-setup.py",
-      "result": "PASS real content/storyboard/image/audio/workflow 15-second render, no provider call",
-      "evidence": "storage/p5-media-evidence.json"
+      "command": "node storage/p5-02-browser-smoke.cjs",
+      "result": "PASS real browser draft/cancel; explicit MOCK_ONLY review response only; no authorize action; zero console errors; actual secrets kept in memory",
+      "evidence": "storage/p5-02-browser-evidence.json; p5-02-browser-real.png; p5-02-review-mock-only.png"
+    },
+    {
+      "command": "python storage/p5-02-restart-smoke.py",
+      "result": "PASS four asserted stages: actual backend/agent restart, durable cancelled unapproved execution/checkpoint, new fenced inspect, real FFmpeg and old revoked/orphan unchanged; restarted worker then stopped",
+      "evidence": "storage/p5-02-restart-evidence.json"
+    },
+    {
+      "command": "python storage/p5-02-secret-scan.py",
+      "result": "PASS actual operator/enrollment/new-agent runtime secrets absent from252 tracked/nonignored files; no secret printed"
     }
   ],
   "evidence": {
-    "repositoryId": "03d107b3-9b5b-4b66-9562-8848d9be8b3d",
-    "agentId": "48944794-739a-4c40-892d-c697f92c29e1",
-    "workspaceId": "7ef6bd02-fad7-471f-9609-e42c984d53af",
-    "workspaceState": "CLEANED",
-    "orphanWorkspaceId": "ab410f7a-2aa8-4298-8887-2839ea8e428c",
-    "orphanState": "NEEDS_RECONCILIATION",
-    "fixtureBaseCommit": "0051ad732f299518272880cb542690ce32ecfdc7",
-    "agentFinalState": "REVOKED generation4; worker intentionally stopped",
-    "renderId": "30218b71-d5f9-4cb3-a8cd-c7661dbe3016"
+    "agentId": "24ad28d3-9195-4740-8f70-03823531010f",
+    "repositoryId": "22c9e32d-92c0-4022-b176-610c25a2d6d5",
+    "workspaceId": "049f2544-4b59-4ad5-bd17-ead792a382c9",
+    "executionId": "9e77a25d-e457-4d10-9a94-31f0b8e1ba28",
+    "executionState": "CANCELLED_WITHOUT_AUTHORIZATION",
+    "fixtureBaseCommit": "575fbcc62755a0cc09f4c0be878e680f6d059971",
+    "finalCheckpointId": "632c2b2c-ebc8-4a8f-9cf6-67e1cd658b96",
+    "ffmpegTaskId": "8255341d-42ef-454b-b603-b041a627906c",
+    "agentProcess": "STOPPED after acceptance; valid new current-user DPAPI identity retained",
+    "oldP501Identity": "48944794-739a-4c40-892d-c697f92c29e1 remains REVOKED generation4",
+    "oldP501Orphan": "ab410f7a-2aa8-4298-8887-2839ea8e428c remains NEEDS_RECONCILIATION",
+    "backendExecutionEnabled": false
   },
   "verificationLimits": [
-    "No new LIVE_VERIFIED authenticated Codex quota; admission READY/exhausted cases are DB fixtures, public version alone is not login evidence.",
-    "Gemini quota unsupported; no inference, provider login/auth-cache access or account switching.",
-    "Retention metadata is configurable but no automatic sweep; orphan retained safely.",
-    "Backend loopback acceptance process remains available for review; runtime secrets/media/logs stay ignored local files.",
-    "Initial Python invocation from repo root lacked child import cwd; corrected run from Agent passed. Earlier Maven without FFMPEG_PATH skipped18; final configured run ran all73.",
-    "No live Telegram/social publishing, AI execution, automatic source push, main merge/deploy or five-hour schedule."
+    "Full live DoD NOT achieved; no LIVE_VERIFIED inference/quota/account claim.",
+    "Native JSON parsing and review diffs were tested with explicit mocks; native inference command/config behavior remains unverified until sandbox proof and operator approval.",
+    "Startup MXC echo is insufficient; strict canary did not certify filesystem/network boundaries. No permission weakening or legacy fallback.",
+    "Gemini installed package metadata0.62.0 only; runtime version/quota/auth/execution not verified; GEMINI_EXECUTE unsupported.",
+    "Actual unapproved draft cancellation was durable; REVIEW_REQUIRED browser fixture response was labeled MOCK_ONLY and never persisted.",
+    "No old revoked credential reuse, orphan deletion/adoption, provider auth-cache access/login/account switch, live Telegram/publication, automatic code push/merge/deploy or five-hour schedule."
   ],
   "architectureDecisions": [
-    "Modular monolith/PostgreSQL remain authority; P0-P4 preserved.",
-    "Agent-generated DPAPI credentials; only hashes in enrollment/rotation APIs; proof rechecked under transaction lock.",
-    "Repository approval AND separate local root allowlist; fixed Git argv with ownership/filter/hook defenses.",
-    "DB fences plus local journal/OS locks/Windows Job Objects; unknown ownership never auto-deletes.",
-    "Admission READY is historical bounded capacity decision, never executor permission; reservations planned wall-clock seconds, not token/money."
+    "Reuse P5-01 identity/registry/worktree/admission/usage. Execution records share agent serialization with AgentQueue; no new DAG or arbitrary shell endpoint.",
+    "Backend execution switch defaults false; exact per-task authorization is separate from foundation policy/READY.",
+    "Credential generation, checkpoint/config and budget policy fingerprint bind authority; begin is single-use and rechecks current fresh DB quota/budget after native preflight.",
+    "Job Objects/local writer lock/start journal preserve uncertainty; started leases never auto-retry dirty work; results stop at REVIEW_REQUIRED.",
+    "Native exact-file/no-network canary must pass, without mocked production success; no fallback to a weaker sandbox."
   ],
   "changedFiles": [
+    ".creatorflow/handoffs/latest.json",
     "CreatorFlow-Agent/agent.py",
-    "CreatorFlow-Agent/credentials.py",
-    "CreatorFlow-Agent/smoke_foundation.py",
-    "CreatorFlow-Agent/test_credentials.py",
-    "CreatorFlow-Agent/test_worktrees.py",
-    "CreatorFlow-Agent/worktrees.py",
-    "CreatorFlow-Backend/src/main/java/com/creatorflow/AgentApi.java",
-    "CreatorFlow-Backend/src/main/java/com/creatorflow/AgentCredentials.java",
-    "CreatorFlow-Backend/src/main/java/com/creatorflow/AgentIdentity.java",
+    "CreatorFlow-Agent/codex_executor.py",
+    "CreatorFlow-Agent/test_codex_executor.py",
     "CreatorFlow-Backend/src/main/java/com/creatorflow/AgentQueue.java",
-    "CreatorFlow-Backend/src/main/java/com/creatorflow/CodingAdmission.java",
-    "CreatorFlow-Backend/src/main/java/com/creatorflow/CodingApi.java",
-    "CreatorFlow-Backend/src/main/java/com/creatorflow/CodingRegistry.java",
+    "CreatorFlow-Backend/src/main/java/com/creatorflow/CodingExecutions.java",
     "CreatorFlow-Backend/src/main/java/com/creatorflow/CodingWorkspaces.java",
-    "CreatorFlow-Backend/src/main/java/com/creatorflow/SecurityConfig.java",
-    "CreatorFlow-Backend/src/main/resources/db/migration/V17__agent_credential_lifecycle.sql",
-    "CreatorFlow-Backend/src/main/resources/db/migration/V18__coding_workspace_foundation.sql",
-    "CreatorFlow-Backend/src/test/java/com/creatorflow/AgentQueueIntegrationTest.java",
+    "CreatorFlow-Backend/src/main/resources/db/migration/V19__coding_execution_authorization.sql",
     "CreatorFlow-Backend/src/test/java/com/creatorflow/CodingFoundationIntegrationTest.java",
-    "CreatorFlow-Backend/src/test/java/com/creatorflow/PublicationManifestIntegrationTest.java",
     "CreatorFlow-Frontend/src/api/codingApi.ts",
-    "CreatorFlow-Frontend/src/components/layout/Sidebar.tsx",
+    "CreatorFlow-Frontend/src/features/coding/CodingExecutionsPanel.tsx",
     "CreatorFlow-Frontend/src/features/coding/CodingWorkspacesPage.tsx",
-    "CreatorFlow-Frontend/src/routes/index.tsx",
     "CreatorFlow-Frontend/src/types/index.ts",
     "docs/ARCHITECTURE.md",
     "docs/MASTER_PLAN.md",
     "docs/NEXT_TASKS.md",
-    "docs/P5_WORKTREE_FOUNDATION.md",
+    "docs/P5_AI_EXECUTOR.md",
     "docs/PROJECT_STATUS.md"
   ],
   "delivery": {
     "implementationPush": "CONFIRMED",
-    "remoteImplementationHead": "ea75ccf95d97b59d167ff954133c22be3f5f3d17",
+    "remoteImplementationHead": "f5b82831116534d21d0acb43e9fbcfc2ef8762d1",
     "prStatus": "BLOCKED_403",
     "prUrl": null,
-    "manualCompareUrl": "https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p4-content-approval...feat/v2-p5-worktree-foundation?expand=1",
-    "navigationCommit": "This handoff is committed separately; final remote SHA and clean tree are verified after its push."
+    "manualCompareUrl": "https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p5-worktree-foundation...feat/v2-p5-ai-executor?expand=1",
+    "navigationCommit": "This handoff is committed separately; final remote SHA/clean tree verified after push."
   },
-  "nextTask": "V2-P5-02 design/operator review only until separately authorized; no autonomous execution in this cycle"
+  "nextTask": "Finish P5-02 native sandbox/integration proof, fresh authenticated quota and explicitly operator-approved harmless live task; only then close P5-02 and review P5-03 proposal."
 }

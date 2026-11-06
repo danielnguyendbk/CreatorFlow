@@ -1,3 +1,17 @@
+# Current boundary: V2-P5-02 live acceptance BLOCKED (2026-11-06/07)
+
+Implementation push confirmed at `f5b8283`. Draft PR BLOCKED_403; [manual comparison into P5-01](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p5-worktree-foundation...feat/v2-p5-ai-executor?expand=1). No PR was created.
+
+P5-02 implementation/mock acceptance is delivered on `feat/v2-p5-ai-executor`, verified P5-01 baseline `28cfb0d`; P5-01 is not a new implementation task. Read [P5_AI_EXECUTOR.md](P5_AI_EXECUTOR.md) and verify remote/clean tree/latest handoff. Maven80/zero skipped, Python24, build, real-backend Playwright draft/cancel, explicit MOCK_ONLY diff rendering, actual restart/fenced inspect/FFmpeg passed. Full live DoD remains incomplete.
+
+1. Diagnose restricted MXC exact-file profile startup failure (`HRESULT 0x80070003`) through an approved CLI/environment fix. Startup-only MXC_OK is insufficient. Do not change broad ACLs, provision legacy accounts/firewall silently, weaken read/write/network boundaries or substitute a full-access sandbox. Prove exact file allow/deny, outside read/write, network denial and process-tree limits first.
+2. Review effective installed CLI integration restrictions/version, authenticate normally outside CreatorFlow only if operator chooses, and obtain fresh same-agent Codex 5-hour/weekly usage. No auth-cache copying, automatic login, account switching or quota inference. Gemini remains unsupported for execution.
+3. Prepare a fresh/reconciled worktree and new draft with exact checkpoint/base/files/provider/budget/expiry. Obtain **explicit operator authorization for that displayed live task**; no live approval was issued in this cycle. Enable the backend execution switch only deliberately after prerequisites. Historical READY, broad foundation policy and an old approval are not execution grants.
+4. Run one harmless real Codex fixture, verify actual diff/hash/checkpoint and REVIEW_REQUIRED, cancellation/restart and no source-main changes. Only then record LIVE_VERIFIED and close P5-02. Current fixture agent has a valid new DPAPI identity but its process was stopped; old P5-01 identity remains revoked, old orphan requires reconciliation.
+5. Proposed **P5-03 (DESIGNED only)** after P5-02 live acceptance: Planner -> operator-authorized isolated Executor -> Reviewer -> approved fixed Tester checks -> operator-reviewed Draft PR, reusing DAG/checkpoints/quota. Define role/tool/network/credential authority and review/test rejection gates first. No automatic pipeline or AI-generated push/merge/deploy was implemented.
+
+No live Telegram/social publication, main merge/deploy or five-hour schedule is authorized. Earlier plans below are historical.
+
 # Current boundary after V2-P5-01 (2026-11-06)
 
 Implementation push confirmed at `ea75ccf`; draft PR BLOCKED_403. [Create PR into P4 manually](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p4-content-approval...feat/v2-p5-worktree-foundation?expand=1). No PR exists from this run.

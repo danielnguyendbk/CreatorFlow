@@ -1,3 +1,15 @@
+# V2-P5-02 current boundary (2026-11-06/07)
+
+Implementation/test milestones `85cfa72`, `9f651b9`, `f5b8283` are pushed; remote confirmed `f5b82831116534d21d0acb43e9fbcfc2ef8762d1`. Draft PR creation BLOCKED_403; no PR exists from this run. [Manual draft PR into P5-01](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p5-worktree-foundation...feat/v2-p5-ai-executor?expand=1). Final navigation commit follows separately.
+
+Branch `feat/v2-p5-ai-executor`; clean P5-01 local/remote baseline verified `28cfb0d0ecfc22ba13cf5ed7c6a5f730ff1182bb`. V19 and executor/authority/UI are IMPLEMENTED with scoped TESTED/MOCK_ONLY acceptance. **Live Codex execution is BLOCKED; full P5-02 DoD is not achieved.** P5-01 services are reused, not reimplemented.
+
+Milestones: `85cfa72` exact immutable contract/authorization, current generation/session/lease/quota/budget gates, single-use begin, isolated native adapter and conservative recovery; `9f651b9` UI draft/fingerprint/confirmation/events/cancel/diff. Feature `CREATORFLOW_CODEX_EXECUTION_ENABLED` remains false. Gemini execution remains unsupported.
+
+Actual checks: Maven package **80 tests, zero failures/errors/skips**, including 17 P5 integration tests and regressions P0-P5; Flyway through V19 including actual V18 upgrade/no-op restart; Windows Python **24 passed** including seven mock-adapter tests with real isolated Git, dirty-crash preservation, scope/secret denial and Job timeout; frontend build passed. Real-backend Playwright registered/prepared a new agent/repository/workspace, created/cancelled an unapproved draft and checked explicit confirmation. REVIEW_REQUIRED rendering used a separately labeled MOCK_ONLY response, verified absent from DB. Zero browser console errors. Actual backend/agent restart, fresh fenced inspect checkpoint and real FFmpeg passed; old revoked identity/orphan were not changed.
+
+Codex 0.162.1 public version/help/schema were verified without inference. MXC startup-only probe passed, but the deny-root/exact-file canary exited 1: `cannot locate required Windows platform directory: HRESULT 0x80070003`; UI correctly shows SANDBOX_NOT_VERIFIED. No ACL/global configuration changes or unsafe fallback. No operator authorization was issued for the concrete live fixture, no inference/live quota verification occurred, and no LIVE_VERIFIED claim is made. Complete evidence/limits and P5-03 proposal: [P5_AI_EXECUTOR.md](P5_AI_EXECUTOR.md). Older status sections below are historical.
+
 # V2-P5-01 current delivery (2026-11-06)
 
 Implementation milestones `f54c81d`, `01da0c2`, `01f6713`, `ea75ccf` are pushed; remote confirmed UI HEAD `ea75ccf95d97b59d167ff954133c22be3f5f3d17`. Draft PR is BLOCKED_403 (`Resource not accessible by integration`), not created. [Manual PR into P4](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p4-content-approval...feat/v2-p5-worktree-foundation?expand=1). Final navigation handoff is committed/pushed separately.

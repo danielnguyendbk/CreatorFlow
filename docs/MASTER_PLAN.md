@@ -1,3 +1,9 @@
+# V2-P5-02 implementation boundary (2026-11-06/07)
+
+Operator-authorized Codex execution contracts/leases/evidence, fixed isolated native adapter and review UI are IMPLEMENTED; Maven80, Python24, frontend build and scoped mock/browser/restart acceptance passed. Full live DoD remains BLOCKED by restrictive MXC canary startup and missing concrete live operator authorization. Backend execution remains disabled; mocks/startup-only probes are not LIVE_VERIFIED. See [P5_AI_EXECUTOR.md](P5_AI_EXECUTOR.md).
+
+Next finish sandbox/integration proof, fresh quota and explicitly approved harmless live fixture before closing P5-02. Only then design P5-03 Planner -> Executor -> Reviewer -> Tester -> Draft PR with role authority/review gates. No autonomous pipeline, source push/merge, deploy, live Telegram/publication, account switching or five-hour scheduler is added.
+
 # V2-P5-01 delivered boundary (2026-11-06)
 
 Isolated worktree/admission foundation is IMPLEMENTED with scoped TESTED acceptance: credential generations and recoverable DPAPI rotation, operator-opened enrollment/revoke/audit, V17/V18 registry and independently verified Git allowlist, exact-commit worktrees with durable ownership/fencing/checkpoints, fixed validated task schemas, bounded quota admission and real UI. Maven 73/zero skipped, Python 17, frontend build, Playwright, actual restart/recovery/FFmpeg and 15-second render passed. See [P5_WORKTREE_FOUNDATION.md](P5_WORKTREE_FOUNDATION.md).

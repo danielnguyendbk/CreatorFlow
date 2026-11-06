@@ -1,3 +1,11 @@
+# P5-02 executor extension (2026-11-06/07)
+
+V19 adds immutable execution contracts, exact expiring operator authorizations bound to credential generation/checkpoint/repository/budget fingerprint, current-session sandbox capability evidence and execution events/results. The existing identity/worktree/admission/usage services are reused. Execution and AgentQueue claims share the agent transaction lock and cross-check writers; there is no new DAG/dependency engine or arbitrary shell endpoint. Single-use begin revalidates authority/current fresh quota/budget after native preflight; lost start responses/leases preserve evidence for reconciliation rather than retrying dirty bytes.
+
+Windows runtime integrates the fixed Codex 0.162.1 native exec adapter with Job Objects, stdin objectives, strict exact existing-file scope, local start journal, allow/deny/network canary and bounded sanitized evidence. The proposed profile disables shell, MCP configuration, hooks/apps/plugins/network and cannot fall back to full access. Its restrictive native canary currently fails at platform-directory startup, so runtime capability is BLOCKED and real inference has not been verified. The backend execution flag defaults false. Only explicit mock adapters in tests generated reviewed diffs; real browser tests did not issue authorization.
+
+UI separates drafts, exact task confirmation, active lease/events/cancel and REVIEW_REQUIRED diff evidence from quota/foundation readiness. Operator and runtime APIs remain distinct. See [P5_AI_EXECUTOR.md](P5_AI_EXECUTOR.md) for actual results and open gates. P5-03 role orchestration is proposed only after live P5-02 acceptance. Older phase sections are historical.
+
 # P5-01 foundation extension (2026-11-06)
 
 The modular Spring/PostgreSQL/Windows Agent architecture is preserved. V17 stores credential generations, hash-only recoverable rotation intents and operator enrollment/retention policy. The Windows agent generates runtime secrets locally, persists bootstrap/next/current identities with current-user DPAPI and atomic replacement, and sends only hashes during enrollment/rotation. Operator HTTP authority is distinct from agent identity; current proof is rechecked under the agent transaction lock. Revoke fences sessions and active work without touching provider auth caches.
