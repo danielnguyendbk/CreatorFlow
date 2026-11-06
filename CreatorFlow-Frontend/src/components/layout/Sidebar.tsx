@@ -59,6 +59,7 @@ const navGroups: NavGroup[] = [
       { label: 'Agent Monitoring', href: '/agents', icon: Activity },
       { label: 'AI Usage', href: '/ai-usage', icon: Circle },
       { label: 'Telegram Integration', href: '/telegram', icon: Send },
+      { label: 'Coding Workspaces', href: '/coding-workspaces', icon: Circle },
       { label: 'Settings', href: '/settings', icon: Settings },
     ],
   },

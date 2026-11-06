@@ -17,6 +17,7 @@ import { AccountManagerPage } from '@/features/accounts/AccountManagerPage';
 import { AgentMonitoringPage } from '@/features/agents/AgentMonitoringPage';
 import { AiUsagePage } from '@/features/usage/AiUsagePage';
 import { TelegramIntegrationPage } from '@/features/telegram/TelegramIntegrationPage';
+import { CodingWorkspacesPage } from '@/features/coding/CodingWorkspacesPage';
 import { NotFoundPage } from '@/features/common/NotFoundPage';
 
 export const router = createBrowserRouter([
@@ -90,6 +91,7 @@ export const router = createBrowserRouter([
         element: <AiUsagePage />,
       },
       { path: 'telegram', element: <TelegramIntegrationPage /> },
+      { path: 'coding-workspaces', element: <CodingWorkspacesPage /> },
       {
         path: '*',
         element: <NotFoundPage />,

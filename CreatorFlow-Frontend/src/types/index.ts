@@ -29,20 +29,44 @@ export interface CodexUsage {
 export interface UsageHistoryEntry { id: string; sequence: number; observedAt: string; status: string; cliVersion: string | null; windows: {windowDurationMins: number; usedPercent: number}[] }
 
 export type AgentTaskKind = 'GIT_FIXTURE' | 'FFMPEG_FIXTURE' | 'CAPABILITY_PROBE';
+export type AgentCapability = AgentTaskKind | 'WORKTREE_PREPARE' | 'WORKTREE_INSPECT' | 'WORKTREE_CLEANUP' | 'CODING_PREFLIGHT';
+export interface CodingRepository {
+  id: string; agentId: string; canonicalPath: string; remoteUrl: string; allowedBases: string[]; protectedBranches: string[];
+  enabled: boolean; verification: string; verifiedCommits: Record<string, string>; configHash: string; approvedBy: string; verifiedAt: string | null; errorCode: string | null;
+}
+export interface CodingWorkspace {
+  id: string; repository_id: string; agent_id: string; base_ref: string; base_commit: string; branch: string; relative_path: string;
+  state: string; current_task_id: string; owner_session: string | null; owner_attempt: number | null; lease_expires_at: string | null;
+  writer_locked: boolean; last_checkpoint_id: string | null; cleanup_state: string; error_code: string | null; task_state?: string;
+}
+export interface CodingAdmissionResult { id: string; agent_id: string; state: string; reason: string; reserved_until: string | null; reserved_seconds: number; executionEnabled: false; budgetUnit: string }
+export interface CodingInventory {
+  executionEnabled: false; repositories: CodingRepository[]; workspaces: CodingWorkspace[];
+  capabilities: { agentId: string; provider: string; installed: boolean; version: string | null; observedAt: string }[];
+  policies: { id: string; agent_id: string; provider: string; enabled: boolean; operator_authorized: boolean; max_concurrent: number; max_reserved_seconds: number }[];
+  admissions: CodingAdmissionResult[];
+  events: { id: number; workspace_id: string | null; repository_id: string | null; type: string; actor: string; created_at: string }[];
+}
+export interface CredentialInventory {
+  credentials: { agentId: string; name: string; generation: number; revokedAt: string | null; lastUsedAt: string | null }[];
+  enrollment: { enabledUntil: string | null };
+  audit: { agentId: string | null; generation: number | null; type: string; actor: string; createdAt: string }[];
+  retention: { logsDays: number; temporaryWorktreeDays: number; artifactMetadataDays: number; preserveReferenced: boolean };
+}
 export interface TaskCycle { id: string; state: string; tasks: {id: string; nodeKey: string; state: string}[] }
 export interface LocalAgent {
   id: string;
   name: string;
   version: string;
   status: 'ONLINE' | 'OFFLINE';
-  capabilities: AgentTaskKind[];
+  capabilities: AgentCapability[];
   lastHeartbeatAt: string | null;
   sessionId: string | null;
 }
 export interface AgentTask {
   id: string;
   agentId: string;
-  kind: AgentTaskKind;
+  kind: AgentCapability;
   state: 'QUEUED' | 'RUNNING' | 'CANCEL_REQUESTED' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED';
   attempt: number;
   maxAttempts: number;
