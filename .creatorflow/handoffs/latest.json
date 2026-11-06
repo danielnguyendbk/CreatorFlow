@@ -1,170 +1,147 @@
 {
-    "schemaVersion":  1,
-    "generatedAtUtc":  "2026-11-06T07:16:00Z",
-    "branch":  "feat/v2-p2-engine-usage",
-    "sourceBranch":  "origin/feat/v2-p1-local-agent",
-    "sourceCommit":  "8c613212f0d730a5322d803d582dc95ff37d9178",
-    "lastImplementationCommit":  "8b9475811cd839a35ec8f79713c15c0418d22ab9",
-    "completedTasks":  [
-                           {
-                               "status":  "TESTED",
-                               "result":  "V10 validated/idempotent durable DAG cycles, dependency-gated concurrent claim, terminal dependency failure propagation and bounded PROCESS_FAILED backoff. Actual browser Git-\u003eFFmpeg-\u003eprobe cycle SUCCEEDED.",
-                               "id":  "V2-P2-01"
-                           },
-                           {
-                               "status":  "TESTED",
-                               "result":  "V11 fenced immutable checkpoints; real crash after checkpoint recovered at attempt 2 with verified artifact/same commit. Committed-state handoffs exported atomically per-cycle/latest; actual JSON Schema and restart/readback passed. Runtime source context remains explicitly unverified/null.",
-                               "id":  "V2-P2-02"
-                           },
-                           {
-                               "status":  "TESTED",
-                               "result":  "V12 strict sanitized snapshots, own agent identity/session, history/freshness/refresh/threshold/readiness and AI Usage/widget. Actual installed Codex App Server returned 300/10080-minute windows; authenticated agent-\u003eDB-\u003ePlaywright path and manual refresh passed. Fixtures are MOCK_ONLY.",
-                               "id":  "V2-P2-03",
-                               "verification":  "LIVE_VERIFIED_HOST_ACCOUNT_CLI_0_162_1_QUOTA_READ_ONLY"
-                           }
-                       ],
-    "incompleteTasks":  [
-                            "Operator review of completed P2 milestones",
-                            "Future AI task execution must consume readiness/reset/operator decisions; no arbitrary AI executor was introduced",
-                            "Draft PR creation blocked by connected GitHub integration 403"
-                        ],
-    "changedFiles":  [
-                         ".creatorflow/handoffs/latest.json",
-                         "CreatorFlow-Agent/agent.py",
-                         "CreatorFlow-Agent/codex_usage.py",
-                         "CreatorFlow-Agent/smoke_e2e.py",
-                         "CreatorFlow-Agent/test_agent.py",
-                         "CreatorFlow-Agent/test_codex_usage.py",
-                         "CreatorFlow-Agent/windows_process.py",
-                         "CreatorFlow-Backend/src/main/java/com/creatorflow/AgentQueue.java",
-                         "CreatorFlow-Backend/src/main/java/com/creatorflow/TaskCheckpoints.java",
-                         "CreatorFlow-Backend/src/main/java/com/creatorflow/TaskCycles.java",
-                         "CreatorFlow-Backend/src/main/java/com/creatorflow/UsageApi.java",
-                         "CreatorFlow-Backend/src/main/resources/db/migration/V10__dependency_cycles.sql",
-                         "CreatorFlow-Backend/src/main/resources/db/migration/V11__checkpoints_and_handoffs.sql",
-                         "CreatorFlow-Backend/src/main/resources/db/migration/V12__usage_snapshots.sql",
-                         "CreatorFlow-Backend/src/test/java/com/creatorflow/PublicationMigrationIntegrationTest.java",
-                         "CreatorFlow-Backend/src/test/java/com/creatorflow/TaskEngineIntegrationTest.java",
-                         "CreatorFlow-Backend/src/test/java/com/creatorflow/UsageIntegrationTest.java",
-                         "CreatorFlow-Frontend/src/api/agentApi.ts",
-                         "CreatorFlow-Frontend/src/api/usageApi.ts",
-                         "CreatorFlow-Frontend/src/components/layout/Sidebar.tsx",
-                         "CreatorFlow-Frontend/src/features/accounts/AccountManagerPage.tsx",
-                         "CreatorFlow-Frontend/src/features/agents/AgentMonitoringPage.tsx",
-                         "CreatorFlow-Frontend/src/features/usage/AiUsagePage.tsx",
-                         "CreatorFlow-Frontend/src/routes/index.tsx",
-                         "CreatorFlow-Frontend/src/types/index.ts",
-                         "docs/ARCHITECTURE.md",
-                         "docs/MASTER_PLAN.md",
-                         "docs/NEXT_TASKS.md",
-                         "docs/P2_ENGINE_USAGE.md",
-                         "docs/PROJECT_STATUS.md",
-                         "docs/schemas/cycle-handoff.schema.json"
-                     ],
-    "implementationCommits":  [
-                                  "eb8dd51",
-                                  "a21c353",
-                                  "6d61efd",
-                                  "8b94758"
-                              ],
-    "tests":  [
-                  "Maven: \u0026 D:/DevTools/apache-maven-3.9.12/bin/mvn.cmd -Dmaven.repo.local=C:/Users/Admin/AppData/Local/codex-with-chatgpt/maven-repo-phase2b package -q: PASS 37 tests, 0 failures/errors/skips. Test DB creatorflow_agent_test_20261106 and actual FFMPEG_PATH set",
-                  "Flyway V1-V12 isolated fresh-schema/upgrade/no-op regression PASS; acceptance DB migrated V9-\u003eV12 with existing local-agent state preserved",
-                  "Python: python -m unittest discover -v from CreatorFlow-Agent: PASS ten tests, no skips; six Windows/process/checkpoint, four collector fixture tests",
-                  "Frontend: npm run build with VITE_API_BASE_URL=http://127.0.0.1:5174: PASS TypeScript/Vite; existing bundle warning",
-                  "Codex public CLI 0.162.1 schema generation PASS: initialize, account/rateLimits/read, account/rateLimits/updated, account/usage/read declared",
-                  "Actual read-only Codex App Server initialized and returned quota windows 300/10080 through collector: PASS, no exec/inference/login/auth-file access",
-                  "python CreatorFlow-Agent/smoke_e2e.py --root storage/agent-runtime-e2e --backend-pid \u003cverified-pid\u003e --backend-jar storage/agent-backend.jar --cycle-id \u003cactual-cycle-id\u003e --evidence storage/p2-e2e-evidence.json: PASS actual fixtures/cancel/timeout/offline/agent+backend restart/checkpoint reuse/persisted cycle-handoff/usage history",
-                  "Actual crash-after-checkpoint: attempt 2 reused exact Git commit; worker logged Restored verified artifact checkpoint from attempt 1",
-                  "Playwright creatorflow-p2: dependency-cycle control -\u003e build/verify/probe SUCCEEDED; persisted handoff displayed; SQL checkpoints/export marker verified",
-                  "Formal jsonschema Draft202012 validation with format checker: actual storage/cycle-handoffs/\u003ccycle\u003e.json and latest.json PASS; completedTasks 3 and next CYCLE_COMPLETE",
-                  "Playwright: real AI Usage LIVE, actual 5h/weekly percentages/progress/reset/timezone/history, matching Account Manager widget, manual refresh PENDING/cooldown then new snapshot",
-                  "Collector fixtures: reversed/both windows, weekly-only/no invented 5h, no data, no login, missing CLI, unsupported schema/methods, timeout, optional usage and notification merge; secret fields discarded. These are MOCK_ONLY",
-                  "Usage integration: strict schema/secret rejection, authenticated identity/session, duplicate/out-of-order history, stale failure/age/reset, refresh 429, configurable warnings, agent credential denied operator APIs, exhausted quota does not block Git fixture",
-                  "Final successful browser run: 0 console errors, 1 existing React Router warning. Intentional backend shutdown traces include expected transient proxy failures",
-                  "Git: remote baseline and pushed implementation SHA match; draft PR returned HTTP 403, no PR exists"
-              ],
-    "liveVerification":  {
-                             "agentId":  "95546c05-ea58-4639-a7f1-902883057307",
-                             "source":  "CODEX_APP_SERVER",
-                             "fixtureVerification":  "MOCK_ONLY_SEPARATE_TEST_DATABASE",
-                             "notificationHandling":  "IMPLEMENTED_FIXTURE_TESTED_NOT_SEPARATELY_LIVE_VERIFIED",
-                             "cliVersion":  "0.162.1",
-                             "scope":  "Actual read-only quota on this host/account/CLI version; no inference or login",
-                             "rateLimitsRead":  "LIVE_VERIFIED",
-                             "sampleWarning":  "Recorded quota observations are historical, not guarantees of current allowance",
-                             "tokenActivity":  "OPTIONAL_SUPPORTED_METHOD; no additional live token-summary claim",
-                             "provider":  "CODEX_CLI",
-                             "windowDurationsMins":  [
-                                                         300,
-                                                         10080
-                                                     ]
-                         },
-    "environment":  {
-                        "maven":  "3.9.12",
-                        "realPublishing":  "disabled",
-                        "java":  "25",
-                        "inferenceCalls":  "not made by collector",
-                        "backend":  "127.0.0.1:8082",
-                        "refreshCooldownSeconds":  30,
-                        "postgresql":  "18.3",
-                        "ffmpeg":  "8.1.2",
-                        "python":  "3.13",
-                        "quotaPollingSeconds":  180,
-                        "frontend":  "127.0.0.1:5174",
-                        "manualRefreshTimeoutSeconds":  45
-                    },
-    "localEvidence":  [
-                          "storage/p2-package.log",
-                          "storage/p2-python-tests.log",
-                          "storage/p2-frontend-build.log",
-                          "storage/p2-e2e.log",
-                          "storage/p2-e2e-evidence.json",
-                          "storage/p2-usage-browser.txt",
-                          "storage/p2-account-widget-browser.txt",
-                          "storage/p2-cycle-browser-pass.txt",
-                          "storage/p2-final-cycle-pass.txt",
-                          "storage/p2-final-usage-browser.txt",
-                          "storage/p2-final-refresh-pending.txt",
-                          "storage/cycle-handoffs/",
-                          ".playwright-cli/"
-                      ],
-    "blockers":  [
-                     "Connected GitHub create_pull_request returned 403 Resource not accessible by integration; no PR exists"
-                 ],
-    "limits":  [
-                   "Fixed fixture execution plus read-only quota collection; no arbitrary shell, autonomous coding, Telegram or live publishing",
-                   "Runtime handoffs under ignored storage are separate from tracked repository navigation; unknown CreatorFlow checkout context is never fabricated",
-                   "Gemini quota adapter UNSUPPORTED, OpenRouter UNKNOWN pending official verification",
-                   "Local/single-operator transport; no service installer, remote identity, retention/rotation UI or general AI execution",
-                   "Flyway warns PostgreSQL 18 exceeds tested range; existing Vite bundle warning remains",
-                   "Final live verification is only the installed host/account/CLI quota read path; fixture success never establishes LIVE_VERIFIED"
-               ],
-    "architectureDecisions":  [
-                                  "Preserve P2-01 then P2-02 before P2-03; retain existing Account Manager and Local Agent",
-                                  "PostgreSQL authoritative DAG/checkpoints/events/handoffs; one writer plus session/attempt/lease fencing preserved",
-                                  "Official initialized App Server read methods only; inspect version/schema, optionally merge notifications/read token activity, never exec/login/reset/switch or read/copy auth caches",
-                                  "Window labels derive from duration 300/10080; absent 5h stays NOT_AVAILABLE; tokens never become quota percentage",
-                                  "Strict allowlisted snapshots bound to authenticated agent identity/session; privacy-sensitive fields rejected and raw errors discarded",
-                                  "Derived freshness degrades after failed collection/age/reset/refresh timeout; old values never stay labelled LIVE",
-                                  "AI readiness supports wait/reset/operator decisions; quota-free Git/FFmpeg/probe claim paths remain independent"
-                              ],
-    "resolvedFailures":  [
-                             "Windows sandbox temp access denied in Python fixtures; approved execution used without ACL edits",
-                             "Standalone probe schema path was relative and nested output; collector root normalized to absolute; real read then succeeded",
-                             "Stale Playwright refs after HMR were refreshed before continuing; no fake mutation success claimed"
-                         ],
-    "git":  {
-                "implementationRemoteVerified":  true,
-                "finalDocumentation":  "Separate documentation commit follows; verify final remote HEAD next cycle",
-                "push":  "CONFIRMED",
-                "pullRequest":  "BLOCKED_403",
-                "baselineRemoteVerified":  true,
-                "implementationRemoteSha":  "8b9475811cd839a35ec8f79713c15c0418d22ab9"
-            },
-    "nextCycle":  {
-                      "firstTask":  "OPERATOR_REVIEW_P2",
-                      "instructions":  "Verify latest P2 feature head and clean worktree, review completed milestones/limits. P2-01/02/03 are not NEXT/reimplement tasks. Future broader phase P3-01 requires a separate scoped instruction; do not automatically add Telegram/autonomous coding/publication."
-                  },
-    "manualPrUrl":  "https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p1-local-agent...feat/v2-p2-engine-usage?expand=1"
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-11-06T08:38:38.082Z",
+  "branch": "feat/v2-p3-telegram-control",
+  "sourceBranch": "origin/feat/v2-p2-engine-usage",
+  "sourceCommit": "f87c6c35d4da70cfe8ef36d7ada722c149cdd07f",
+  "lastImplementationCommit": "41b7ea0e0e5ef1039115e0aa15ef3f9b77c00c3a",
+  "completedTasks": [
+    {
+      "id": "V2-P3-01",
+      "status": "TESTED",
+      "verification": "MOCK_ONLY_TELEGRAM_REAL_WINDOWS_FIXTURE_AGENT",
+      "result": "V13/V14 default-disabled polling, durable offset/update receipts, numeric route/operator authority, fixed commands, durable cycle control/fixture approval, transactional outbox/quarantine and real backend Telegram UI. Maven 49, Python 10, build, migrations, real Windows fixtures/recovery and Playwright passed."
+    }
+  ],
+  "preservedTasks": [
+    "V2-P1-01 Account Manager",
+    "V2-P1-02 Windows Local Agent",
+    "V2-P2-01 dependency engine",
+    "V2-P2-02 checkpoints/handoff",
+    "V2-P2-03 read-only AI quota"
+  ],
+  "incompleteTasks": [
+    "Live Telegram acceptance NOT_CONFIGURED: no real token/chat setup or live-send authorization in this cycle",
+    "Draft PR creation BLOCKED_403: connected GitHub integration lacks permission"
+  ],
+  "changedFiles": [
+    "CreatorFlow-Backend/src/main/java/com/creatorflow/AgentQueue.java",
+    "CreatorFlow-Backend/src/main/java/com/creatorflow/TaskCycles.java",
+    "CreatorFlow-Backend/src/main/java/com/creatorflow/ControlApprovals.java",
+    "CreatorFlow-Backend/src/main/java/com/creatorflow/TelegramClient.java",
+    "CreatorFlow-Backend/src/main/java/com/creatorflow/TelegramStore.java",
+    "CreatorFlow-Backend/src/main/java/com/creatorflow/TelegramRuntime.java",
+    "CreatorFlow-Backend/src/main/java/com/creatorflow/TelegramApi.java",
+    "CreatorFlow-Backend/src/main/resources/db/migration/V13__telegram_control.sql",
+    "CreatorFlow-Backend/src/main/resources/db/migration/V14__telegram_delivery_budget.sql",
+    "CreatorFlow-Backend/src/test/java/com/creatorflow/TelegramIntegrationTest.java",
+    "CreatorFlow-Frontend/src/api/telegramApi.ts",
+    "CreatorFlow-Frontend/src/features/telegram/TelegramIntegrationPage.tsx",
+    "CreatorFlow-Frontend/src/components/layout/Sidebar.tsx",
+    "CreatorFlow-Frontend/src/routes/index.tsx",
+    "CreatorFlow-Frontend/src/types/index.ts",
+    "docs/TELEGRAM_INTEGRATION.md",
+    "docs/MASTER_PLAN.md",
+    "docs/ARCHITECTURE.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/NEXT_TASKS.md",
+    ".creatorflow/handoffs/latest.json"
+  ],
+  "implementationCommits": [
+    "d9f1cad",
+    "5c28b1f",
+    "3365629",
+    "41b7ea0"
+  ],
+  "tests": [
+    "Maven: D:/DevTools/apache-maven-3.9.12/bin/mvn.cmd -Dmaven.repo.local=C:/Users/Admin/AppData/Local/codex-with-chatgpt/maven-repo-phase2b package -q from CreatorFlow-Backend, CREATORFLOW_TEST_DB_URL/USER and actual FFMPEG_PATH set: PASS 49 tests, zero failures/errors/skips.",
+    "Flyway: isolated fresh V1-V14; historical V4->V14 conflicting-publication upgrade/validation/no-op; acceptance DB V12->V14 preserving existing agent/usage: PASS.",
+    "TelegramIntegrationTest: PASS 12 tests. Mock HTTP getMe/getWebhookInfo/getUpdates/sendMessage, duplicate/out-of-order/old updates, durable offset/new runtime instance, malformed-batch rollback, wrong/revoked user/chat, mutation authority, bot ignore, callback binding/replay/expiry, webhook refusal/timeout, outbox rate-limit retry/dead-letter/crash-before-ack UNKNOWN, trigger rollback and three-group routing.",
+    "Security/concurrency: PASS committed PAUSED blocks six concurrent claimers; six send claimers have one winner; valid agent credential denied Telegram management/approval APIs; token values invalid as environment references and not echoed; CONTENT control flag rejected 400; secret event text not forwarded.",
+    "Actual independent Windows Agent through mock Telegram: PASS paused Git->FFmpeg resumed and succeeded with real artifact hashes; running FFmpeg paused without being killed then cancelled through fenced renewal; mock send confirmed. Own DPAPI identity, no browser-token reuse, provider collection disabled.",
+    "DB-only /usage: PASS fixture five-hour/weekly percentages, reset/source/freshness from existing UsageApi, no inference/refresh. MOCK_ONLY percentages are not live-provider evidence.",
+    "Python: C:/Python313/python.exe -m unittest discover -v from CreatorFlow-Agent with FFMPEG_PATH: PASS ten tests, no skips; actual Windows process/checkpoint and collector fixture regressions.",
+    "Frontend: npm run build with VITE_API_BASE_URL=http://127.0.0.1:5174: PASS TypeScript/Vite; existing >500kB bundle warning.",
+    "Playwright creatorflow-p3: PASS real backend Telegram DISABLED/NOT_CONFIGURED metadata, CODE/CONTENT/VIDEO/operator mappings, pending fixture approval, routing NOT_SENT; browser-created dependency cycle SUCCEEDED and persisted handoff displayed.",
+    "storage/p3-restart-run.ps1 -> python CreatorFlow-Agent/smoke_e2e.py --root storage/agent-runtime-e2e --backend-pid <verified-pid> --backend-jar storage/agent-backend.jar --cycle-id 95189b31-536a-4c91-bf84-45820b92e5b9 --evidence storage/p3-e2e-evidence.json: PASS actual Git/FFmpeg/cancel/timeout/offline/process cleanup/checkpoint reuse/agent+backend restart; recovered attempts 2.",
+    "python storage/p3-verify-restart.py: PASS after actual backend restart and final tested JAR reload: PAUSED cycle retains QUEUED nodes, approval PENDING, three routes and pending outbox persisted, zero Telegram polls/sends.",
+    "Playwright after restart: PASS actual page reload; zero console errors, one existing React Router warning.",
+    "Git: clean baseline, remote baseline verified, implementation pushed and remote exact SHA matched. Draft PR connector returned 403; no PR created."
+  ],
+  "environment": {
+    "os": "Windows",
+    "java": "25",
+    "maven": "3.9.12",
+    "python": "3.13",
+    "postgresql": "18.3",
+    "ffmpeg": "8.1.2",
+    "testDatabase": "creatorflow_p3_test_20261106",
+    "backend": "127.0.0.1:8082",
+    "frontend": "127.0.0.1:5174",
+    "telegramEnabled": false,
+    "liveTelegram": "NOT_CONFIGURED",
+    "providerInference": "not invoked by P3",
+    "realPublishing": "disabled"
+  },
+  "localEvidence": [
+    "storage/p3-package.log",
+    "storage/p3-python-tests.log",
+    "storage/p3-frontend-build.log",
+    "storage/p3-telegram-agent-tests.log",
+    "storage/p3-telegram-browser.txt",
+    "storage/p3-cycle-browser-pass.txt",
+    "storage/p3-telegram-after-restart.txt",
+    "storage/p3-e2e.log",
+    "storage/p3-e2e-evidence.json",
+    "storage/p3-telegram-restart-evidence.json",
+    ".playwright-cli/"
+  ],
+  "architectureDecisions": [
+    "PostgreSQL is authoritative; Telegram is a default-disabled adapter, never a task database.",
+    "Environment owns bot tokens; DB stores only environment key/identity metadata. No auth cache, cookie or provider token access.",
+    "Per-bot poll lease plus transactional update receipts/effects/outbox/offset. No polling alongside a configured webhook; no webhook deletion or public ingress.",
+    "Numeric user and chat authority plus route permissions; bots ignored, reply depth 3 and command rate limit. Executor/reviewer role names remain future routing.",
+    "Cycle controls serialize on existing agent locks; pause blocks new claims, running task continues, cancel uses current fencing and is terminal after recovery.",
+    "Approvals bind fixture cycle/operator/action/chat/bot/expiry/evidence; durable decision precedes outbound success, never dispatches publication.",
+    "Event triggers enqueue sanitized persisted ID/type references transactionally. Known rejections retry at most five attempts, ambiguous sends quarantine UNKNOWN without blind replay; no exactly-once guarantee.",
+    "Usage commands read existing snapshots/freshness only; Git/FFmpeg fixtures remain quota-independent.",
+    "UI shows real backend metadata/errors and validates routing without sending. No frontend token entry."
+  ],
+  "limits": [
+    "Telegram verification MOCK_ONLY; no LIVE_VERIFIED bot or group.",
+    "No inline approval keyboard; callback validation tested, unqualified slash commands work, explicit @bot command mentions ignored.",
+    "UNKNOWN sends require manual operator reconciliation; no blind replay API.",
+    "No arbitrary shell, AI coding executor, real publishing, main merge, production deployment, public API or periodic/five-hour schedule.",
+    "Stored quota reported LIVE during recovery is not a new Telegram/live-provider verification claim.",
+    "Existing Flyway/PostgreSQL compatibility, Vite bundle and React Router warnings remain."
+  ],
+  "resolvedFailures": [
+    "Python initial test lacked FFMPEG_PATH and failed TOOL_UNAVAILABLE; rerun with installed path passed.",
+    "Initial UI Button secondary variant invalid; corrected to existing outline and build passed.",
+    "Initial real-agent assertion used sha256 instead of actual artifactSha256 field; corrected and full suite passed.",
+    "Private restart launcher initially sliced shell setup incorrectly; corrected before successful process recovery run."
+  ],
+  "git": {
+    "baselineRemoteVerified": true,
+    "implementationRemoteVerified": true,
+    "implementationRemoteSha": "41b7ea0e0e5ef1039115e0aa15ef3f9b77c00c3a",
+    "push": "CONFIRMED_IMPLEMENTATION",
+    "finalDocumentation": "Navigation commit follows; final push/remote SHA verified after commit",
+    "pullRequest": "BLOCKED_403"
+  },
+  "blockers": [
+    "GitHub create_pull_request returned HTTP 403 Resource not accessible by integration; no PR created.",
+    "Live Telegram token and designated verified chat/user IDs are not configured; explicit test-message authorization required before live acceptance."
+  ],
+  "manualPrUrl": "https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p2-engine-usage...feat/v2-p3-telegram-control?expand=1",
+  "nextCycle": {
+    "firstTask": "OPERATOR_REVIEW_P3",
+    "instructions": "Verify final feature remote/clean tree and review P3 scope. Optional live Telegram acceptance only after actual setup and explicit permission. Then P4 immutable content/action/artifact manifests and official adapter reconciliation; P5 isolated worktrees/credential lifecycle/provider capabilities/quota admission/reviewer-tests-draft PR. No automatic coding, publishing or five-hour schedule.",
+    "dependencies": [
+      "P4 approval bound to immutable action/evidence and controlled provider mock acceptance",
+      "P5 credential lifecycle, isolated repository worktree ownership, fixed schema/process budgets",
+      "P5 official Codex/Gemini capability checks and fresh quota READY/budget/operator gate; wait reset or ask operator on unavailable/stale quota",
+      "P5 reviewer/tests then operator-reviewed draft PR, never automatic merge/deploy"
+    ]
+  }
 }

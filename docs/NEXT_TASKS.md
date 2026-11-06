@@ -11,6 +11,8 @@ P3 Telegram control, durable cycle controls/fixture approvals and transactional 
 5. P5 review chain: planner -> isolated executor -> reviewer/tests -> operator-reviewed draft PR. Telegram CodeBot/Gemini/reviewer labels remain routing until execution acceptance exists. No automatic merge/deploy; any periodic/five-hour trigger is a separate opt-in after overlap/restart/quota tests.
 6. Follow-up ergonomics: verified `/command@botname` routing, inline approval keyboards and audited manual UNKNOWN-send reconciliation are not implemented in P3. Avoid blind replay and preserve decision/event references.
 
+Implementation push is CONFIRMED at `41b7ea0`; draft PR creation is BLOCKED_403 (`Resource not accessible by integration`). [Manual PR into P2](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p2-engine-usage...feat/v2-p3-telegram-control?expand=1). Final navigation commit is pushed and verified separately; use latest Git state over historical snapshots below.
+
 Updated: 2026-11-06. Current branch `feat/v2-p2-engine-usage`, baseline `8c61321`. Implemented in order: P2-01 dependency engine -> P2-02 checkpoints/handoff -> P2-03 usage monitoring. All three have actual scoped acceptance in [P2_ENGINE_USAGE.md](P2_ENGINE_USAGE.md). Read AGENTS.md/latest handoff and verify Git/remote/runtime before another cycle.
 
 ## P2 completion and next boundary

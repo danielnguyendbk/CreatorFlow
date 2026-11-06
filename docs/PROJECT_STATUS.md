@@ -11,6 +11,8 @@ Branch `feat/v2-p3-telegram-control`; baseline local/remote verified `f87c6c35d4
 
 Commands, contracts, evidence, resolved setup failures and P4/P5 dependency proposal: [TELEGRAM_INTEGRATION.md](TELEGRAM_INTEGRATION.md). Milestones so far: `d9f1cad` adapter/schema, `5c28b1f` cycle controls/approvals, `3365629` outbox/API/tests. Final UI/handoff commit and remote/PR evidence are in latest.json. Older results below are historical snapshots.
 
+Final implementation `41b7ea0` (UI/configuration rejection/docs) was pushed and matched `git ls-remote`. Connected GitHub draft PR creation into `feat/v2-p2-engine-usage` returned HTTP 403 `Resource not accessible by integration`; no PR was created by this run. [Create the PR manually](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p2-engine-usage...feat/v2-p3-telegram-control?expand=1). Navigation handoff delivery follows in a documentation commit.
+
 Updated: 2026-11-06. Current branch: `feat/v2-p2-engine-usage`, verified baseline `origin/feat/v2-p1-local-agent` at `8c613212f0d730a5322d803d582dc95ff37d9178`. Current results supersede previous cycles below.
 
 ## Current cycle: P2-01 -> P2-02 -> P2-03
