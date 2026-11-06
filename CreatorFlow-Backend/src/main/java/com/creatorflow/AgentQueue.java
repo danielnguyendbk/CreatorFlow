@@ -88,10 +88,11 @@ class AgentQueue {
         db.queryForList("select id from local_agents where id=? for update",agent);
         current(agent,session);
         if(db.queryForObject("select count(*) from agent_tasks where agent_id=? and state in ('RUNNING','CANCEL_REQUESTED')",Integer.class,agent)>0) return null;
-        var rows=db.queryForList("select t.id from agent_tasks t join local_agents a on a.id=t.agent_id where t.agent_id=? and t.state='QUEUED' and t.not_before<=now() and a.capabilities ?? t.kind and not exists (select 1 from agent_task_dependencies d join agent_tasks p on p.id=d.depends_on_id where d.task_id=t.id and p.state<>'SUCCEEDED') order by t.created_at limit 1 for update of t skip locked",agent);
+        var rows=db.queryForList("select t.id from agent_tasks t join local_agents a on a.id=t.agent_id where t.agent_id=? and t.state='QUEUED' and t.not_before<=now() and (t.cycle_id is null or exists (select 1 from agent_cycles c where c.id=t.cycle_id and c.state in ('QUEUED','RUNNING'))) and a.capabilities ?? t.kind and not exists (select 1 from agent_task_dependencies d join agent_tasks p on p.id=d.depends_on_id where d.task_id=t.id and p.state<>'SUCCEEDED') order by t.created_at limit 1 for update of t skip locked",agent);
         if(rows.isEmpty()) return null;
         UUID id=(UUID)rows.getFirst().get("id");
         db.update("update agent_tasks set state='RUNNING',attempt=attempt+1,session_id=?,lease_expires_at=now()+make_interval(secs=>?),error_code=null,updated_at=now() where id=?",session,lease,id);
+        db.update("update agent_cycles set state='RUNNING' where id=(select cycle_id from agent_tasks where id=?) and state='QUEUED'",id);
         var result=task(id);
         var checkpoints=db.queryForList("select attempt,result_json from agent_task_checkpoints where task_id=? order by attempt desc limit 1",id);
         if(!checkpoints.isEmpty()) try {result.put("checkpoint",Map.of("attempt",checkpoints.getFirst().get("attempt"),"result",json.readValue(checkpoints.getFirst().get("result_json").toString(),Map.class)));}

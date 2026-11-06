@@ -55,11 +55,52 @@ class TaskCycles {
             db.update("insert into agent_task_dependencies(task_id,depends_on_id) values (?,?)",ids.get(node.key()),ids.get(parent));
         return read(id);
     }
-    Map<String,Object> read(UUID id) {
-        if(db.queryForList("select id from agent_cycles where id=?",id).isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Cycle not found");
+    @Transactional(noRollbackFor=ResponseStatusException.class) Map<String,Object> read(UUID id) {
+        var rows=db.queryForList("select state from agent_cycles where id=?",id);
+        if(rows.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Cycle not found");
         var tasks=db.queryForList("select id,node_key as \"nodeKey\",state from agent_tasks where cycle_id=? order by node_key",id);
-        String state=tasks.stream().allMatch(t->"SUCCEEDED".equals(t.get("state")))?"SUCCEEDED":tasks.stream().anyMatch(t->List.of("FAILED","CANCELLED").contains(t.get("state")))?"FAILED":"RUNNING";
+        String stored=(String)rows.getFirst().get("state"),state=stored;
+        boolean settled=!tasks.isEmpty() && tasks.stream().allMatch(t->List.of("SUCCEEDED","FAILED","CANCELLED").contains(t.get("state")));
+        if(settled && !List.of("SUCCEEDED","FAILED","CANCELLED").contains(stored)) {
+            state=stored.equals("CANCEL_REQUESTED")?"CANCELLED":tasks.stream().allMatch(t->"SUCCEEDED".equals(t.get("state")))?"SUCCEEDED":"FAILED";
+            if(db.update("update agent_cycles set state=? where id=? and state=?",state,id,stored)==1)
+                db.update("insert into cycle_control_events(cycle_id,state) values (?,?)",id,state);
+            else state=db.queryForObject("select state from agent_cycles where id=?",String.class,id);
+        }
         return Map.of("id",id,"state",state,"tasks",tasks,"dependencies",db.queryForList("select d.task_id as \"taskId\",d.depends_on_id as \"dependsOnId\" from agent_task_dependencies d join agent_tasks t on t.id=d.task_id where t.cycle_id=?",id));
+    }
+    @Transactional(noRollbackFor=ResponseStatusException.class) Map<String,Object> control(UUID id,String action) {
+        // Follow the agent -> cycle -> task lock order used by claims and completions.
+        db.queryForList("select id from local_agents where id in (select agent_id from agent_tasks where cycle_id=?) order by id for update",id);
+        var rows=db.queryForList("select state from agent_cycles where id=? for update",id);
+        if(rows.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Cycle not found");
+        String state=(String)read(id).get("state"),next;
+        switch(action) {
+            case "pause" -> {
+                if(state.equals("PAUSED")) return read(id);
+                if(!List.of("QUEUED","RUNNING").contains(state)) throw AgentQueue.conflict("Cycle cannot pause");
+                next="PAUSED";
+            }
+            case "resume" -> {
+                if(!state.equals("PAUSED")) throw AgentQueue.conflict("Only a paused cycle can resume");
+                next="QUEUED"; // Claim still checks dependencies, capabilities and backoff.
+            }
+            case "cancel" -> {
+                if(List.of("CANCELLED","CANCEL_REQUESTED").contains(state)) return read(id);
+                if(List.of("SUCCEEDED","FAILED").contains(state)) throw AgentQueue.conflict("Terminal cycle cannot cancel");
+                next="CANCEL_REQUESTED";
+                db.update("update agent_cycles set state=? where id=?",next,id);
+                for(var task:db.queryForList("select id from agent_tasks where cycle_id=? order by id",id)) queue.cancel((UUID)task.get("id"));
+            }
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Unknown cycle action");
+        }
+        db.update("update agent_cycles set state=? where id=?",next,id);
+        db.update("insert into cycle_control_events(cycle_id,state) values (?,?)",id,next);
+        return read(id);
+    }
+    @org.springframework.scheduling.annotation.Scheduled(fixedDelay=1000)
+    @Transactional public void reconcile() {
+        for(var row:db.queryForList("select id from agent_cycles where state in ('QUEUED','RUNNING','PAUSED','CANCEL_REQUESTED') order by id limit 100")) read((UUID)row.get("id"));
     }
 }
 
@@ -69,4 +110,5 @@ class TaskCycleApi {
     TaskCycleApi(TaskCycles cycles) {this.cycles=cycles;}
     @PostMapping("/api/v2/task-cycles") Map<String,Object> create(@Valid @RequestBody TaskCycles.Create request) {return cycles.create(request);}
     @GetMapping("/api/v2/task-cycles/{id}") Map<String,Object> read(@PathVariable UUID id) {return cycles.read(id);}
+    @PostMapping("/api/v2/task-cycles/{id}/{action:pause|resume|cancel}") Map<String,Object> control(@PathVariable UUID id,@PathVariable String action) {return cycles.control(id,action);}
 }
