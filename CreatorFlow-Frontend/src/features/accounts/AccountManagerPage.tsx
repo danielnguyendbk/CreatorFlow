@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { accountApi } from '@/api/accountApi';
 import { Button, PageHeader } from '@/components/ui';
 import type { ReconnectIntent } from '@/types';
+import { UsageWidget } from '@/features/usage/AiUsagePage';
 
 const labels = { CONNECTED: 'Connected', EXPIRED: 'Expired', UNSUPPORTED: 'Unsupported', UNKNOWN: 'Unknown' };
 
@@ -16,6 +17,7 @@ export function AccountManagerPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Account Manager" description="Provider capabilities and connection health from this backend host." />
+      <UsageWidget compact />
       <p className="text-sm text-zinc-400">CLI sign-in stays in the official tool. Local login status does not verify provider reachability or quota.</p>
       <Button onClick={() => refresh.mutate()} disabled={refresh.isPending || query.isPending}>
         {refresh.isPending ? 'Checking health…' : 'Refresh health'}

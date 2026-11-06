@@ -14,6 +14,7 @@ import { ActivityPage } from '@/features/activity/ActivityPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { AccountManagerPage } from '@/features/accounts/AccountManagerPage';
 import { AgentMonitoringPage } from '@/features/agents/AgentMonitoringPage';
+import { AiUsagePage } from '@/features/usage/AiUsagePage';
 import { NotFoundPage } from '@/features/common/NotFoundPage';
 
 export const router = createBrowserRouter([
@@ -80,6 +81,10 @@ export const router = createBrowserRouter([
       {
         path: 'agents',
         element: <AgentMonitoringPage />,
+      },
+      {
+        path: 'ai-usage',
+        element: <AiUsagePage />,
       },
       {
         path: '*',

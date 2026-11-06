@@ -243,6 +243,10 @@ def run(args):
         executor = Executor(root)
         capabilities = executor.capabilities()
         session = client.post("session", {"capabilities": capabilities})["sessionId"]
+        if os.environ.get("CREATORFLOW_USAGE_ENABLED", "true").lower() == "true":
+            import threading
+            from codex_usage import usage_loop
+            threading.Thread(target=usage_loop, args=(client, session, root, stop), daemon=True).start()
         print("Agent session started; credentials retained by Windows DPAPI", flush=True)
         last_beat = [0.0]
         current = [None]

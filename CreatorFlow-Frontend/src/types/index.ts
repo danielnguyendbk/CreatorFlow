@@ -9,6 +9,25 @@
 
 export type ID = string;
 
+export interface QuotaWindow {
+  status: 'AVAILABLE' | 'NOT_AVAILABLE' | 'UNKNOWN';
+  windowDurationMins: number;
+  usedPercent?: number;
+  remainingPercent?: number;
+  resetsAt?: number | null;
+  warning?: 'NORMAL' | 'LOW' | 'CRITICAL' | 'EXHAUSTED';
+}
+export interface CodexUsage {
+  provider: 'CODEX_CLI'; agentId: string | null; source: string; freshness: 'LIVE' | 'STALE' | 'UNKNOWN';
+  connection: string; errorCode: string | null; cliVersion: string | null; lastSynced: string | null; lastGoodAt: string | null;
+  fiveHour: QuotaWindow; weekly: QuotaWindow; automationReadiness: string;
+  refreshState: 'IDLE' | 'PENDING' | 'TIMEOUT';
+  credits: { balance: string | null; hasCredits: boolean | null; unlimited: boolean | null } | null;
+  tokens: { lifetimeTokens: number | null; peakDailyTokens: number | null } | null;
+  thresholds: { low: number; critical: number };
+}
+export interface UsageHistoryEntry { id: string; sequence: number; observedAt: string; status: string; cliVersion: string | null; windows: {windowDurationMins: number; usedPercent: number}[] }
+
 export type AgentTaskKind = 'GIT_FIXTURE' | 'FFMPEG_FIXTURE' | 'CAPABILITY_PROBE';
 export interface TaskCycle { id: string; state: string; tasks: {id: string; nodeKey: string; state: string}[] }
 export interface LocalAgent {

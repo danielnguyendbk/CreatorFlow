@@ -63,7 +63,7 @@ class AgentQueue {
         db.update("update local_agents set session_id=?,capabilities=?::jsonb,last_heartbeat_at=now() where id=?",session,encode(capabilities.stream().distinct().toList()),agent);
         return Map.of("sessionId",session,"leaseSeconds",lease);
     }
-    private void current(UUID agent,UUID session) {
+    void current(UUID agent,UUID session) {
         if(db.queryForList("select id from local_agents where id=? and session_id=? for update",agent,session).isEmpty())
             throw conflict("Agent session fenced");
     }

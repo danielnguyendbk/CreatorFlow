@@ -57,6 +57,7 @@ const navGroups: NavGroup[] = [
       { label: 'Activity', href: '/activity', icon: Activity },
       { label: 'Account Manager', href: '/accounts', icon: Circle },
       { label: 'Agent Monitoring', href: '/agents', icon: Activity },
+      { label: 'AI Usage', href: '/ai-usage', icon: Circle },
       { label: 'Settings', href: '/settings', icon: Settings },
     ],
   },

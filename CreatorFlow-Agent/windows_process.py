@@ -1,6 +1,6 @@
 """Windows child created suspended, assigned to a kill-on-close Job, then resumed.
 
-No shell, no inherited handles. Closing the job also kills all descendants, including
+No shell; only explicit stdio pipes may be inherited. Closing the job kills descendants, including
 when Windows terminates the owning agent abruptly.
 """
 import ctypes
@@ -40,14 +40,20 @@ if os.name == "nt":
     kernel.TerminateProcess.argtypes = [w.HANDLE, w.UINT]
     kernel.WaitForSingleObject.argtypes = [w.HANDLE, w.DWORD]
     kernel.CloseHandle.argtypes = [w.HANDLE]
+    class Security(ctypes.Structure):
+        _fields_ = [("length", w.DWORD), ("descriptor", ctypes.c_void_p), ("inherit", w.BOOL)]
+    kernel.CreatePipe.argtypes = [ctypes.POINTER(w.HANDLE), ctypes.POINTER(w.HANDLE), ctypes.POINTER(Security), w.DWORD]
+    kernel.SetHandleInformation.argtypes = [w.HANDLE, w.DWORD, w.DWORD]
 
 
 class JobProcess:
-    def __init__(self, argv, cwd, env):
+    def __init__(self, argv, cwd, env, piped=False):
         if os.name != "nt":
             raise RuntimeError("Windows agent requires Windows Job Objects")
         self.job = kernel.CreateJobObjectW(None, None)
         self.process = None
+        self.stdin = self.stdout = None
+        child_handles = []
         info = ProcessInfo()
         limits = Extended()
         limits.basic.flags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
@@ -56,10 +62,30 @@ class JobProcess:
                 raise ctypes.WinError(ctypes.get_last_error())
             startup = Startup()
             startup.cb = ctypes.sizeof(startup)
+            if piped:
+                import msvcrt
+                security = Security(ctypes.sizeof(Security), None, True)
+                stdin_read, stdin_write, stdout_read, stdout_write = w.HANDLE(), w.HANDLE(), w.HANDLE(), w.HANDLE()
+                if not kernel.CreatePipe(ctypes.byref(stdin_read), ctypes.byref(stdin_write), ctypes.byref(security), 0):
+                    raise ctypes.WinError(ctypes.get_last_error())
+                child_handles.append(stdin_read)
+                if not kernel.CreatePipe(ctypes.byref(stdout_read), ctypes.byref(stdout_write), ctypes.byref(security), 0):
+                    kernel.CloseHandle(stdin_write)
+                    raise ctypes.WinError(ctypes.get_last_error())
+                child_handles.append(stdout_write)
+                kernel.SetHandleInformation(stdin_write, 1, 0)
+                kernel.SetHandleInformation(stdout_read, 1, 0)
+                self.stdin = os.fdopen(msvcrt.open_osfhandle(stdin_write.value, 0), "w", encoding="utf-8", newline="\n", buffering=1)
+                self.stdout = os.fdopen(msvcrt.open_osfhandle(stdout_read.value, os.O_RDONLY), "r", encoding="utf-8", errors="replace")
+                null_fd = os.open(os.devnull, os.O_WRONLY)
+                null_handle = msvcrt.get_osfhandle(null_fd)
+                os.set_handle_inheritable(null_handle, True)
+                startup.flags = 0x100
+                startup.stdin, startup.stdout, startup.stderr = stdin_read, stdout_write, null_handle
             environment = ctypes.create_unicode_buffer("\0".join(f"{k}={v}" for k, v in sorted(env.items())) + "\0\0")
             command = ctypes.create_unicode_buffer(subprocess.list2cmdline([str(a) for a in argv]))
             # CREATE_SUSPENDED | CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT
-            if not kernel.CreateProcessW(str(argv[0]), command, None, None, False, 0x08000404,
+            if not kernel.CreateProcessW(str(argv[0]), command, None, None, piped, 0x08000404,
                                          environment, str(cwd), ctypes.byref(startup), ctypes.byref(info)):
                 raise ctypes.WinError(ctypes.get_last_error())
             self.process, self.pid = info.process, info.pid
@@ -74,6 +100,10 @@ class JobProcess:
         finally:
             if info.thread:
                 kernel.CloseHandle(info.thread)
+            for handle in child_handles:
+                kernel.CloseHandle(handle)
+            if piped and 'null_fd' in locals():
+                os.close(null_fd)
 
     def poll(self):
         result = w.DWORD()
@@ -90,3 +120,9 @@ class JobProcess:
             kernel.WaitForSingleObject(self.process, 5000)
             kernel.CloseHandle(self.process)
             self.process = None
+        for stream in (self.stdin, self.stdout):
+            if stream:
+                try:
+                    stream.close()
+                except OSError:
+                    pass

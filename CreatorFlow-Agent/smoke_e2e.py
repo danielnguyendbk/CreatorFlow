@@ -99,6 +99,31 @@ def main(args):
         wait(lambda: not alive(cancelled_pid), 5)
         timeout_id = enqueue("FFMPEG_FIXTURE", duration=20, timeout=1)
         assert state(timeout_id, "FAILED")["errorCode"] == "TIMEOUT"
+        # Crash an authenticated agent after its real Git artifact/checkpoint commits,
+        # but before the terminal result. The normal worker must reuse verified output.
+        worker.terminate()
+        worker.wait(timeout=5)
+        checkpoint_id = enqueue("GIT_FIXTURE")
+        checkpoint_script = """
+import sys,json,os
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+from agent import Client,Executor,exclusive_lock,protect
+root=Path(sys.argv[2]); client=Client(sys.argv[3])
+with exclusive_lock(root/'instance.lock'):
+ client.identity=json.loads(protect((root/'identity.dpapi').read_bytes(),True))
+ session=client.post('session',{'capabilities':['GIT_FIXTURE','FFMPEG_FIXTURE','CAPABILITY_PROBE']})['sessionId']
+ task=client.post('claim',{'sessionId':session})
+ result=Executor(root).execute(task)
+ client.post('tasks/'+task['id']+'/checkpoint',{'sessionId':session,'attempt':task['attempt'],'result':result})
+ os._exit(17)
+"""
+        crashed = subprocess.run([sys.executable,"-c",checkpoint_script,str(Path(__file__).parent.resolve()),str(root),args.backend],stdout=log,stderr=log,timeout=15)
+        assert crashed.returncode == 17
+        checkpoint_commit = next(iter((root/'worktrees/e2e-fixture'/ (checkpoint_id+'-1')/'.git/refs/heads').glob('fixture'))).read_text().strip()
+        worker=start_agent()
+        checkpoint_result=state(checkpoint_id,'SUCCEEDED',30)
+        assert checkpoint_result['attempt']==2 and checkpoint_result['result']['gitCommit']==checkpoint_commit
         restart_id = enqueue("FFMPEG_FIXTURE", duration=8, timeout=20)
         state(restart_id, "RUNNING")
         first_pid = child(restart_id)
@@ -124,9 +149,16 @@ def main(args):
         after_backend = state(backend_restart_id, "SUCCEEDED", 45)
         assert after_backend["attempt"] == 2
         assert task(git_id)["result"] == git["result"]
+        if args.cycle_id:
+            assert api('task-cycles/'+args.cycle_id)['state']=='SUCCEEDED'
+            assert api('task-cycles/'+args.cycle_id+'/handoff')['source']=='COMMITTED_POSTGRESQL_STATE'
+        quota=api('usage/codex?agentId='+agent_id)
+        history=api('usage/history?agentId='+agent_id)
         evidence = dict(agentId=agent_id, gitTask=git_id, ffmpegTask=ff_id, cancellationTask=cancel_id,
             timeoutTask=timeout_id, agentRestartTask=restart_id, backendRestartTask=backend_restart_id,
             agentRestartAttempt=recovered["attempt"], backendRestartAttempt=after_backend["attempt"],
+            checkpointTask=checkpoint_id,checkpointAttempt=checkpoint_result['attempt'],checkpointCommit=checkpoint_commit,
+            persistedCycleId=args.cycle_id,quotaConnection=quota['connection'],quotaFreshness=quota['freshness'],quotaHistoryCount=len(history),
             processTreeCleanup=True, offlineObserved=True, dpapiIdentityReused=True,
             persistedGitResult=git["result"], persistedFfmpegResult=video["result"])
         output.write_text(json.dumps(evidence, indent=2), encoding="utf-8")
@@ -149,6 +181,7 @@ if __name__ == "__main__":
     parser.add_argument("--backend-pid", type=int, required=True)
     parser.add_argument("--backend-jar", required=True)
     parser.add_argument("--evidence", default="storage/agent-e2e-evidence.json")
+    parser.add_argument("--cycle-id")
     try:
         main(parser.parse_args())
     except Exception:
