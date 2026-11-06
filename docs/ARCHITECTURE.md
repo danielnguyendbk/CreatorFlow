@@ -1,6 +1,16 @@
 # CreatorFlow V2 architecture
 
-Updated 2026-11-06. P0, Account Manager, local agent, P2 dependency cycles/checkpoints/handoff and read-only Codex monitoring are **IMPLEMENTED**, with scoped tests in PROJECT_STATUS.md. Outbox delivery, Telegram, autonomous coding and general AI task execution remain **DESIGNED**.
+Updated 2026-11-06. P0, Account Manager, local agent, P2 dependency cycles/checkpoints/handoff, read-only Codex monitoring and P3 Telegram control/outbox are **IMPLEMENTED**, with scoped tests in PROJECT_STATUS.md. Telegram acceptance is MOCK_ONLY; live bot is NOT_CONFIGURED. Autonomous coding and general AI task execution remain **DESIGNED**.
+
+## Implemented P3 boundary
+
+Telegram -> long-poll adapter -> authenticated numeric command dispatcher -> Spring services -> PostgreSQL cycles/task queue -> existing Windows Agent. No public webhook/API port is added. TELEGRAM_ENABLED defaults false; backend environment owns tokens, PostgreSQL owns non-secret identity/routing metadata, durable poll leases/offsets/update receipts and control state. Separate workers keep long polling off the agent recovery scheduler. Operator HTTP credentials and agent-runtime credentials remain separate; agents cannot access Telegram management APIs.
+
+V13/V14 persist cycle states/controls/events, assigned expiring fixture approvals and transactional outbound rows. Claim and control serialize through the same agent lock; pause gates new claims, cancel uses existing attempt/session fencing and cannot resurrect after restart. Event triggers atomically enqueue sanitized ID/type notifications for CODE, CONTENT and VIDEO. Send claims have bot/chat budgets, bounded retries and dead-letter/UNKNOWN quarantine; an ambiguous send is never blindly replayed. The provider does not offer exactly-once send semantics.
+
+Telegram commands require both registered chat and numeric user; OPERATOR/ADMIN plus route flags gate mutations. Bot senders, anonymous senders and deep replies are ignored; response frequency and command set are bounded. `/usage` reads existing PostgreSQL quota/freshness only. Approval binds fixture cycle, action, operator, bot/chat, expiry and evidence; duplicate/replayed decisions cannot change terminal state and never publish. UI `/telegram` reads real backend metadata and validates routing without sending. Official bot-to-bot mode is documented but not assumed/enabled; executor/reviewer remain future roles.
+
+Actual database/security/concurrency/mock HTTP, real Windows fixture/control, process restart and Playwright evidence are in [TELEGRAM_INTEGRATION.md](TELEGRAM_INTEGRATION.md). Existing P2 implementation below is preserved. P4/P5 require immutable action/evidence manifests, isolated coding worktrees, credential lifecycle, verified provider capabilities, fresh quota admission/operator gates and review/test-gated draft PRs; no autonomous executor or five-hour trigger is introduced.
 
 ## Implemented P2 boundary
 

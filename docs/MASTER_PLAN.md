@@ -1,5 +1,11 @@
 # CreatorFlow V2 master plan
 
+## Current: V2-P3-01 Telegram control plane (2026-11-06)
+
+Branch `feat/v2-p3-telegram-control`, verified local/remote P2 baseline `f87c6c35d4da70cfe8ef36d7ada722c149cdd07f`. P2 DAG/checkpoint/usage and Windows Agent are reused. V13/V14 implement default-disabled long polling, numeric routing/authority, cycle pause/resume/cancel, fixture approvals, transactional outbox/quarantine and backend-driven Telegram UI. Actual mock/database/concurrency and real Windows fixture/restart acceptance passed; Telegram remains MOCK_ONLY/NOT_CONFIGURED, not LIVE_VERIFIED. See [TELEGRAM_INTEGRATION.md](TELEGRAM_INTEGRATION.md) and latest handoff for commands and delivery evidence. Older phase snapshots below are historical.
+
+Next dependency sequence: P4 controlled artifact/content/approval manifests and official adapter reconciliation, then P5 credential lifecycle and isolated coding worktrees, verified Codex/Gemini execution capabilities, fresh quota admission/budget/operator gates, reviewer/tests and draft PR. Unknown quota requires an operator decision; exhausted quota waits for reset. Git/FFmpeg remain quota-independent. Telegram role names do not implement AI coding. Live publication, main merge/deploy and any periodic/five-hour schedule require separate authorization and acceptance; none is enabled here.
+
 Current update 2026-11-06: branch `feat/v2-p2-engine-usage`, verified baseline `8c61321`. P2-01 and P2-02 were preserved/implemented before P2-03. See PROJECT_STATUS.md, P2_ENGINE_USAGE.md and the latest handoff for current scoped acceptance. The original V1 audit below is historical.
 
 Updated: 2026-11-05. Source baseline: `origin/feat/backend-v1` at `a7c1f06`. Implementation branch: `feat/v2-p0-hardening`. This plan is based on the checked Spring controllers, Flyway V1–V4, six existing Maven tests, frontend API clients and domain types. Read `PROJECT_STATUS.md` and `.creatorflow/handoffs/latest.json` for subsequent results; recheck Git and runtime before acting.

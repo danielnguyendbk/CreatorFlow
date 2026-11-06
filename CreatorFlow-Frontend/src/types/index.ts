@@ -457,6 +457,25 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+export interface TelegramStatus {
+  state: 'ENABLED' | 'DISABLED' | 'NOT_CONFIGURED';
+  botToBot: string;
+  bots: { identity: string; botId: number; configured: boolean; availability: string; nextOffset: number;
+    lastPollAt: string | null; lastSuccessfulSendAt: string | null; errorCode: string | null }[];
+  routes: { botIdentity: string; chatId: string; kind: 'CODE' | 'CONTENT' | 'VIDEO'; canControl: boolean; canApprove: boolean }[];
+  operators: { botIdentity: string; chatId: string; userId: string; role: string }[];
+  outbox: { state: string; count: number }[];
+  errors: { id: string; refType: string; refId: string; state: string; errorCode: string; attempts: number }[];
+}
+export interface TelegramApproval {
+  id: string; cycle_id: string; action: string; state: string; required_operator: number;
+  bot_identity: string; chat_id: number; expires_at: string; decision_actor: number | null; decision_at: string | null; evidence_ref: string;
+}
+export interface TelegramRoutingTest {
+  delivery: 'NOT_SENT';
+  routes: { botIdentity: string; chatId: string; kind: string; operators: number }[];
+}
+
 export interface ApiResponse<T> {
   data: T;
   message: string | null;

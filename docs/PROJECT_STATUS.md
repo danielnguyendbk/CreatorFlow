@@ -1,5 +1,16 @@
 # CreatorFlow project status
 
+## Current cycle: V2-P3-01 Telegram control plane (2026-11-06)
+
+Branch `feat/v2-p3-telegram-control`; baseline local/remote verified `f87c6c35d4da70cfe8ef36d7ada722c149cdd07f`, clean before branching. P2 operator/source review found missing durable cycle controls and outbound dispatch; those gaps were recorded before implementation. Existing Account Manager, DAG/checkpoint/usage and Windows Agent are preserved.
+
+- IMPLEMENTED: V13/V14, disabled-by-default environment-only Bot API transport, long polling with webhook refusal, durable offset/dedupe/leases, registered CODE/CONTENT/VIDEO routing, numeric authority, bounded commands/bot-loop prevention, durable cycle controls and fixture approvals, transactional outbox/retry/dead-letter/uncertain-send quarantine. `/usage` reads existing DB snapshots only. UI `/telegram` shows backend configuration, routes/operators, approvals and delivery errors; routing validation sends nothing.
+- TESTED: Maven package 49 tests, zero failures/errors/skips; Python ten tests; frontend TypeScript/Vite build; Flyway fresh V1–V14 and historical upgrade/no-op regression; PostgreSQL security/concurrency plus mock Telegram HTTP. Twelve Telegram tests include actual independent Windows agent Git/FFmpeg execution, pause without killing running work, cancellation/fencing, persisted quota read, callback/replay/expiry and crash-after-send quarantine.
+- TESTED: Playwright actual backend mappings/approval/NOT_SENT validation; browser-created Git -> FFmpeg -> probe cycle SUCCEEDED with persisted handoff. Actual agent/backend process recovery and checkpoint reuse finished at attempt 2, with process-tree cleanup/offline detection. After restart the separate PAUSED cycle stayed queued, its approval PENDING, and mappings/outbox survived. No real Telegram poll/send occurred.
+- Telegram verification is MOCK_ONLY; live token/groups NOT_CONFIGURED, no LIVE_VERIFIED claim. Existing bundle/Flyway compatibility and React Router warnings remain. Explicit command mentions and inline keyboards are not implemented; use unqualified slash commands. UNKNOWN sends require operator reconciliation, never automatic resend. No autonomous coding, publication, main merge, production deployment, public exposure or periodic schedule.
+
+Commands, contracts, evidence, resolved setup failures and P4/P5 dependency proposal: [TELEGRAM_INTEGRATION.md](TELEGRAM_INTEGRATION.md). Milestones so far: `d9f1cad` adapter/schema, `5c28b1f` cycle controls/approvals, `3365629` outbox/API/tests. Final UI/handoff commit and remote/PR evidence are in latest.json. Older results below are historical snapshots.
+
 Updated: 2026-11-06. Current branch: `feat/v2-p2-engine-usage`, verified baseline `origin/feat/v2-p1-local-agent` at `8c613212f0d730a5322d803d582dc95ff37d9178`. Current results supersede previous cycles below.
 
 ## Current cycle: P2-01 -> P2-02 -> P2-03

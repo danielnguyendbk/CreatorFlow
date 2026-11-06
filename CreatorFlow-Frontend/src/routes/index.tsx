@@ -15,6 +15,7 @@ import { SettingsPage } from '@/features/settings/SettingsPage';
 import { AccountManagerPage } from '@/features/accounts/AccountManagerPage';
 import { AgentMonitoringPage } from '@/features/agents/AgentMonitoringPage';
 import { AiUsagePage } from '@/features/usage/AiUsagePage';
+import { TelegramIntegrationPage } from '@/features/telegram/TelegramIntegrationPage';
 import { NotFoundPage } from '@/features/common/NotFoundPage';
 
 export const router = createBrowserRouter([
@@ -86,6 +87,7 @@ export const router = createBrowserRouter([
         path: 'ai-usage',
         element: <AiUsagePage />,
       },
+      { path: 'telegram', element: <TelegramIntegrationPage /> },
       {
         path: '*',
         element: <NotFoundPage />,

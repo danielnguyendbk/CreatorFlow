@@ -38,8 +38,8 @@ class TelegramApi {
         return Map.of("identity",input.identity(),"configured",client.configured(input.tokenEnv()));
     }
     @PutMapping("/routes") @Transactional Map<String,Object> route(@Valid @RequestBody Route input) {
-        if(input.chatId()==0 || input.canControl() && input.kind()!=Group.CODE) throw new IllegalArgumentException("Invalid group permissions");
-        if(input.operators().stream().map(Operator::userId).distinct().count()!=input.operators().size()) throw new IllegalArgumentException("Duplicate operator");
+        if(input.chatId()==0 || input.canControl() && input.kind()!=Group.CODE) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,"Invalid group permissions");
+        if(input.operators().stream().map(Operator::userId).distinct().count()!=input.operators().size()) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,"Duplicate operator");
         db.update("insert into telegram_routes(bot_identity,chat_id,kind,can_control,can_approve) values (?,?,?,?,?) on conflict(bot_identity,chat_id) do update set kind=excluded.kind,can_control=excluded.can_control,can_approve=excluded.can_approve",input.botIdentity(),input.chatId(),input.kind().name(),input.canControl(),input.canApprove());
         // Preserve approval bindings; omitted identities lose authority rather than deleting audit references.
         db.update("update telegram_operators set role='REVOKED' where bot_identity=? and chat_id=?",input.botIdentity(),input.chatId());

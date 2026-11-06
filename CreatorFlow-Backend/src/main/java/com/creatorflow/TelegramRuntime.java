@@ -62,7 +62,7 @@ class TelegramRuntime {
     Map<String,Object> sendClaim() {
         return tx.execute(s->{
             recoverSends();
-            // Bot row first: global 1 message/second/bot, stronger than the per-chat bound.
+            // Bot row first: one message/second/bot plus one per three seconds per registered chat.
             var bots=db.queryForList("select b.identity,b.token_env from telegram_bots b where b.availability='AVAILABLE' and (b.last_send_at is null or b.last_send_at<now()-interval '1 second') and exists(select 1 from telegram_outbox o join telegram_routes r using(bot_identity,chat_id) where o.bot_identity=b.identity and o.state in ('PENDING','RETRY') and o.next_at<=now() and r.next_send_at<=now()) order by b.last_send_at nulls first limit 1 for update skip locked");
             if(bots.isEmpty()) return null;var bot=bots.getFirst();
             var rows=db.queryForList("select o.* from telegram_outbox o join telegram_routes r using(bot_identity,chat_id) where o.bot_identity=? and o.state in ('PENDING','RETRY') and o.next_at<=now() and r.next_send_at<=now() order by o.created_at,o.id limit 1 for update of o skip locked",bot.get("identity"));

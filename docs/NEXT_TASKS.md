@@ -1,5 +1,16 @@
 # CreatorFlow next tasks
 
+## Current boundary after V2-P3-01 (2026-11-06)
+
+P3 Telegram control, durable cycle controls/fixture approvals and transactional outbox are IMPLEMENTED and scoped TESTED on `feat/v2-p3-telegram-control`, baseline `f87c6c3`. P2-01/02/03 and the Windows Agent are preserved, not NEXT/reimplementation tasks. Exact commands and limits: [TELEGRAM_INTEGRATION.md](TELEGRAM_INTEGRATION.md). Telegram is MOCK_ONLY/NOT_CONFIGURED, disabled by default; no live bot send has been authorized/performed. Verify Git/remote/latest handoff before another cycle. Older plans below are historical.
+
+1. Operator review of P3 and draft PR into `feat/v2-p2-engine-usage`. Live bot acceptance is optional and needs actual token/verified numeric chat/user IDs, webhook check and explicit permission for non-sensitive status/test messages in the designated group. Do not auto-enable Telegram.
+2. P4: immutable content/artifact/evidence manifests and action-specific approval binding, official provider adapter scopes and uncertain-result reconciliation, controlled mock pipeline acceptance. Live publishing remains a separate authorization; P3 fixture approval cannot trigger it.
+3. P5 prerequisites: credential lifecycle/rotation/retention, repository/branch allowlists, isolated worktree ownership, fixed validated AI task schema, process-tree deadlines and secret-safe checkpoints/evidence. Preserve one writer per worktree.
+4. P5 executor: verify installed official Codex/Gemini capabilities before execution. Add explicit quota admission and budget/operator policy: fresh READY -> eligible; exhausted -> wait for reset; STALE/UNKNOWN/unsupported -> operator decision. Never switch accounts to bypass limits; fixtures remain quota-independent.
+5. P5 review chain: planner -> isolated executor -> reviewer/tests -> operator-reviewed draft PR. Telegram CodeBot/Gemini/reviewer labels remain routing until execution acceptance exists. No automatic merge/deploy; any periodic/five-hour trigger is a separate opt-in after overlap/restart/quota tests.
+6. Follow-up ergonomics: verified `/command@botname` routing, inline approval keyboards and audited manual UNKNOWN-send reconciliation are not implemented in P3. Avoid blind replay and preserve decision/event references.
+
 Updated: 2026-11-06. Current branch `feat/v2-p2-engine-usage`, baseline `8c61321`. Implemented in order: P2-01 dependency engine -> P2-02 checkpoints/handoff -> P2-03 usage monitoring. All three have actual scoped acceptance in [P2_ENGINE_USAGE.md](P2_ENGINE_USAGE.md). Read AGENTS.md/latest handoff and verify Git/remote/runtime before another cycle.
 
 ## P2 completion and next boundary

@@ -201,6 +201,14 @@ class TelegramIntegrationTest {
         db.update("update telegram_operators set role='REVOKED' where bot_identity=?",bot);
         accept(message(2,-100,42,"/status",false));assertEquals("UNAUTHORIZED",outcome(2));
     }
+    @Test void configurationRejectsTokenValuesAndInvalidGroupAuthorityWithoutEchoingSecrets() {
+        var headers=new HttpHeaders();headers.setBearerAuth("telegram-fixture-browser");headers.setContentType(MediaType.APPLICATION_JSON);
+        var rejected=http.exchange("/api/v2/telegram/bots",HttpMethod.POST,new HttpEntity<>(Map.of("identity","invalid-fixture","botId",123,"tokenEnv",fixtureToken),headers),String.class);
+        assertEquals(HttpStatus.BAD_REQUEST,rejected.getStatusCode());assertFalse(rejected.getBody().contains(fixtureToken));
+        var route=Map.of("botIdentity",bot,"chatId",-400,"kind","CONTENT","canControl",true,"canApprove",false,"operators",List.of(Map.of("userId",42,"role","OPERATOR")));
+        assertEquals(HttpStatus.BAD_REQUEST,http.exchange("/api/v2/telegram/routes",HttpMethod.PUT,new HttpEntity<>(route,headers),String.class).getStatusCode());
+        assertEquals(0,db.queryForObject("select count(*) from telegram_routes where bot_identity=? and chat_id=-400",Integer.class,bot));
+    }
     static void await(java.util.function.BooleanSupplier condition,int seconds) throws Exception {
         long until=System.nanoTime()+TimeUnit.SECONDS.toNanos(seconds);
         while(System.nanoTime()<until) {if(condition.getAsBoolean()) return;Thread.sleep(100);}
