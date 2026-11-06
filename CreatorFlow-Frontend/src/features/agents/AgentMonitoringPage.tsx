@@ -26,7 +26,7 @@ export function AgentMonitoringPage() {
   const enqueue = useMutation({ mutationFn: agentApi.create, onSuccess: (task) => { setSelectedTask(task.id); void cache.invalidateQueries({ queryKey: ['agent-tasks'] }); } });
   const cancel = useMutation({ mutationFn: agentApi.cancel, onSuccess: () => { void cache.invalidateQueries({ queryKey: ['agent-tasks'] }); } });
   const error = agents.error ?? tasks.error ?? enqueue.error ?? cancel.error ?? events.error;
-  const valid = /^[a-z0-9][a-z0-9_-]{0,47}$/.test(worktreeKey) && timeoutSec >= 1 && timeoutSec <= 60 && durationSec >= 1 && durationSec <= 30;
+  const valid = /^[a-z0-9][a-z0-9_-]{0,47}$/.test(worktreeKey) && Number.isInteger(timeoutSec) && timeoutSec >= 1 && timeoutSec <= 60 && Number.isInteger(durationSec) && durationSec >= 1 && durationSec <= 30;
   return <div className="space-y-6">
     <PageHeader title="Agent Monitoring" description="Heartbeat, fixed fixture tasks and persisted execution results." />
     {error && <p role="alert" className="text-red-400">{error.message}</p>}

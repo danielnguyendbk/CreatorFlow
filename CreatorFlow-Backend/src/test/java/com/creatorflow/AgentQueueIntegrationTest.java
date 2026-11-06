@@ -37,6 +37,7 @@ class AgentQueueIntegrationTest {
         var h=new HttpHeaders();h.set("X-Agent-Enrollment","fixture-enrollment-token-at-least-32-characters");
         var response=post("/api/v2/agent-runtime/register",Map.of("name","Queue fixture"),h);
         assertEquals(HttpStatus.OK,response.getStatusCode());
+        assertEquals("no-store",response.getHeaders().getCacheControl());
         UUID id=UUID.fromString((String)response.getBody().get("id"));created.add(id);
         return new Identity(id,(String)response.getBody().get("credential"));
     }

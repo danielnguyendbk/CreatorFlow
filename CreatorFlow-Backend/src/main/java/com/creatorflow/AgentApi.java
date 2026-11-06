@@ -36,7 +36,9 @@ class AgentApi {
     }
     @PostMapping("/api/v2/agent-tasks") Map<String,Object> create(@Valid @RequestBody CreateTask request) {return queue.enqueue(request);}
     @PostMapping("/api/v2/agent-tasks/{id}/cancel") Map<String,Object> cancel(@PathVariable UUID id) {return queue.cancel(id);}
-    @PostMapping("/api/v2/agent-runtime/register") Map<String,Object> register(@Valid @RequestBody Register request) {return queue.register(request.name());}
+    @PostMapping("/api/v2/agent-runtime/register") org.springframework.http.ResponseEntity<Map<String,Object>> register(@Valid @RequestBody Register request) {
+        return org.springframework.http.ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore()).body(queue.register(request.name()));
+    }
     @PostMapping("/api/v2/agent-runtime/session") Map<String,Object> session(Authentication auth,@Valid @RequestBody Session request) {return queue.session(identity(auth),request.capabilities());}
     @PostMapping("/api/v2/agent-runtime/heartbeat") Map<String,Object> heartbeat(Authentication auth,@Valid @RequestBody SessionRequest request) {
         queue.heartbeat(identity(auth),request.sessionId());return Map.of("status","OK");

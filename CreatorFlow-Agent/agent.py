@@ -261,7 +261,8 @@ def run(args):
                 if result.get("errorCode") != "LEASE_LOST":
                     completion = {"sessionId": session, "attempt": task["attempt"], "state": state, "result": result}
                     client.post("tasks/" + task["id"] + "/result", completion)
-                print("Task " + task["id"] + " attempt " + str(task["attempt"]) + ": " + state, flush=True)
+                observed = "LEASE_LOST; awaiting backend recovery" if result.get("errorCode") == "LEASE_LOST" else state
+                print("Task " + task["id"] + " attempt " + str(task["attempt"]) + ": " + observed, flush=True)
                 current[0] = None
                 if args.once:
                     return
