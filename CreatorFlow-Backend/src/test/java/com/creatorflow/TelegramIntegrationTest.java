@@ -180,6 +180,8 @@ class TelegramIntegrationTest {
             headers.set("Authorization","Agent "+credential);headers.set("X-Agent-Id",agent.toString());
             assertEquals(HttpStatus.UNAUTHORIZED,http.exchange("/api/v2/telegram",HttpMethod.GET,new HttpEntity<>(headers),String.class).getStatusCode());
             assertEquals(HttpStatus.UNAUTHORIZED,http.exchange("/api/v2/telegram/approvals",HttpMethod.GET,new HttpEntity<>(headers),String.class).getStatusCode());
+            assertEquals(HttpStatus.UNAUTHORIZED,http.exchange("/api/v2/publication-review/jobs/"+UUID.randomUUID(),HttpMethod.GET,new HttpEntity<>(headers),String.class).getStatusCode());
+            assertEquals(HttpStatus.UNAUTHORIZED,http.exchange("/api/v2/publication-review/manifests/"+UUID.randomUUID()+"/decision",HttpMethod.POST,new HttpEntity<>(Map.of(),headers),String.class).getStatusCode());
         } finally {db.update("delete from ai_usage_snapshots where agent_id=?",agent);}
     }
     @Test void concurrentClaimsCannotCrossCommittedPauseAndOutboxHasSingleSender() throws Exception {

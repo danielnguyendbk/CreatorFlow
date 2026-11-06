@@ -44,6 +44,8 @@ class ApiSecurityIntegrationTest {
     }
 
     @Test void readAndWriteRequireTokenWhileReadinessIsPublic(){
+        assertEquals(HttpStatus.UNAUTHORIZED,http.getForEntity("/api/v2/publication-review/jobs/00000000-0000-0000-0000-000000000001",String.class).getStatusCode());
+        assertEquals(HttpStatus.UNAUTHORIZED,http.postForEntity("/api/v2/publication-review/manifests/00000000-0000-0000-0000-000000000001/decision",MapBody.of("{}"),String.class).getStatusCode());
         assertEquals(HttpStatus.UNAUTHORIZED,http.getForEntity("/api/ideas",String.class).getStatusCode());
         assertEquals(HttpStatus.UNAUTHORIZED,http.postForEntity("/api/ideas",MapBody.of("{}"),String.class).getStatusCode());
         HttpHeaders wrong=new HttpHeaders();wrong.setBearerAuth("wrong-token");
