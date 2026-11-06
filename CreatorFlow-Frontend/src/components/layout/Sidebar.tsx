@@ -55,6 +55,7 @@ const navGroups: NavGroup[] = [
     title: 'System',
     items: [
       { label: 'Activity', href: '/activity', icon: Activity },
+      { label: 'Account Manager', href: '/accounts', icon: Circle },
       { label: 'Settings', href: '/settings', icon: Settings },
     ],
   },

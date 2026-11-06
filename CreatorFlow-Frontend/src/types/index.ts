@@ -9,6 +9,26 @@
 
 export type ID = string;
 
+export interface ProviderAccount {
+  provider: string;
+  displayName: string;
+  installed: boolean;
+  status: 'CONNECTED' | 'EXPIRED' | 'UNSUPPORTED' | 'UNKNOWN';
+  healthCode: string;
+  reconnectCapability: 'SUPPORTED' | 'UNSUPPORTED' | 'UNKNOWN';
+  switchingCapability: 'SUPPORTED' | 'UNSUPPORTED' | 'UNKNOWN';
+  checkedAt: string | null;
+}
+
+export interface ReconnectIntent {
+  id: string;
+  provider: string;
+  status: string;
+  command: string;
+  instructions: string;
+  documentationUrl: string;
+}
+
 export interface Timestamps {
   createdAt: string; // ISO 8601
   updatedAt: string;

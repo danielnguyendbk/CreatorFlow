@@ -12,6 +12,7 @@ import { RenderQueuePage } from '@/features/render/RenderQueuePage';
 import { PublicationQueuePage } from '@/features/publishing/PublicationQueuePage';
 import { ActivityPage } from '@/features/activity/ActivityPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
+import { AccountManagerPage } from '@/features/accounts/AccountManagerPage';
 import { NotFoundPage } from '@/features/common/NotFoundPage';
 
 export const router = createBrowserRouter([
@@ -70,6 +71,10 @@ export const router = createBrowserRouter([
       {
         path: 'settings',
         element: <SettingsPage />,
+      },
+      {
+        path: 'accounts',
+        element: <AccountManagerPage />,
       },
       {
         path: '*',
