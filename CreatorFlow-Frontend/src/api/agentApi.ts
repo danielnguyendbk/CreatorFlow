@@ -6,6 +6,7 @@ function backend() {
 }
 export const agentApi = {
   cycle: (id: string) => { backend(); return apiRequest<TaskCycle>(`/api/v2/task-cycles/${encodeURIComponent(id)}`); },
+  handoff: (id: string) => { backend(); return apiRequest<Record<string, unknown>>(`/api/v2/task-cycles/${encodeURIComponent(id)}/handoff`); },
   createCycle: (agentId: string) => {
     backend(); return apiRequest<TaskCycle>('/api/v2/task-cycles', { method: 'POST', body: JSON.stringify({ agentId, idempotencyKey: crypto.randomUUID(), nodes: [
       { key: 'build', kind: 'GIT_FIXTURE', dependsOn: [] }, { key: 'verify', kind: 'FFMPEG_FIXTURE', dependsOn: ['build'] },

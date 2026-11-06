@@ -23,6 +23,7 @@ export function AgentMonitoringPage() {
   const [cycleId, setCycleId] = useState('');
   const cycle = useQuery({ queryKey: ['task-cycle', cycleId], queryFn: () => agentApi.cycle(cycleId), enabled: Boolean(cycleId), refetchInterval: 1000 });
   const createCycle = useMutation({ mutationFn: agentApi.createCycle, onSuccess: (data) => setCycleId(data.id) });
+  const handoff = useQuery({ queryKey: ['cycle-handoff', cycleId], queryFn: () => agentApi.handoff(cycleId), enabled: Boolean(cycleId) && ['SUCCEEDED', 'FAILED'].includes(cycle.data?.state ?? ''), refetchInterval: 2000 });
   const chosen = agentId || agents.data?.[0]?.id || '';
   const current = agents.data?.find((agent) => agent.id === chosen);
   const events = useQuery({ queryKey: ['agent-events', selectedTask], queryFn: () => agentApi.events(selectedTask), enabled: Boolean(selectedTask), refetchInterval: 1000, retry: false });
@@ -64,6 +65,7 @@ export function AgentMonitoringPage() {
       {cycle.data && <section aria-label="Dependency cycle" className="space-y-2 text-sm text-zinc-300">
         <p>Cycle {cycle.data.id}: {cycle.data.state}</p>
         <ol>{cycle.data.tasks.map((task) => <li key={task.id}>{task.nodeKey}: {task.state}</li>)}</ol>
+        {handoff.data && <details><summary>Persisted cycle handoff</summary><pre className="overflow-auto text-xs">{JSON.stringify(handoff.data, null, 2)}</pre></details>}
       </section>}
       {current && kinds.some((kind) => !current.capabilities.includes(kind.value)) && <p className="text-sm text-zinc-400">Unavailable tools are disabled according to the agent's reported capabilities.</p>}
     </section>

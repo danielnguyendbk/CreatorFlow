@@ -167,6 +167,17 @@ class Executor:
         result = {"exitCode": 0, "artifactSha256": None, "bytes": None, "gitCommit": None,
                   "gitAvailable": None, "ffmpegAvailable": None, "errorCode": None}
         with exclusive_lock(worktree / ".writer.lock"):
+            checkpoint = task.get("checkpoint")
+            if checkpoint and task["kind"] in {"GIT_FIXTURE", "FFMPEG_FIXTURE"}:
+                previous = checkpoint["attempt"]
+                saved = checkpoint["result"]
+                if isinstance(previous, int) and 0 < previous < attempt:
+                    old = worktree / (task_id + "-" + str(previous))
+                    artifact = old / ("fixture.txt" if task["kind"] == "GIT_FIXTURE" else "fixture.mp4")
+                    if artifact.is_file() and not artifact.is_symlink() and hashlib.sha256(artifact.read_bytes()).hexdigest() == saved.get("artifactSha256"):
+                        if task["kind"] != "GIT_FIXTURE" or (old / ".git/refs/heads/fixture").read_text().strip() == saved.get("gitCommit"):
+                            print("Restored verified artifact checkpoint from attempt " + str(previous), flush=True)
+                            return saved
             directory = worktree / (task_id + "-" + str(attempt))
             directory.mkdir(exist_ok=False)
             if task["kind"] == "GIT_FIXTURE":
@@ -271,6 +282,8 @@ def run(args):
                     result, state = {"exitCode": -1, "errorCode": "AGENT_ERROR"}, "FAILED"
                 # On lost lease, never publish an unfenced result. Recovery is owned by PostgreSQL.
                 if result.get("errorCode") != "LEASE_LOST":
+                    if state == "SUCCEEDED":
+                        client.post("tasks/" + task["id"] + "/checkpoint", {"sessionId": session, "attempt": task["attempt"], "result": result})
                     completion = {"sessionId": session, "attempt": task["attempt"], "state": state, "result": result}
                     client.post("tasks/" + task["id"] + "/result", completion)
                 observed = "LEASE_LOST; awaiting backend recovery" if result.get("errorCode") == "LEASE_LOST" else state

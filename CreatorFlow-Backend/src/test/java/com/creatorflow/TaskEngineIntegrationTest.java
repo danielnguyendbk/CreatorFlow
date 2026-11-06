@@ -24,6 +24,7 @@ class TaskEngineIntegrationTest {
     @Autowired AgentQueue queue;
     @Autowired JdbcTemplate db;
     @Autowired ObjectMapper json;
+    @Autowired TaskCheckpoints checkpoints;
     UUID agent,session;
     @BeforeEach void register() {
         agent=(UUID)queue.register("Engine fixture").get("id");session=(UUID)queue.session(agent,AgentQueue.KINDS).get("sessionId");
@@ -71,5 +72,23 @@ class TaskEngineIntegrationTest {
         queue.finish(agent,session,id,new AgentApi.Completion(session,2,AgentApi.Outcome.CANCELLED,new AgentApi.Result(-1,null,null,null,null,null,"CANCELLED")));
         queue.recoverExpired();assertEquals(1,db.queryForObject("select count(*) from agent_tasks where agent_id=? and error_code='DEPENDENCY_FAILED'",Integer.class,agent));
         assertNull(queue.claim(agent,session));
+    }
+    @Test void checkpointsAreFencedImmutableAndHandoffsRebuildFromCommittedState() throws Exception {
+        var cycle=cycles.create(graph());var first=queue.claim(agent,session);UUID id=(UUID)first.get("id");
+        checkpoints.save(agent,id,new TaskCheckpoints.Save(session,1,done(1).result()));
+        checkpoints.save(agent,id,new TaskCheckpoints.Save(session,1,done(1).result()));
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,()->checkpoints.save(agent,id,new TaskCheckpoints.Save(session,2,done(1).result())));
+        db.update("update agent_tasks set lease_expires_at=now()-interval '1 second' where id=?",id);queue.recoverExpired();
+        session=(UUID)queue.session(agent,AgentQueue.KINDS).get("sessionId");
+        var resumed=queue.claim(agent,session);assertTrue(resumed.containsKey("checkpoint"));
+        queue.finish(agent,session,id,done(2));var last=queue.claim(agent,session);queue.finish(agent,session,(UUID)last.get("id"),done(1));
+        checkpoints.generate();checkpoints.generate();
+        UUID cycleId=(UUID)cycle.get("id");assertEquals(1,db.queryForObject("select count(*) from cycle_handoffs where cycle_id=?",Integer.class,cycleId));
+        var temp=java.nio.file.Files.createTempDirectory("cf-handoff-");
+        var restarted=new TaskCheckpoints(db,queue,json,temp.toString());restarted.exportCommitted();
+        var persisted=json.readTree(java.nio.file.Files.readString(temp.resolve(cycleId+".json")));
+        assertEquals("COMMITTED_POSTGRESQL_STATE",persisted.get("source").asText());assertEquals(2,persisted.get("tasks").size());
+        assertEquals(cycleId.toString(),restarted.handoff(cycleId).get("cycleId"));
+        java.nio.file.Files.deleteIfExists(temp.resolve(cycleId+".json"));java.nio.file.Files.delete(temp);
     }
 }

@@ -24,7 +24,7 @@ class AgentQueue {
     private String encode(Object value) {
         try {return json.writeValueAsString(value);} catch(Exception e) {throw new IllegalArgumentException("Invalid agent data");}
     }
-    private boolean sameResult(Object first,Object second) {
+    boolean sameResult(Object first,Object second) {
         try {return json.readTree(encode(first)).equals(json.readTree(encode(second)));}
         catch(Exception e) {throw new IllegalStateException("Invalid result",e);}
     }
@@ -92,9 +92,13 @@ class AgentQueue {
         if(rows.isEmpty()) return null;
         UUID id=(UUID)rows.getFirst().get("id");
         db.update("update agent_tasks set state='RUNNING',attempt=attempt+1,session_id=?,lease_expires_at=now()+make_interval(secs=>?),error_code=null,updated_at=now() where id=?",session,lease,id);
-        var result=task(id);event(id,((Number)result.get("attempt")).intValue(),"CLAIMED");return result;
+        var result=task(id);
+        var checkpoints=db.queryForList("select attempt,result_json from agent_task_checkpoints where task_id=? order by attempt desc limit 1",id);
+        if(!checkpoints.isEmpty()) try {result.put("checkpoint",Map.of("attempt",checkpoints.getFirst().get("attempt"),"result",json.readValue(checkpoints.getFirst().get("result_json").toString(),Map.class)));}
+        catch(Exception e) {throw new IllegalStateException(e);}
+        event(id,((Number)result.get("attempt")).intValue(),"CLAIMED");return result;
     }
-    private Map<String,Object> active(UUID agent,UUID session,UUID id,int attempt) {
+    Map<String,Object> active(UUID agent,UUID session,UUID id,int attempt) {
         current(agent,session);
         var rows=db.queryForList("select id from agent_tasks where id=? and agent_id=? and session_id=? and attempt=? and state in ('RUNNING','CANCEL_REQUESTED') and lease_expires_at>now() for update",id,agent,session,attempt);
         if(rows.isEmpty()) throw conflict("Task attempt/lease fenced");

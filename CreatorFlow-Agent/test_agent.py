@@ -29,6 +29,21 @@ class AgentProcessTest(unittest.TestCase):
             self.assertRegex(video["artifactSha256"], "^[a-f0-9]{64}$")
             self.assertTrue(executor.execute(self.task("CAPABILITY_PROBE"))["gitAvailable"])
 
+    def test_verified_checkpoint_reuses_artifact_and_corruption_forces_rebuild(self):
+        with tempfile.TemporaryDirectory() as temp:
+            executor = Executor(Path(temp))
+            task = self.task("GIT_FIXTURE")
+            result = executor.execute(task)
+            task.update(attempt=2, checkpoint={"attempt": 1, "result": result})
+            original = executor.command
+            executor.command = lambda *_: self.fail("Verified artifact should not execute another Git command")
+            self.assertEqual(result, executor.execute(task))
+            executor.command = original
+            old = Path(temp) / "worktrees/fixture" / (task["id"] + "-1") / "fixture.txt"
+            old.write_text("corrupt", encoding="utf-8")
+            rebuilt = executor.execute(task)
+            self.assertEqual(result["artifactSha256"], rebuilt["artifactSha256"])
+
     def test_timeout_cancellation_and_reject_paths_or_shell(self):
         with tempfile.TemporaryDirectory() as temp:
             executor = Executor(Path(temp))
