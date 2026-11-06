@@ -20,12 +20,15 @@ export function AgentMonitoringPage() {
   const [timeoutSec, setTimeoutSec] = useState(15);
   const [durationSec, setDurationSec] = useState(1);
   const [selectedTask, setSelectedTask] = useState('');
+  const [cycleId, setCycleId] = useState('');
+  const cycle = useQuery({ queryKey: ['task-cycle', cycleId], queryFn: () => agentApi.cycle(cycleId), enabled: Boolean(cycleId), refetchInterval: 1000 });
+  const createCycle = useMutation({ mutationFn: agentApi.createCycle, onSuccess: (data) => setCycleId(data.id) });
   const chosen = agentId || agents.data?.[0]?.id || '';
   const current = agents.data?.find((agent) => agent.id === chosen);
   const events = useQuery({ queryKey: ['agent-events', selectedTask], queryFn: () => agentApi.events(selectedTask), enabled: Boolean(selectedTask), refetchInterval: 1000, retry: false });
   const enqueue = useMutation({ mutationFn: agentApi.create, onSuccess: (task) => { setSelectedTask(task.id); void cache.invalidateQueries({ queryKey: ['agent-tasks'] }); } });
   const cancel = useMutation({ mutationFn: agentApi.cancel, onSuccess: () => { void cache.invalidateQueries({ queryKey: ['agent-tasks'] }); } });
-  const error = agents.error ?? tasks.error ?? enqueue.error ?? cancel.error ?? events.error;
+  const error = agents.error ?? tasks.error ?? enqueue.error ?? cancel.error ?? events.error ?? createCycle.error ?? cycle.error;
   const valid = /^[a-z0-9][a-z0-9_-]{0,47}$/.test(worktreeKey) && Number.isInteger(timeoutSec) && timeoutSec >= 1 && timeoutSec <= 60 && Number.isInteger(durationSec) && durationSec >= 1 && durationSec <= 30;
   return <div className="space-y-6">
     <PageHeader title="Agent Monitoring" description="Heartbeat, fixed fixture tasks and persisted execution results." />
@@ -54,9 +57,14 @@ export function AgentMonitoringPage() {
       </div>
       {!valid && <p role="alert" className="text-amber-400">Use a lowercase worktree key, timeout 1–60 and duration 1–30 seconds.</p>}
       <div className="flex flex-wrap gap-2">
+        <Button disabled={!current || !kinds.every((kind) => current.capabilities.includes(kind.value)) || createCycle.isPending} onClick={() => createCycle.mutate(chosen)}>Run dependency cycle</Button>
         {kinds.map((kind) => <Button key={kind.value} disabled={!valid || !current?.capabilities.includes(kind.value) || enqueue.isPending}
           onClick={() => enqueue.mutate({ agentId: chosen, kind: kind.value, worktreeKey, timeoutSec, durationSec, idempotencyKey: crypto.randomUUID() })}>Run {kind.label}</Button>)}
       </div>
+      {cycle.data && <section aria-label="Dependency cycle" className="space-y-2 text-sm text-zinc-300">
+        <p>Cycle {cycle.data.id}: {cycle.data.state}</p>
+        <ol>{cycle.data.tasks.map((task) => <li key={task.id}>{task.nodeKey}: {task.state}</li>)}</ol>
+      </section>}
       {current && kinds.some((kind) => !current.capabilities.includes(kind.value)) && <p className="text-sm text-zinc-400">Unavailable tools are disabled according to the agent's reported capabilities.</p>}
     </section>
     <section aria-labelledby="task-heading" className="space-y-3">

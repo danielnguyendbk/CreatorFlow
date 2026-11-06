@@ -10,6 +10,7 @@
 export type ID = string;
 
 export type AgentTaskKind = 'GIT_FIXTURE' | 'FFMPEG_FIXTURE' | 'CAPABILITY_PROBE';
+export interface TaskCycle { id: string; state: string; tasks: {id: string; nodeKey: string; state: string}[] }
 export interface LocalAgent {
   id: string;
   name: string;

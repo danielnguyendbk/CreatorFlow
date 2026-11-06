@@ -88,7 +88,7 @@ class AgentQueue {
         db.queryForList("select id from local_agents where id=? for update",agent);
         current(agent,session);
         if(db.queryForObject("select count(*) from agent_tasks where agent_id=? and state in ('RUNNING','CANCEL_REQUESTED')",Integer.class,agent)>0) return null;
-        var rows=db.queryForList("select t.id from agent_tasks t join local_agents a on a.id=t.agent_id where t.agent_id=? and t.state='QUEUED' and a.capabilities ?? t.kind order by t.created_at limit 1 for update of t skip locked",agent);
+        var rows=db.queryForList("select t.id from agent_tasks t join local_agents a on a.id=t.agent_id where t.agent_id=? and t.state='QUEUED' and t.not_before<=now() and a.capabilities ?? t.kind and not exists (select 1 from agent_task_dependencies d join agent_tasks p on p.id=d.depends_on_id where d.task_id=t.id and p.state<>'SUCCEEDED') order by t.created_at limit 1 for update of t skip locked",agent);
         if(rows.isEmpty()) return null;
         UUID id=(UUID)rows.getFirst().get("id");
         db.update("update agent_tasks set state='RUNNING',attempt=attempt+1,session_id=?,lease_expires_at=now()+make_interval(secs=>?),error_code=null,updated_at=now() where id=?",session,lease,id);
@@ -119,6 +119,10 @@ class AgentQueue {
         String state="CANCEL_REQUESTED".equals(row.get("state")) ? "CANCELLED" : completion.state().name();
         if(completion.state()==AgentApi.Outcome.SUCCEEDED && (completion.result().exitCode()!=0 || completion.result().errorCode()!=null))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid success result");
+        if(state.equals("FAILED") && "PROCESS_FAILED".equals(completion.result().errorCode()) && completion.attempt()<((Number)row.get("maxAttempts")).intValue()) {
+            db.update("update agent_tasks set state='QUEUED',session_id=null,lease_expires_at=null,error_code='PROCESS_FAILED',not_before=now()+make_interval(secs=>?),updated_at=now() where id=?",Math.min(30,1<<completion.attempt()),id);
+            event(id,completion.attempt(),"RETRY_BACKOFF");return task(id);
+        }
         db.update("update agent_tasks set state=?,result_json=?::jsonb,error_code=?,lease_expires_at=null,updated_at=now() where id=?",
             state,encode(completion.result()),completion.result().errorCode(),id);
         event(id,completion.attempt(),state);return task(id);
@@ -141,5 +145,10 @@ class AgentQueue {
             db.update("update agent_tasks set state=?,session_id=null,lease_expires_at=null,error_code='LEASE_EXPIRED',updated_at=now() where id=?",state,id);
             event(id,attempt,"LEASE_EXPIRED_"+state);
         }
+        // Propagate terminal dependency failure to queued descendants, even after backend restart.
+        int changed;
+        do {
+            changed=db.update("with blocked as (select t.id,t.attempt from agent_tasks t where t.state='QUEUED' and exists (select 1 from agent_task_dependencies d join agent_tasks p on p.id=d.depends_on_id where d.task_id=t.id and p.state in ('FAILED','CANCELLED')) for update skip locked), updated as (update agent_tasks t set state='FAILED',error_code='DEPENDENCY_FAILED',updated_at=now() from blocked b where t.id=b.id returning t.id,t.attempt) insert into agent_task_events(task_id,attempt,type) select id,attempt,'DEPENDENCY_FAILED' from updated");
+        } while(changed>0);
     }
 }
