@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.*;
 class AgentApi {
     enum Kind {GIT_FIXTURE,FFMPEG_FIXTURE,CAPABILITY_PROBE}
     enum Outcome {SUCCEEDED,FAILED,CANCELLED}
-    record Register(@NotBlank @Pattern(regexp="[A-Za-z0-9 ._-]{1,80}") String name) {}
-    record Session(@NotNull @Size(max=3) List<@NotNull String> capabilities) {}
+    record Register(@NotBlank @Pattern(regexp="[A-Za-z0-9 ._-]{1,80}") String name,@NotNull UUID id,@NotNull @Pattern(regexp="[a-f0-9]{64}") String credentialHash) {}
+    record Session(@NotNull @Size(max=7) List<@NotNull String> capabilities) {}
     record SessionRequest(@NotNull UUID sessionId) {}
     record Attempt(@NotNull UUID sessionId,@Min(1) int attempt) {}
     record CreateTask(@NotNull UUID agentId,@NotNull Kind kind,
@@ -22,7 +22,7 @@ class AgentApi {
     record Result(@Min(-1) @Max(255) int exitCode,
         @Pattern(regexp="[a-f0-9]{64}") String artifactSha256,@Min(0) Long bytes,
         @Pattern(regexp="[a-f0-9]{40,64}") String gitCommit,Boolean gitAvailable,Boolean ffmpegAvailable,
-        @Pattern(regexp="TIMEOUT|CANCELLED|PROCESS_FAILED|WORKTREE_BUSY|LEASE_LOST|TOOL_UNAVAILABLE|AGENT_ERROR") String errorCode) {}
+        @Pattern(regexp="TIMEOUT|CANCELLED|PROCESS_FAILED|WORKTREE_BUSY|LEASE_LOST|TOOL_UNAVAILABLE|AGENT_ERROR|WORKSPACE_RECONCILIATION_REQUIRED|REPOSITORY_REJECTED") String errorCode) {}
     record Completion(@NotNull UUID sessionId,@Min(1) int attempt,@NotNull Outcome state,@NotNull @Valid Result result) {}
     private final AgentQueue queue;
     private final JdbcTemplate db;
@@ -36,8 +36,9 @@ class AgentApi {
     }
     @PostMapping("/api/v2/agent-tasks") Map<String,Object> create(@Valid @RequestBody CreateTask request) {return queue.enqueue(request);}
     @PostMapping("/api/v2/agent-tasks/{id}/cancel") Map<String,Object> cancel(@PathVariable UUID id) {return queue.cancel(id);}
-    @PostMapping("/api/v2/agent-runtime/register") org.springframework.http.ResponseEntity<Map<String,Object>> register(@Valid @RequestBody Register request) {
-        return org.springframework.http.ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore()).body(queue.register(request.name()));
+    @PostMapping("/api/v2/agent-runtime/register") @org.springframework.transaction.annotation.Transactional org.springframework.http.ResponseEntity<Map<String,Object>> register(@Valid @RequestBody Register request) {
+        if(db.queryForList("select id from agent_enrollment_policy where id=1 and enabled_until>now() for update").isEmpty()) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED,"Enrollment window closed");
+        return org.springframework.http.ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore()).body(queue.registerHash(request.id(),request.name(),request.credentialHash()));
     }
     @PostMapping("/api/v2/agent-runtime/session") Map<String,Object> session(Authentication auth,@Valid @RequestBody Session request) {return queue.session(identity(auth),request.capabilities());}
     @PostMapping("/api/v2/agent-runtime/heartbeat") Map<String,Object> heartbeat(Authentication auth,@Valid @RequestBody SessionRequest request) {

@@ -57,8 +57,21 @@ class AgentQueue {
         db.update("insert into agent_credentials(agent_id,token_hash) values (?,?)",id,AgentIdentity.hash(secret));
         return Map.of("id",id,"credential",secret);
     }
+    @Transactional Map<String,Object> registerHash(UUID id,String name,String hash) {
+        db.queryForList("select pg_advisory_xact_lock(hashtextextended(?::text,0))",id);
+        var old=db.queryForList("select c.token_hash,c.revoked_at,a.name from agent_credentials c join local_agents a on a.id=c.agent_id where c.agent_id=?",id);
+        if(!old.isEmpty()) {
+            if(old.getFirst().get("revoked_at")!=null || !hash.equals(old.getFirst().get("token_hash")) || !name.equals(old.getFirst().get("name"))) throw conflict("Enrollment identity collision");
+        } else {
+            db.update("insert into local_agents(id,name,version) values (?,?,'0.1.0')",id,name);
+            db.update("insert into agent_credentials(agent_id,token_hash) values (?,?)",id,hash);
+            db.update("insert into agent_identity_audit(agent_id,generation,type,actor) values (?,1,'AGENT_ENROLLED','operator-enrollment')",id);
+        }
+        return Map.of("id",id,"generation",1);
+    }
     @Transactional Map<String,Object> session(UUID agent,List<String> capabilities) {
-        if(!KINDS.containsAll(capabilities)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Unsupported capability");
+        db.queryForList("select id from local_agents where id=? for update",agent);AgentIdentity.requireCurrent(db,agent);
+        if(!java.util.stream.Stream.concat(KINDS.stream(),CodingWorkspaces.KINDS.stream()).toList().containsAll(capabilities)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Unsupported capability");
         UUID session=UUID.randomUUID();
         db.update("update local_agents set session_id=?,capabilities=?::jsonb,last_heartbeat_at=now() where id=?",session,encode(capabilities.stream().distinct().toList()),agent);
         return Map.of("sessionId",session,"leaseSeconds",lease);
@@ -66,8 +79,10 @@ class AgentQueue {
     void current(UUID agent,UUID session) {
         if(db.queryForList("select id from local_agents where id=? and session_id=? for update",agent,session).isEmpty())
             throw conflict("Agent session fenced");
+        AgentIdentity.requireCurrent(db,agent);
     }
     @Transactional void heartbeat(UUID agent,UUID session) {
+        current(agent,session);
         if(db.update("update local_agents set last_heartbeat_at=now() where id=? and session_id=?",agent,session)!=1) throw conflict("Agent session fenced");
     }
     @Transactional Map<String,Object> enqueue(AgentApi.CreateTask request) {
@@ -88,12 +103,19 @@ class AgentQueue {
         db.queryForList("select id from local_agents where id=? for update",agent);
         current(agent,session);
         if(db.queryForObject("select count(*) from agent_tasks where agent_id=? and state in ('RUNNING','CANCEL_REQUESTED')",Integer.class,agent)>0) return null;
-        var rows=db.queryForList("select t.id from agent_tasks t join local_agents a on a.id=t.agent_id where t.agent_id=? and t.state='QUEUED' and t.not_before<=now() and (t.cycle_id is null or exists (select 1 from agent_cycles c where c.id=t.cycle_id and c.state in ('QUEUED','RUNNING'))) and a.capabilities ?? t.kind and not exists (select 1 from agent_task_dependencies d join agent_tasks p on p.id=d.depends_on_id where d.task_id=t.id and p.state<>'SUCCEEDED') order by t.created_at limit 1 for update of t skip locked",agent);
+        var rows=db.queryForList("select t.id from agent_tasks t join local_agents a on a.id=t.agent_id where t.agent_id=? and t.state='QUEUED' and t.not_before<=now() and (t.cycle_id is null or exists (select 1 from agent_cycles c where c.id=t.cycle_id and c.state in ('QUEUED','RUNNING'))) and a.capabilities ?? t.kind and (not exists(select 1 from coding_task_contracts cc where cc.task_id=t.id) or exists(select 1 from coding_task_contracts cc join coding_workspaces w on w.id=cc.workspace_id join coding_repositories r on r.id=w.repository_id where cc.task_id=t.id and w.current_task_id=t.id and r.enabled and r.verification='VERIFIED')) and not exists (select 1 from agent_task_dependencies d join agent_tasks p on p.id=d.depends_on_id where d.task_id=t.id and p.state<>'SUCCEEDED') order by t.created_at limit 1 for update of t skip locked",agent);
         if(rows.isEmpty()) return null;
         UUID id=(UUID)rows.getFirst().get("id");
         db.update("update agent_tasks set state='RUNNING',attempt=attempt+1,session_id=?,lease_expires_at=now()+make_interval(secs=>?),error_code=null,updated_at=now() where id=?",session,lease,id);
         db.update("update agent_cycles set state='RUNNING' where id=(select cycle_id from agent_tasks where id=?) and state='QUEUED'",id);
         var result=task(id);
+        var coding=db.queryForList("select c.workspace_id from coding_task_contracts c where c.task_id=?",id);
+        if(!coding.isEmpty()) {
+            UUID workspace=(UUID)coding.getFirst().get("workspace_id");
+            db.update("update coding_workspaces set owner_session=?,owner_attempt=?,lease_expires_at=now()+make_interval(secs=>?),writer_locked=true,state=case when state='NEEDS_RECONCILIATION' then state else 'PREPARING' end,updated_at=now() where id=? and current_task_id=?",session,result.get("attempt"),lease,workspace,id);
+            result.put("workspace",db.queryForMap("select id,repository_id as \"repositoryId\",agent_id as \"agentId\",base_ref as \"baseRef\",base_commit as \"baseCommit\",branch,relative_path as \"relativePath\",allocation_task_id as \"allocationTaskId\",last_checkpoint_id as \"lastCheckpointId\",state from coding_workspaces where id=?",workspace));
+            result.put("contract",db.queryForMap("select payload from coding_task_contracts where task_id=?",id).get("payload").toString());
+        }
         var checkpoints=db.queryForList("select attempt,result_json from agent_task_checkpoints where task_id=? order by attempt desc limit 1",id);
         if(!checkpoints.isEmpty()) try {result.put("checkpoint",Map.of("attempt",checkpoints.getFirst().get("attempt"),"result",json.readValue(checkpoints.getFirst().get("result_json").toString(),Map.class)));}
         catch(Exception e) {throw new IllegalStateException(e);}
@@ -108,6 +130,7 @@ class AgentQueue {
     @Transactional Map<String,Object> renew(UUID agent,UUID session,UUID id,int attempt) {
         var task=active(agent,session,id,attempt);
         db.update("update agent_tasks set lease_expires_at=now()+make_interval(secs=>?),updated_at=now() where id=?",lease,id);
+        db.update("update coding_workspaces set lease_expires_at=now()+make_interval(secs=>?) where current_task_id=? and owner_session=? and owner_attempt=?",lease,id,session,attempt);
         return Map.of("cancelRequested","CANCEL_REQUESTED".equals(task.get("state")),"leaseSeconds",lease);
     }
     @Transactional Map<String,Object> finish(UUID agent,UUID session,UUID id,AgentApi.Completion completion) {
@@ -121,6 +144,7 @@ class AgentQueue {
             throw conflict("Terminal task cannot be overwritten");
         }
         var row=active(agent,session,id,completion.attempt());
+        if(CodingWorkspaces.KINDS.contains(row.get("kind")) && completion.state()==AgentApi.Outcome.SUCCEEDED && db.queryForObject("select count(*) from coding_workspace_checkpoints where task_id=? and session_id=? and attempt=? and state in ('READY','CLEANED')",Integer.class,id,session,completion.attempt())!=1) throw conflict("Verified workspace checkpoint required before success");
         String state="CANCEL_REQUESTED".equals(row.get("state")) ? "CANCELLED" : completion.state().name();
         if(completion.state()==AgentApi.Outcome.SUCCEEDED && (completion.result().exitCode()!=0 || completion.result().errorCode()!=null))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid success result");
@@ -130,6 +154,7 @@ class AgentQueue {
         }
         db.update("update agent_tasks set state=?,result_json=?::jsonb,error_code=?,lease_expires_at=null,updated_at=now() where id=?",
             state,encode(completion.result()),completion.result().errorCode(),id);
+        db.update("update coding_workspaces set writer_locked=false,lease_expires_at=null,state=case when ?='SUCCEEDED' then state else 'NEEDS_RECONCILIATION' end,error_code=?,updated_at=now() where current_task_id=?",state,completion.result().errorCode(),id);
         event(id,completion.attempt(),state);return task(id);
     }
     @Transactional Map<String,Object> cancel(UUID id) {
@@ -143,10 +168,11 @@ class AgentQueue {
         return task(id);
     }
     @Scheduled(fixedDelay=1000) @Transactional public void recoverExpired() {
-        var rows=db.queryForList("select id,attempt,max_attempts,state from agent_tasks where state in ('RUNNING','CANCEL_REQUESTED') and lease_expires_at<=now() for update skip locked");
+        var rows=db.queryForList("select id,attempt,max_attempts,state,kind from agent_tasks where state in ('RUNNING','CANCEL_REQUESTED') and lease_expires_at<=now() for update skip locked");
         for(var row:rows) {
             UUID id=(UUID)row.get("id");int attempt=((Number)row.get("attempt")).intValue();
             String state="CANCEL_REQUESTED".equals(row.get("state"))?"CANCELLED":attempt>=((Number)row.get("max_attempts")).intValue()?"FAILED":"QUEUED";
+            if(CodingWorkspaces.KINDS.contains(row.get("kind"))) {state="CANCEL_REQUESTED".equals(row.get("state"))?"CANCELLED":"FAILED"; db.update("update coding_workspaces set state='NEEDS_RECONCILIATION',writer_locked=false,lease_expires_at=null,error_code='LEASE_EXPIRED',updated_at=now() where current_task_id=?",id);}
             db.update("update agent_tasks set state=?,session_id=null,lease_expires_at=null,error_code='LEASE_EXPIRED',updated_at=now() where id=?",state,id);
             event(id,attempt,"LEASE_EXPIRED_"+state);
         }

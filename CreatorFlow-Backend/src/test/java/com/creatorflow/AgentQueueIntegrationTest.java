@@ -34,12 +34,15 @@ class AgentQueueIntegrationTest {
     private HttpHeaders browser() {var h=new HttpHeaders();h.setBearerAuth("fixture-browser-token");return h;}
     private HttpHeaders agent(Identity identity) {var h=new HttpHeaders();h.set("Authorization","Agent "+identity.credential());h.set("X-Agent-Id",identity.id().toString());return h;}
     private Identity register() {
+        assertEquals(HttpStatus.OK,post("/api/v2/agent-credentials/enrollment",Map.of("minutes",1,"confirmation","ENROLL"),browser()).getStatusCode());
         var h=new HttpHeaders();h.set("X-Agent-Enrollment","fixture-enrollment-token-at-least-32-characters");
-        var response=post("/api/v2/agent-runtime/register",Map.of("name","Queue fixture"),h);
+        String secret="fixture-agent-"+UUID.randomUUID();UUID requested=UUID.randomUUID();
+        var response=post("/api/v2/agent-runtime/register",Map.of("name","Queue fixture","id",requested,"credentialHash",AgentIdentity.hash(secret)),h);
         assertEquals(HttpStatus.OK,response.getStatusCode());
         assertEquals("no-store",response.getHeaders().getCacheControl());
         UUID id=UUID.fromString((String)response.getBody().get("id"));created.add(id);
-        return new Identity(id,(String)response.getBody().get("credential"));
+        db.update("delete from agent_identity_audit where agent_id=?",id);
+        return new Identity(id,secret);
     }
     private UUID session(Identity identity) {
         var r=post("/api/v2/agent-runtime/session",Map.of("capabilities",AgentQueue.KINDS),agent(identity));

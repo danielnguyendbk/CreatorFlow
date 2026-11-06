@@ -46,13 +46,15 @@ public class SecurityConfig {
                     if (path.startsWith("/api/v2/agent-runtime/")) {
                         Object principal;
                         if (path.equals("/api/v2/agent-runtime/register") && req.getMethod().equals("POST")) {
-                            if (enrollment.length()<32 || enrollment.equals(token) || !AgentIdentity.equal(enrollment,req.getHeader("X-Agent-Enrollment"))) {
+                            if (enrollment.length()<32 || enrollment.equals(token) || !AgentIdentity.equal(enrollment,req.getHeader("X-Agent-Enrollment")) || !agents.enrollmentOpen()) {
                                 res.setStatus(401); return;
                             }
                             principal="agent-enrollment";
                         } else {
-                            principal=agents.authenticate(req.getHeader("X-Agent-Id"),req.getHeader("Authorization"));
-                            if(principal==null) {res.setStatus(401); return;}
+                            var proof=agents.authenticate(req.getHeader("X-Agent-Id"),req.getHeader("Authorization"));
+                            if(proof==null) {res.setStatus(401); return;}
+                            var authentication=new UsernamePasswordAuthenticationToken(proof.agent(),null,List.of());authentication.setDetails(proof);
+                            SecurityContextHolder.getContext().setAuthentication(authentication);chain.doFilter(req,res);return;
                         }
                         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(principal,null,List.of()));
                         chain.doFilter(req,res); return;

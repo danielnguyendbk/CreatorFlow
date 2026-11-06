@@ -106,6 +106,12 @@ class Client:
         with self.http.open(request, timeout=2) as response:
             return json.load(response)
 
+    def get(self, path):
+        request = urllib.request.Request(self.base + '/api/v2/agent-runtime/' + path,
+            headers={'X-Agent-Id': self.identity['id'], 'Authorization': 'Agent ' + self.identity['credential']})
+        with self.http.open(request, timeout=3) as response:
+            return json.load(response)
+
 
 class Executor:
     def __init__(self, root, tick=lambda: None):
@@ -234,19 +240,38 @@ def run(args):
             enrollment = os.environ.get("CREATORFLOW_AGENT_ENROLLMENT_TOKEN", "")
             if len(enrollment) < 32:
                 raise RuntimeError("Agent enrollment is not configured")
-            client.identity = client.post("register", {"name": args.name}, enrollment)
-            client.identity["backend"] = client.base
+            from credentials import replace_identity
+            import secrets
+            bootstrap = root / 'identity-bootstrap.dpapi'
+            if bootstrap.exists():
+                client.identity = json.loads(protect(bootstrap.read_bytes(), decrypt=True))
+                if client.identity.get('backend') != client.base:
+                    raise RuntimeError('Bootstrap belongs to another backend')
+            else:
+                client.identity = dict(id=str(uuid.uuid4()), credential=secrets.token_urlsafe(32), backend=client.base, generation=1)
+                replace_identity(bootstrap, client.identity, protect)
+            client.post('register', dict(name=args.name, id=client.identity['id'], credentialHash=hashlib.sha256(client.identity['credential'].encode()).hexdigest()), enrollment)
             encrypted = protect(json.dumps(client.identity).encode())
             temporary = root / "identity.dpapi.tmp"
             temporary.write_bytes(encrypted)
             temporary.replace(credential_file)
+            bootstrap.unlink(missing_ok=True)
+            os.environ.pop('CREATORFLOW_AGENT_ENROLLMENT_TOKEN', None)
         executor = Executor(root)
+        from credentials import recover, rotate_if_requested
+        recover(client, root, protect)
         capabilities = executor.capabilities()
+        from worktrees import WorktreeManager, KINDS as WORKTREE_KINDS
+        if os.environ.get('CREATORFLOW_REPOSITORY_ROOTS') and executor.git:
+            capabilities += list(WORKTREE_KINDS)
         session = client.post("session", {"capabilities": capabilities})["sessionId"]
+        manager = WorktreeManager(root, client, session) if os.environ.get('CREATORFLOW_REPOSITORY_ROOTS') else None
+        usage_thread = None
         if os.environ.get("CREATORFLOW_USAGE_ENABLED", "true").lower() == "true":
             import threading
             from codex_usage import usage_loop
-            threading.Thread(target=usage_loop, args=(client, session, root, stop), daemon=True).start()
+            usage_thread = threading.Thread(target=usage_loop, args=(client, session, root, stop), daemon=True)
+            usage_thread.start()
         print("Agent session started; credentials retained by Windows DPAPI", flush=True)
         last_beat = [0.0]
         current = [None]
@@ -267,8 +292,28 @@ def run(args):
             except Exception:
                 raise TaskError("LEASE_LOST") from None
         executor.tick = tick
+        if manager:
+            manager.tick = tick
+        last_configuration = 0.0
         while not stop[0]:
             try:
+                if time.monotonic() - last_configuration > 10:
+                    if rotate_if_requested(client, root, protect):
+                        stop[0] = True
+                        if usage_thread:
+                            usage_thread.join(timeout=30)
+                        return 'ROTATED'
+                    if manager:
+                        manager.sync()
+                        from codex_usage import CodexUsageCollector
+                        collector = CodexUsageCollector(root / 'usage')
+                        version = None
+                        if collector.executable:
+                            code, output = collector.capture_public(['--version'], 5)
+                            match = re.search(r'codex-cli (\d+\.\d+\.\d+(?:[-.][A-Za-z0-9.]+)?)', output)
+                            version = match[1] if not code and match else None
+                        client.post('coding/capabilities', dict(sessionId=session, providers=[dict(provider='CODEX_CLI', installed=bool(version), version=version), dict(provider='GEMINI_CLI', installed=bool(shutil.which('gemini')), version=None)]))
+                    last_configuration = time.monotonic()
                 tick()
                 task = client.post("claim", {"sessionId": session})
                 if not task:
@@ -276,8 +321,17 @@ def run(args):
                     continue
                 current[0] = task
                 try:
-                    result = executor.execute(task)
-                    state = "SUCCEEDED"
+                    if task['kind'] in WORKTREE_KINDS:
+                        if not manager:
+                            raise TaskError('REPOSITORY_REJECTED')
+                        report = manager.execute(task)
+                        client.post('coding/tasks/' + task['id'] + '/checkpoint', report)
+                        good = report['state'] in ('READY', 'CLEANED')
+                        result = dict(exitCode=0 if good else -1, gitCommit=report['headCommit'], errorCode=None if good else 'WORKSPACE_RECONCILIATION_REQUIRED')
+                        state = 'SUCCEEDED' if good else 'FAILED'
+                    else:
+                        result = executor.execute(task)
+                        state = "SUCCEEDED"
                 except TaskError as error:
                     code = str(error)
                     result = {"exitCode": -1, "errorCode": code}
@@ -286,7 +340,7 @@ def run(args):
                     result, state = {"exitCode": -1, "errorCode": "AGENT_ERROR"}, "FAILED"
                 # On lost lease, never publish an unfenced result. Recovery is owned by PostgreSQL.
                 if result.get("errorCode") != "LEASE_LOST":
-                    if state == "SUCCEEDED":
+                    if state == "SUCCEEDED" and task['kind'] not in WORKTREE_KINDS:
                         client.post("tasks/" + task["id"] + "/checkpoint", {"sessionId": session, "attempt": task["attempt"], "result": result})
                     completion = {"sessionId": session, "attempt": task["attempt"], "state": state, "result": result}
                     client.post("tasks/" + task["id"] + "/result", completion)
@@ -309,7 +363,8 @@ if __name__ == "__main__":
     parser.add_argument("--name", default="Windows Local Agent")
     parser.add_argument("--once", action="store_true")
     try:
-        run(parser.parse_args())
+        while run(parser.parse_args()) == 'ROTATED':
+            pass
     except Exception:
         print("Agent stopped: check configuration, exclusive root ownership and DPAPI identity", flush=True)
         raise SystemExit(1)
