@@ -73,10 +73,49 @@ def protect(data, decrypt=False):
         kernel.LocalFree(target.data)
 
 
+def windows_system_drive():
+    """Accept only the host drive reported by Windows, never a caller-supplied path."""
+    if os.name != 'nt':
+        return None
+    directory = ctypes.create_unicode_buffer(32768)
+    if not ctypes.windll.kernel32.GetWindowsDirectoryW(directory, len(directory)):
+        return None
+    drive = Path(directory.value).drive
+    supplied = os.environ.get('SYSTEMDRIVE', '')
+    return drive if re.fullmatch(r'[A-Za-z]:', supplied) and supplied.upper() == drive.upper() else None
+
+
+def codex_startup_environment():
+    """Only two validated Windows path variables required by the MXC launcher."""
+    drive = windows_system_drive()
+    if not drive:
+        raise TaskError('WINDOWS_STARTUP_ENV_INVALID')
+    folder_id = ctypes.create_string_buffer(uuid.UUID('f1b32785-6fba-4fcf-9d55-7b8e7f157091').bytes_le)
+    folder = ctypes.c_void_p()
+    shell = ctypes.WinDLL('shell32')
+    shell.SHGetKnownFolderPath.argtypes = [ctypes.c_void_p, wintypes.DWORD, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p)]
+    shell.SHGetKnownFolderPath.restype = ctypes.c_long
+    try:
+        if shell.SHGetKnownFolderPath(folder_id, 0, None, ctypes.byref(folder)) != 0:
+            raise TaskError('WINDOWS_STARTUP_ENV_INVALID')
+        local = ctypes.wstring_at(folder)
+        supplied = os.environ.get('LOCALAPPDATA', '')
+        if not supplied or os.path.normcase(os.path.normpath(supplied)) != os.path.normcase(os.path.normpath(local)):
+            raise TaskError('WINDOWS_STARTUP_ENV_INVALID')
+        return {'SYSTEMDRIVE': drive, 'LOCALAPPDATA': local}
+    finally:
+        if folder.value:
+            ctypes.windll.ole32.CoTaskMemFree.argtypes = [ctypes.c_void_p]
+            ctypes.windll.ole32.CoTaskMemFree(folder)
+
+
 def child_environment():
     # No browser/agent/provider tokens, enrollment secret, auth caches or Git config inheritance.
     allowed = {"PATH", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "COMSPEC", "PATHEXT"}
     env = {k: v for k, v in os.environ.items() if k.upper() in allowed}
+    drive = windows_system_drive()
+    if drive:
+        env['SYSTEMDRIVE'] = drive
     env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "NUL", "GIT_TERMINAL_PROMPT": "0"})
     return env
 

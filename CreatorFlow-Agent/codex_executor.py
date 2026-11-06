@@ -14,7 +14,7 @@ import threading
 import time
 import uuid
 from contextlib import contextmanager
-from agent import TaskError, child_environment, exclusive_lock
+from agent import TaskError, child_environment, codex_startup_environment, exclusive_lock
 from codex_usage import resolve_codex
 from worktrees import atomic_json, plain_path
 from windows_process import JobProcess
@@ -46,6 +46,7 @@ def settings(files, extra_reads=()):
            'approval_policy="never"','mcp_servers={}','plugins._default.enabled=false',
            'project_doc_max_bytes=0','web_search="disabled"',
            'shell_environment_policy.inherit="none"',
+           'shell_environment_policy.set={'+','.join(json.dumps(k)+'='+json.dumps(v) for k,v in codex_startup_environment().items())+'}',
            'features.apps=false','features.plugins=false','features.hooks=false',
            'features.shell_tool=false','features.unified_exec=false','features.skill_search=false',
            'features.skip_host_skill_discovery=true','analytics.enabled=false']
