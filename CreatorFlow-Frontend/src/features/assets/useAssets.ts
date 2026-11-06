@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { assetApi, storyboardApi, contentApi } from '@/api';
 import type { SceneAssetStatus } from '@/types';
 import { realApi } from '@/api/_http';
+import { notify } from '@/stores/notificationStore';
 
 export function useAssets() {
   return useQuery({
@@ -72,8 +73,12 @@ export function useAssignAssetToScene() {
         if (storyboardId) {
           const storyboard = await storyboardApi.getStoryboard(storyboardId);
           const content = await contentApi.getContent(contentId);
-          if (content.workflowInstanceId && storyboard.scenes.every((scene) => scene.assetStatus === 'READY')) {
-            await contentApi.resumeWorkflow(contentId);
+          if (content.workflowInstanceId && content.status === 'WAITING_FOR_ASSET' && storyboard.scenes.every((scene) => scene.assetStatus === 'READY')) {
+            try {
+              await contentApi.resumeWorkflow(contentId);
+            } catch (error) {
+              notify.warning('Asset assigned; workflow still waiting', error instanceof Error ? error.message : 'Workflow resume failed');
+            }
           }
         }
         return updatedAsset;
