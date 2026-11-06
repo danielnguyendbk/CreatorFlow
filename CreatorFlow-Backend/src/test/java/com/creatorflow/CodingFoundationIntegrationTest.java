@@ -35,6 +35,14 @@ class CodingFoundationIntegrationTest {
     HttpHeaders runtime(String token) {var h=new HttpHeaders();h.set("Authorization","Agent "+token);h.set("X-Agent-Id",agent.toString());h.setContentType(MediaType.APPLICATION_JSON);return h;}
     ResponseEntity<Map> post(String path,Object body,HttpHeaders h) {return http.exchange(path,HttpMethod.POST,new HttpEntity<>(body,h),Map.class);}
     CodingWorkspaces.Create createInput(String key) {return new CodingWorkspaces.Create(repo,"main",base,CodingWorkspaces.Role.CODEX_EXECUTOR,CodingWorkspaces.Scope.WORKSPACE_ONLY,"Foundation fixture only",List.of("src/**"),List.of("private/**"),30,1,null,CodingAdmission.Provider.NONE,key,List.of(),"WORKTREE_PREPARE");}
+    @Test void runtimeConfigurationWritesReturnJsonAcknowledgements() {
+        var created=post("/api/v2/coding/workspaces",createInput(UUID.randomUUID().toString()),operator());
+        assertEquals(HttpStatus.OK,created.getStatusCode());assertEquals("REQUESTED",created.getBody().get("state"));
+        var verified=post("/api/v2/agent-runtime/coding/repositories/verify",Map.of("sessionId",session,"repositoryId",repo,"configHash",registry.repository(repo).get("configHash"),"commits",Map.of("main",base)),runtime(secret));
+        assertEquals(HttpStatus.OK,verified.getStatusCode());assertEquals("VERIFIED",verified.getBody().get("verification"));
+        var capabilities=post("/api/v2/agent-runtime/coding/capabilities",Map.of("sessionId",session,"providers",List.of(Map.of("provider","CODEX_CLI","installed",true,"version","0.162.1"))),runtime(secret));
+        assertEquals(HttpStatus.OK,capabilities.getStatusCode());assertEquals(true,capabilities.getBody().get("accepted"));
+    }
     @Test void enrollmentRequiresExplicitOperatorWindowAndNeverAgentAuthority() {
         db.update("update agent_enrollment_policy set enabled_until=null where id=1");var enroll=new HttpHeaders();enroll.set("X-Agent-Enrollment","p5-enrollment-fixture-at-least-32-characters");
         assertEquals(HttpStatus.UNAUTHORIZED,post("/api/v2/agent-runtime/register",Map.of("name","Closed"),enroll).getStatusCode());
@@ -113,6 +121,7 @@ class CodingFoundationIntegrationTest {
         db.update("delete from ai_usage_snapshots where agent_id=?",agent);capabilityAndQuota(10,800,false);assertEquals("OPERATOR_REQUIRED",admission.check(check(false),"local-user").get("state"));
         db.update("delete from ai_usage_snapshots where agent_id=?",agent);capabilityAndQuota(10,0,true);assertEquals("OPERATOR_REQUIRED",admission.check(check(false),"local-user").get("state"));
         admission.policy(new CodingAdmission.Policy(agent,CodingAdmission.Provider.GEMINI_CLI,true,true,1,60,1,30),"local-user");assertEquals("PROVIDER_UNSUPPORTED",admission.check(new CodingAdmission.Check(UUID.randomUUID(),agent,CodingAdmission.Provider.GEMINI_CLI,30,1,false),"local-user").get("state"));
+        credentials.revoke(agent,"local-user");assertEquals("AGENT_OFFLINE_OR_REVOKED",admission.check(check(false),"local-user").get("reason"));
     }
     @Test void concurrentAdmissionCannotOverReserveAndFixturesIgnoreQuota() throws Exception {
         capabilityAndQuota(30,0,false);admission.policy(new CodingAdmission.Policy(agent,CodingAdmission.Provider.CODEX_CLI,true,true,1,60,1,30),"local-user");

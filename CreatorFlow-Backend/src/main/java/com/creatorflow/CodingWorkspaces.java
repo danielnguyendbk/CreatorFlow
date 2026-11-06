@@ -22,11 +22,11 @@ class CodingWorkspaces {
         @NotBlank @Pattern(regexp="[A-Za-z0-9_-]{1,64}") String idempotencyKey) {}
     record Report(@NotNull UUID sessionId,@Min(1) int attempt,@NotNull UUID checkpointId,
         @NotNull @Pattern(regexp="READY|CLEANED|NEEDS_RECONCILIATION") String state,@Pattern(regexp="[a-f0-9]{40,64}") String headCommit,boolean dirty) {}
-    final JdbcTemplate db;final AgentQueue queue;final CodingRegistry registry;final Validator validator;
-    CodingWorkspaces(JdbcTemplate db,AgentQueue queue,CodingRegistry registry,Validator validator) {this.db=db;this.queue=queue;this.registry=registry;this.validator=validator;}
+    final JdbcTemplate db;final AgentQueue queue;final CodingRegistry registry;final Validator validator;final ObjectMapper json;
+    CodingWorkspaces(JdbcTemplate db,AgentQueue queue,CodingRegistry registry,Validator validator,ObjectMapper json) {this.db=db;this.queue=queue;this.registry=registry;this.validator=validator;this.json=json;}
     <T> T strict(JsonNode body,Class<T> type,Set<String> fields) {
         if(!body.isObject()) throw AgentQueue.conflict("Invalid task schema");body.fieldNames().forEachRemaining(k->{if(!fields.contains(k)) throw AgentQueue.conflict("Unknown task field");});
-        try {T value=registry.json.treeToValue(body,type);if(!validator.validate(value).isEmpty()) throw AgentQueue.conflict("Invalid task schema");return value;}
+        try {T value=json.treeToValue(body,type);if(!validator.validate(value).isEmpty()) throw AgentQueue.conflict("Invalid task schema");return value;}
         catch(com.fasterxml.jackson.core.JsonProcessingException e) {throw AgentQueue.conflict("Invalid task schema");}
     }
     static void relative(String path) {if(path==null || path.isBlank() || path.startsWith("/") || path.contains("\\") || path.contains(":") || path.contains("..") || path.startsWith("-") || path.chars().anyMatch(c->c<32) || path.startsWith(".git") || path.startsWith(".codex") || path.startsWith(".aws") || path.startsWith(".env")) throw AgentQueue.conflict("Unsafe file scope");}

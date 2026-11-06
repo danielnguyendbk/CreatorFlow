@@ -37,10 +37,11 @@ class CodingApi {
     }
     @org.springframework.transaction.annotation.Transactional
     List<Map<String,Object>> configurationTransaction(UUID agent,UUID session) {queue.current(agent,session);return db.queryForList("select id from coding_repositories where agent_id=?",agent).stream().map(r->registry.repository((UUID)r.get("id"))).toList();}
-    @PostMapping("/api/v2/agent-runtime/coding/repositories/verify") void verify(Authentication auth,@Valid @RequestBody Verify input) {registry.verify((UUID)auth.getPrincipal(),input.sessionId(),input.repositoryId(),input.configHash(),input.commits(),input.errorCode(),queue);}
-    @PostMapping("/api/v2/agent-runtime/coding/capabilities") @org.springframework.transaction.annotation.Transactional void capabilities(Authentication auth,@Valid @RequestBody Capabilities input) {
+    @PostMapping("/api/v2/agent-runtime/coding/repositories/verify") Map<String,Object> verify(Authentication auth,@Valid @RequestBody Verify input) {registry.verify((UUID)auth.getPrincipal(),input.sessionId(),input.repositoryId(),input.configHash(),input.commits(),input.errorCode(),queue);return Map.of("verification",registry.repository(input.repositoryId()).get("verification"));}
+    @PostMapping("/api/v2/agent-runtime/coding/capabilities") @org.springframework.transaction.annotation.Transactional Map<String,Object> capabilities(Authentication auth,@Valid @RequestBody Capabilities input) {
         UUID agent=(UUID)auth.getPrincipal();queue.current(agent,input.sessionId());
         for(var p:input.providers()) {if(p.provider()==CodingAdmission.Provider.NONE) throw AgentQueue.conflict("Invalid provider capability");db.update("insert into agent_provider_capabilities values (?,?,?,?,now()) on conflict(agent_id,provider) do update set installed=excluded.installed,version=excluded.version,observed_at=now()",agent,p.provider().name(),p.installed(),p.version());}
+        return Map.of("accepted",true);
     }
     @PostMapping("/api/v2/agent-runtime/coding/tasks/{id}/checkpoint") Map<String,Object> checkpoint(Authentication auth,@PathVariable UUID id,@Valid @RequestBody CodingWorkspaces.Report input) {return workspaces.report((UUID)auth.getPrincipal(),id,input);}
 }

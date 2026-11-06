@@ -28,6 +28,7 @@ class CodingAdmission {
         if(policy!=null && Boolean.TRUE.equals(policy.get("enabled"))) {
             if(input.provider()!=Provider.CODEX_CLI) {state="PROVIDER_UNSUPPORTED";reason="VERIFIED_QUOTA_ADAPTER_UNAVAILABLE";}
             else if(!Boolean.TRUE.equals(policy.get("operator_authorized"))) {state="OPERATOR_REQUIRED";reason="OPERATOR_AUTHORIZATION_REQUIRED";}
+            else if(db.queryForObject("select count(*) from local_agents a join agent_credentials c on c.agent_id=a.id where a.id=? and a.session_id is not null and a.last_heartbeat_at>now()-interval '10 seconds' and c.revoked_at is null",Integer.class,input.agentId())!=1) {state="OPERATOR_REQUIRED";reason="AGENT_OFFLINE_OR_REVOKED";}
             else {
                 var capability=db.queryForList("select installed from agent_provider_capabilities where agent_id=? and provider='CODEX_CLI' and installed and observed_at>now()-interval '6 minutes'",input.agentId());
                 var q=usage.codex(input.agentId());
