@@ -89,6 +89,8 @@ class TaskEngineIntegrationTest {
         var persisted=json.readTree(java.nio.file.Files.readString(temp.resolve(cycleId+".json")));
         assertEquals("COMMITTED_POSTGRESQL_STATE",persisted.get("source").asText());assertEquals(2,persisted.get("tasks").size());
         assertEquals(cycleId.toString(),restarted.handoff(cycleId).get("cycleId"));
-        java.nio.file.Files.deleteIfExists(temp.resolve(cycleId+".json"));java.nio.file.Files.delete(temp);
+        assertTrue(java.nio.file.Files.isRegularFile(temp.resolve("latest.json")));
+        assertEquals("CYCLE_COMPLETE",persisted.get("nextCycle").get("firstTask").asText());
+        java.nio.file.Files.deleteIfExists(temp.resolve(cycleId+".json"));java.nio.file.Files.deleteIfExists(temp.resolve("latest.json"));java.nio.file.Files.delete(temp);
     }
 }

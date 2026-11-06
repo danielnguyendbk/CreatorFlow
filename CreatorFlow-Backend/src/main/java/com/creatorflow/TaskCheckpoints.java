@@ -57,6 +57,12 @@ class TaskCheckpoints {
                 evidence.add(item);
             }
             document.put("tasks",evidence);document.put("changedFiles",List.of());
+            document.put("completedTasks",evidence.stream().filter(t->"SUCCEEDED".equals(t.get("state"))).map(t->t.get("id")).toList());
+            document.put("incompleteTasks",evidence.stream().filter(t->!"SUCCEEDED".equals(t.get("state"))).map(t->t.get("id")).toList());
+            document.put("tests",evidence.stream().map(t->Map.of("taskId",t.get("id"),"kind",t.get("kind"),"outcome",t.get("state"))).toList());
+            boolean failed=evidence.stream().anyMatch(t->!"SUCCEEDED".equals(t.get("state")));
+            document.put("blockers",failed?List.of("TASK_FAILURE_OPERATOR_REVIEW"):List.of());
+            document.put("nextCycle",Map.of("firstTask",failed?"OPERATOR_REVIEW":"CYCLE_COMPLETE"));
             document.put("limits",List.of("Fixture task evidence only; no provider/publication or Maven claim","Runtime handoff is separate from the repository navigation handoff"));
             try {
                 String value=json.writeValueAsString(document);
@@ -83,6 +89,14 @@ class TaskCheckpoints {
                 db.update("update cycle_handoffs set exported_hash=? where cycle_id=? and document_hash=?",row.get("document_hash"),row.get("cycle_id"),row.get("document_hash"));
             } catch(java.io.IOException e) { /* Leave export pending for restart/retry; DB remains authoritative. */ }
         }
+        if(!rows.isEmpty()) try {
+            String value=rows.getLast().get("document").toString();Path latest=root.resolve("latest.json");
+            if(!Files.isRegularFile(latest) || !Files.readString(latest).equals(value)) {
+                Files.createDirectories(root);Path temporary=Files.createTempFile(root,"latest-",".tmp");
+                try {Files.writeString(temporary,value);Files.move(temporary,latest,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);}
+                finally {Files.deleteIfExists(temporary);}
+            }
+        } catch(java.io.IOException e) { /* Retried from committed DB state next tick/restart. */ }
     }
 }
 
