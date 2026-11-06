@@ -38,7 +38,7 @@ class PublicationManifestIntegrationTest {
         var old=Flyway.configure().dataSource(source).defaultSchema(schema).schemas(schema).target("14").load();assertEquals(14,old.migrate().migrationsExecuted);
         UUID historicalContent=UUID.randomUUID();db.update("insert into contents(id,title,topic,status,current_stage,language,niche) values (?,'Historical','Fixture','READY','PUBLICATION','en','fixture')",historicalContent);
         db.update("insert into publication_jobs(id,content_id,platform,status,title,caption,approved_at) values (?,?,'YOUTUBE_SHORTS','SCHEDULED','Historical','Fixture',now())",UUID.randomUUID(),historicalContent);
-        var latest=Flyway.configure().dataSource(source).defaultSchema(schema).schemas(schema).load();assertEquals(2,latest.migrate().migrationsExecuted);latest.validate();assertEquals(0,latest.migrate().migrationsExecuted);
+        var latest=Flyway.configure().dataSource(source).defaultSchema(schema).schemas(schema).load();int pending=latest.info().pending().length;assertTrue(pending>=2);assertEquals(pending,latest.migrate().migrationsExecuted);latest.validate();assertEquals(0,latest.migrate().migrationsExecuted);
         assertEquals(0,db.queryForObject("select count(*) from publication_approvals",Integer.class));assertEquals(1,db.queryForObject("select count(*) from publication_jobs where approved_at is not null and active_manifest_id is null",Integer.class));
         manager=new DataSourceTransactionManager(source);tx=new TransactionTemplate(manager);
         root=Files.createTempDirectory(Path.of("../storage"),"p4-media-").toAbsolutePath();baseVideo=root.resolve("source.mp4");voice=root.resolve("voice.wav");
