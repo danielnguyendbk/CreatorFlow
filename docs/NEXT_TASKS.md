@@ -1,8 +1,20 @@
 # CreatorFlow next tasks
 
-Updated: 2026-11-06. Current branch `feat/v2-p1-local-agent`, baseline `05afbd6`. V2-P1-02 is IMPLEMENTED/TESTED within the local fixture scope in [LOCAL_AGENT.md](LOCAL_AGENT.md). Account Manager was not reimplemented. Read AGENTS.md and the latest handoff, then verify Git/remote/runtime before new work.
+Updated: 2026-11-06. Current branch `feat/v2-p2-engine-usage`, baseline `8c61321`. Implemented in order: P2-01 dependency engine -> P2-02 checkpoints/handoff -> P2-03 usage monitoring. All three have actual scoped acceptance in [P2_ENGINE_USAGE.md](P2_ENGINE_USAGE.md). Read AGENTS.md/latest handoff and verify Git/remote/runtime before another cycle.
 
-## Immediate next task: V2-P2-01 / V2-P2-02
+## P2 completion and next boundary
+
+1. P2-01 IMPLEMENTED/TESTED: preserve V10 DAG validation, idempotency, dependency failure propagation, retry/backoff and writer/fencing rules; do not replace with a quota-only queue.
+2. P2-02 IMPLEMENTED/TESTED: preserve V11 fenced checkpoints and committed-state atomic runtime per-cycle/latest handoffs. Repository navigation is separately Git/test verified; unknown source metadata stays unknown.
+3. P2-03 IMPLEMENTED/TESTED: V12, initialized read-only Codex collector, private authenticated snapshots, usage/history/refresh API, AI Usage UI and Account Manager widget. This host's 0.162.1 account was LIVE_VERIFIED through actual agent/backend/browser evidence, never fixtures. Windows use duration 300/10080; weekly-only means five-hour NOT_AVAILABLE.
+4. Future AI tasks must consume WAIT_FOR_RESET/OPERATOR_REQUIRED for exhausted/incomplete/stale quota. Keep Git/FFmpeg/probe tasks independent, configurable thresholds, three-minute polling, manual cooldown/deadline, schema privacy and no account switching.
+5. Operator review is next. Gemini/OpenRouter adapters require official quota/limit verification; never derive percentages from token counts. Retention, credential lifecycle and real AI executors need explicit contracts/acceptance. The broader next planned phase remains P3-01, but Telegram/autonomous coding/live publication were not implemented or authorized for this completed cycle.
+
+Acceptance: Maven 37 tests, Python ten tests, frontend build, actual checkpoint/agent/backend restart and live Codex/Playwright. Final Git/PR confirmation/manual URL are in `.creatorflow/handoffs/latest.json`. If a future session budget prevents continuation, push only tested milestones and mark remaining work NEXT; do not skip P2-01/02 or fabricate completion.
+
+P2 implementation branch is pushed/remote verified. Draft PR creation returned GitHub connector 403; no PR exists. [Create PR manually](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p1-local-agent...feat/v2-p2-engine-usage?expand=1).
+
+## Previous cycle plan: V2-P2-01 / V2-P2-02 (completed and preserved)
 
 1. Create a clean feature branch from the verified remote local-agent head. Preserve the existing V1/Account Manager/Monitoring routes and separate browser versus agent authentication.
 2. Implement PostgreSQL dependency tasks and durable checkpoints over the existing session/attempt/lease queue. Initially use the three existing safe fixture kinds; do not introduce arbitrary shell, Telegram, autonomous coding or live publication.

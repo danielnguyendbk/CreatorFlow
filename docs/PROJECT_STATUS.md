@@ -1,8 +1,23 @@
 # CreatorFlow project status
 
-Updated: 2026-11-06. Current branch: `feat/v2-p1-local-agent`, baseline `origin/feat/v2-p1-account-manager` at `05afbd6a479099afe10174b74f463084fc1ee682`. Current results below supersede prior cycle records.
+Updated: 2026-11-06. Current branch: `feat/v2-p2-engine-usage`, verified baseline `origin/feat/v2-p1-local-agent` at `8c613212f0d730a5322d803d582dc95ff37d9178`. Current results supersede previous cycles below.
 
-## Current cycle: V2-P1-02 Windows Local Agent
+## Current cycle: P2-01 -> P2-02 -> P2-03
+
+- P2-01 IMPLEMENTED/TESTED: V10 durable validated DAGs, atomic/idempotent creation, dependency-gated concurrent claim, failure propagation, bounded retry/backoff. Browser-created Git -> FFmpeg -> probe cycle completed using the real Windows agent. Existing fixture kinds, fencing and one writer are preserved; autonomous roles/publishing were not enabled.
+- P2-02 IMPLEMENTED/TESTED: V11 fenced immutable checkpoints, hash/ref verification before artifact reuse, committed-state handoffs, atomic per-cycle/latest export, formal JSON schema and restart/readback. Real crash after checkpoint restored the artifact at attempt 2 with the exact Git commit. Runtime handoffs are under ignored storage; tracked repository navigation stays with the Git implementation writer. Unknown repository source context remains null/empty, not fabricated.
+- P2-03 IMPLEMENTED/TESTED; LIVE_VERIFIED for this host/account/Codex CLI 0.162.1 only. Actual initialized App Server reads returned 300/10080-minute windows; the authenticated agent uploaded sanitized snapshots and Playwright showed quota, reset times, history and Account Manager widget. First browser sample used 71% five-hour / 41% weekly (historical observations). Manual refresh created another real snapshot. No inference/exec/login/switch/auth-cache access.
+- V12/API: strict allowlist/identity/session attachment, duplicate/out-of-order handling, three-minute provider polling, refresh 202/429/deadline, computed STALE/UNKNOWN after errors/age/expired resets, configurable LOW/CRITICAL/EXHAUSTED and future AI readiness. Agent credentials cannot call operator usage APIs. AI exhaustion never gates Git/FFmpeg fixtures. Gemini adapter UNSUPPORTED; OpenRouter UNKNOWN.
+- Maven package TESTED: 37 tests, zero failures/errors/skips. Python TESTED: ten tests (six actual Windows/process/checkpoint, four collector fixture tests), no skips. Frontend build passed. Fixtures cover reversed/both windows, weekly-only, no data, missing CLI, unsupported protocol, no auth, timeout, notification merge and secret exclusion; these are MOCK_ONLY, not LIVE_VERIFIED evidence.
+- Actual process E2E TESTED: Git/FFmpeg, cancel/timeout/offline, checkpoint reuse, agent/backend restart, persisted browser cycle/handoff and quota history. Interrupted tasks recovered at attempt 2; recorded usage after restart was OK/LIVE with five history rows. Successful Playwright runs had zero console errors and one Router warning; deliberate backend shutdown traces include transient proxy failures.
+
+Milestones: `eb8dd51` P2-01, `a21c353` P2-02, `6d61efd` P2-03, `8b94758` latest handoff/schema. Exact commands/contracts/evidence/limits: [P2_ENGINE_USAGE.md](P2_ENGINE_USAGE.md). Final Git/PR confirmation is in the latest JSON handoff.
+
+Implementation branch was pushed and remote SHA matched local. Draft PR targeting `feat/v2-p1-local-agent` returned connected GitHub HTTP 403 `Resource not accessible by integration`; no PR exists. [Create PR manually](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p1-local-agent...feat/v2-p2-engine-usage?expand=1). Final documentation/handoff is committed and pushed separately.
+
+Limits: local/single-operator, fixed fixture tasks and read-only Codex collector. Future AI executors must consume WAIT_FOR_RESET/OPERATOR_REQUIRED; no service installer, retention/rotation UI, remote identity or verified Gemini/OpenRouter adapter. Existing Flyway PostgreSQL 18 range and Vite bundle warnings remain. No Telegram, autonomous coding, live publishing, main merge, production deployment or public exposure.
+
+## Previous cycle: V2-P1-02 Windows Local Agent
 
 - Identity/authentication: IMPLEMENTED, TESTED. Separate enrollment and per-agent runtime credential; backend stores hash/scope/revocation metadata, agent stores current-user DPAPI ciphertext. Browser credentials cannot register/claim; agent credentials cannot call browser/operator routes. Cross-agent spoofing/revocation and no-store enrollment response tested. No Account Manager implementation changes.
 - Queue/V9: IMPLEMENTED, TESTED. Fresh V1-V9, targeted fixed-kind queue, atomic SKIP LOCKED claim, session/attempt/lease fencing, unique idempotency key, one active agent/worktree writer, transactional events, cancellation and bounded expired-lease recovery. Eight concurrent claims yielded one writer; stale attempts/sessions/results were rejected. Equivalent terminal result retransmission passed.

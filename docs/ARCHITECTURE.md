@@ -1,6 +1,16 @@
 # CreatorFlow V2 architecture
 
-Updated 2026-11-06. P0, Account Manager and V2-P1-02 local fixture agent are **IMPLEMENTED**, with scoped actual tests recorded in PROJECT_STATUS.md. Dependency graphs, outbox delivery, Telegram and autonomous coding below remain **DESIGNED**.
+Updated 2026-11-06. P0, Account Manager, local agent, P2 dependency cycles/checkpoints/handoff and read-only Codex monitoring are **IMPLEMENTED**, with scoped tests in PROJECT_STATUS.md. Outbox delivery, Telegram, autonomous coding and general AI task execution remain **DESIGNED**.
+
+## Implemented P2 boundary
+
+P2-01 -> P2-02 -> P2-03 is preserved. V10 adds bounded validated DAGs over the existing queue, dependency-aware claim, failure propagation and bounded retry/backoff. V11 adds owner/session/attempt/lease-fenced immutable checkpoints; the Windows agent verifies artifact hashes/Git refs before reuse. Settled cycles generate handoffs from committed DB state, atomically exported per-cycle/latest under ignored storage. They never race the source writer by overwriting tracked navigation; unknown checkout branch/commit/files remain unavailable rather than invented.
+
+V12 stores allowlisted usage snapshots and refresh intents tied to authenticated agent identity/session. A separate read-only agent collector thread checks CLI version/public schema and initializes App Server stdio before rate-limit/optional token reads, merging available notifications. No inference, login, switching, reset-credit consumption or provider auth-file access/copy occurs. Raw protocol errors, emails/account IDs, prompts and secrets are discarded at the collector boundary and rejected by ingestion schema. Agent and operator APIs remain separate.
+
+Provider polling defaults to 180 seconds. Backend freshness derives from observation age, failures/reset deadlines and refresh timeout; duplicate/out-of-order reports cannot replace newer observations. Match five-hour/seven-day windows by duration 300/10080, not primary/secondary. Missing windows stay NOT_AVAILABLE; credits/token activity remain nullable facts, never an invented quota denominator. Configurable warnings/readiness support future AI admission without blocking quota-free fixtures.
+
+React `/ai-usage` and a compact Account Manager widget render real backend progress/reset/countdown, source/agent, history and manual refresh. Gemini is UNSUPPORTED and OpenRouter UNKNOWN pending official adapters. Codex 0.162.1 was LIVE_VERIFIED through the actual local agent/backend/browser path; fixture tests remain MOCK_ONLY. Protocol, limits and acceptance: [P2_ENGINE_USAGE.md](P2_ENGINE_USAGE.md).
 
 ## Implemented local agent boundary
 
