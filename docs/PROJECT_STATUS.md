@@ -1,6 +1,23 @@
 # CreatorFlow project status
 
-Updated: 2026-11-05. Current branch: `feat/v2-p0-reliability`, based on `feat/v2-p0-hardening` at `86f0cee`. This file retains prior-cycle evidence below; the current-cycle results are in the next section.
+Updated: 2026-11-06. Current branch: `feat/v2-p1-account-manager`, baseline `feat/v2-p0-media-ai` at `70ad2088aa4a492cd19f1ad58b547eb80e0abb8c`. Current results below supersede the historical records later in this file.
+
+## Current cycle: P0 closeout and V2-P1-01
+
+- V2-P0-06: IMPLEMENTED, TESTED for the remaining asset/settings browser mutations. Actual upload, content/scene selection, assignment, settings save/persistence and local voice test passed. Fixed assignment success being reported as failure after invalid auto-resume. Completed workflows no longer resume; missing voice produces a separate warning; a ready WAITING workflow became RUNNING in PostgreSQL. Deliberate Gemini-disabled/missing-voice HTTP errors were expected; final successful assignment browser run had zero console errors and one React Router future warning.
+- V2-P0-07/08: IMPLEMENTED in baseline, TESTED this cycle. Maven package ran 25 tests, zero failures/errors/skips, including actual FFmpeg corrupt/valid media regressions and five AI reliability integration tests. Provider fixtures remain MOCK_ONLY.
+- Video E2E: TESTED, actual 15.000000-second MP4, video/audio/subtitle, full FFmpeg decode exit 0, retry count 1 and cancellation CANCELLED. HTTP contract smoke passed 11 routes and auth/validation/storyboard/media using the matching current fixture.
+- V2-P1-01: IMPLEMENTED, TESTED (local/fixture scope). Migration V8, authenticated Account API, metadata/capability snapshots, bounded Codex/Gemini CLI discovery, official reconnect intent and React sidebar/page. Database/API tests assert exact response allowlist, no secret/cache/password/cookie schema fields, authentication, persisted intents, expired fixture handling and 409 for unsupported default switching. Fresh V1-V8, upgrade/no-op migration regression, frontend TypeScript/Vite build passed. Bundle-size warning remains.
+- Account browser smoke: TESTED. Refresh detected both CLIs installed. Codex reports CONNECTED from local `login status` exit 0, explicitly not live verified. Gemini remains UNKNOWN. Both official reconnect instructions rendered. Unsupported API reconnect/default switching remain unavailable. No auth-cache file was read or copied.
+- Git: TESTED. Sandbox deny-write ACLs blocked ref locks; approved execution created/pushed the feature branch without ACL changes. Baseline remote matched; implementation remote SHA `ef51627484552ba803f9e65d0e73640b4d8b6513` matched local after push. Final handoff documentation is committed separately.
+- Draft PR: BLOCKED. GitHub connector creation targeting `feat/v2-p0-media-ai` returned 403 `Resource not accessible by integration`; no PR exists. [Create PR manually](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p0-media-ai...feat/v2-p1-account-manager?expand=1).
+- V2-P1-02 Windows Local Agent: DESIGNED, next implementation task; scoped identity, heartbeat, leased tasks, timeout/restart plan is in `ACCOUNT_MANAGER.md`.
+
+Implementation commits: `bbe9123` (P0 browser fix/acceptance), `ef51627` (Account Manager/V8/tests). Exact commands, resolved environment failures and local evidence: [P0_ACCEPTANCE_20261106.md](P0_ACCEPTANCE_20261106.md). Capability limits and local-agent plan: [ACCOUNT_MANAGER.md](ACCOUNT_MANAGER.md).
+
+Limits: JDK 25 and PostgreSQL 18.3 used; Flyway warns PostgreSQL 18 is newer than its tested range. No live Gemini/OpenRouter, OAuth completion, Telegram, social publication, main merge, deployment or public exposure. Reconnect is an intent awaiting user completion in the official terminal flow. Historical conflicting publication IDs remain quarantined for operator reconciliation before live publishing.
+
+## Historical records (superseded by current results above)
 
 ## V2 P0 reliability cycle, 2026-11-05
 

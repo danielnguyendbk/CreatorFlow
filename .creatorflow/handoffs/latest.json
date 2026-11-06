@@ -1,101 +1,119 @@
-﻿{
+{
     "schemaVersion":  1,
-    "generatedAtUtc":  "2026-11-05T01:57:51Z",
-    "branch":  "feat/v2-p0-reliability",
-    "sourceBranch":  "origin/feat/v2-p0-hardening",
-    "sourceCommit":  "86f0ceeadd9f300e412438a742dfbc8e137f13f2",
-    "lastImplementationCommit":  "88c8c54",
+    "generatedAtUtc":  "2026-11-06T03:07:13Z",
+    "branch":  "feat/v2-p1-account-manager",
+    "sourceBranch":  "feat/v2-p0-media-ai",
+    "sourceCommit":  "70ad2088aa4a492cd19f1ad58b547eb80e0abb8c",
+    "lastImplementationCommit":  "ef51627484552ba803f9e65d0e73640b4d8b6513",
     "completedTasks":  [
                            {
-                               "id":  "V2-P0-01",
                                "status":  "TESTED",
-                               "result":  "Failed publication targets are reused; concurrent scheduling creates one job; retry refuses a second active target."
-                           },
-                           {
-                               "id":  "V2-P0-02-auth-boundary",
-                               "status":  "TESTED",
-                               "result":  "Local token protects reads/writes; malformed authorized requests return 400; readiness is public."
-                           },
-                           {
-                               "id":  "V2-P0-03-media-smoke",
-                               "status":  "TESTED",
-                               "result":  "Fresh 15-second MP4 has video, audio and subtitle; render retry/cancel and PostgreSQL persistence survived restart."
-                           },
-                           {
-                               "status":  "TESTED",
-                               "result":  "Flyway V5 fresh, duplicate-bearing and conflicting-post-ID fixtures passed; history and post IDs retained; API retry 409 on conflicted rows.",
-                               "id":  "V2-P0-04"
-                           },
-                           {
-                               "status":  "TESTED",
-                               "result":  "Mock YouTube HTTP 503 and actual timeout before/after PUT classified; restart quarantine and retry rejection passed; no live upload.",
-                               "id":  "V2-P0-05"
-                           },
-                           {
-                               "status":  "TESTED",
-                               "result":  "All nine API clients mapped; HTTP contract and local proxy passed; Playwright visited 12 routes, 0 console errors; full mutation click-through remains open.",
+                               "result":  "Remaining asset/settings browser mutations passed; committed fix distinguishes assignment success from resume failure.",
                                "id":  "V2-P0-06"
+                           },
+                           {
+                               "status":  "TESTED",
+                               "result":  "Actual FFmpeg valid/corrupt media regression, upload 422/no readiness mutation and 15-second video E2E passed.",
+                               "id":  "V2-P0-07"
+                           },
+                           {
+                               "status":  "TESTED",
+                               "result":  "Five AI reliability integration regressions passed; provider responses MOCK_ONLY, no live call.",
+                               "id":  "V2-P0-08"
+                           },
+                           {
+                               "status":  "TESTED",
+                               "result":  "Metadata V8, Account API, local CLI discovery, official reconnect intent and React page implemented; DB/API/browser/build passed. Switching unsupported; no auth-cache access.",
+                               "id":  "V2-P1-01"
                            }
                        ],
     "incompleteTasks":  [
-                            "V2-P0-06 full browser mutation click-through",
-                            "V2-P0-07 media decodability validation",
-                            "V2-P0-08 durable AI retry and validated completion",
-                            "Operator procedure for historically conflicting post IDs",
-                            "V2 account manager, local agent, task engine, Telegram and autonomous coding remain design only"
+                            "V2-P1-02 Windows Local Agent implementation",
+                            "Live provider health and official OAuth completion remain unverified",
+                            "Draft PR blocked by GitHub integration 403",
+                            "Historical publication conflict operator reconciliation before live publishing"
                         ],
     "changedFiles":  [
-                         "CreatorFlow-Backend/src/main/resources/db/migration/V5__publication_reconciliation.sql",
-                         "CreatorFlow-Backend/src/main/java/com/creatorflow/PublicationApi.java",
-                         "CreatorFlow-Backend/src/main/java/com/creatorflow/YouTubePublisher.java",
+                         ".creatorflow/handoffs/latest.json",
+                         "CreatorFlow-Backend/src/main/java/com/creatorflow/AccountApi.java",
+                         "CreatorFlow-Backend/src/main/java/com/creatorflow/AccountDiscovery.java",
+                         "CreatorFlow-Backend/src/main/resources/db/migration/V8__account_metadata.sql",
+                         "CreatorFlow-Backend/src/test/java/com/creatorflow/AccountApiIntegrationTest.java",
                          "CreatorFlow-Backend/src/test/java/com/creatorflow/PublicationMigrationIntegrationTest.java",
-                         "CreatorFlow-Backend/src/test/java/com/creatorflow/PublicationIdempotencyIntegrationTest.java",
-                         "CreatorFlow-Backend/src/test/java/com/creatorflow/YouTubePublisherTest.java",
-                         "CreatorFlow-Backend/scripts/smoke-contract.ps1",
-                         "CreatorFlow-Frontend/src/api/_http.ts",
-                         "CreatorFlow-Frontend/src/api/assetApi.ts",
+                         "CreatorFlow-Frontend/src/api/accountApi.ts",
+                         "CreatorFlow-Frontend/src/components/layout/Sidebar.tsx",
+                         "CreatorFlow-Frontend/src/features/accounts/AccountManagerPage.tsx",
                          "CreatorFlow-Frontend/src/features/assets/useAssets.ts",
+                         "CreatorFlow-Frontend/src/routes/index.tsx",
                          "CreatorFlow-Frontend/src/types/index.ts",
-                         "docs/FRONTEND_API_CONTRACT.md",
-                         "docs/PROJECT_STATUS.md",
+                         "docs/ACCOUNT_MANAGER.md",
                          "docs/NEXT_TASKS.md",
-                         ".creatorflow/handoffs/latest.json"
+                         "docs/P0_ACCEPTANCE_20261106.md",
+                         "docs/PROJECT_STATUS.md"
                      ],
+    "implementationCommits":  [
+                                  "bbe9123",
+                                  "ef51627"
+                              ],
     "tests":  [
-                  "mvn package -q: pass",
-                  "Flyway V1-V5 fresh database: pass",
-                  "Flyway V5 existing FAILED/SCHEDULED duplicate: pass",
-                  "Flyway V5 conflicting remote post IDs: pass, both retained and flagged",
-                  "Flyway isolated schema migration rerun: 0 new migrations, validate pass",
-                  "npm run build with VITE_API_BASE_URL set: pass",
-                  "smoke-contract.ps1: pass, 11 routes plus auth/validation/media",
-                  "smoke-e2e.ps1: pass, 15-second MP4 with video/audio/subtitle and retry/cancel",
-                  "Backend restart: render SUCCESS, workflow COMPLETED, publication FAILED/NOT_CONFIGURED",
-                  "Playwright CLI: 12 routes, 0 console errors; dashboard DB count observed",
-                  "mvn test -q on local PostgreSQL 18.3 after HTTP timeout regression: 13 tests, 0 failures/errors",
-                  "Mock YouTube 80 ms HTTP timeout before/after PUT: safe/unknown classification, PUT count 1"
+                  "\u0026 D:/DevTools/apache-maven-3.9.12/bin/mvn.cmd -Dmaven.repo.local=C:/Users/Admin/AppData/Local/codex-with-chatgpt/maven-repo-phase2b package -q: PASS, 25 tests, 0 failures/errors/skips; test DB and FFMPEG_PATH set",
+                  "Fresh PostgreSQL creatorflow_p1_acceptance_20261106: Flyway V1-V8 all success=true; isolated upgrade/no-op rerun passed",
+                  "npm run build with VITE_API_BASE_URL=http://127.0.0.1:5173: PASS; bundle warning",
+                  "CreatorFlow-Backend/scripts/smoke-e2e.ps1 -Ffprobe \u003cinstalled-ffmpeg-bin\u003e/ffprobe.exe -EvidenceFile storage/e2e-evidence-v2-p1.json: PASS, actual 15.000000s MP4 video/audio/subtitle; retry 1/cancel CANCELLED",
+                  "ffmpeg -nostdin -v error -i storage/e2e-output.mp4 -f null NUL: PASS exit 0",
+                  "CreatorFlow-Backend/scripts/smoke-contract.ps1 -EvidenceFile storage/e2e-evidence-v2-p1.json: PASS, 11 routes plus auth/validation/storyboard/media",
+                  "Playwright CLI creatorflow-p1: actual upload and completed/waiting/missing-voice assignment, settings save persisted in DB, actual local voice, expected disabled Gemini error; final success console 0 errors, 1 React Router warning",
+                  "Playwright CLI: Account Manager refresh detects both CLIs, Codex local login present, Gemini Unknown, official Codex/Gemini reconnect instructions rendered",
+                  "AccountApiIntegrationTest: 2 tests passed; auth, metadata allowlist, secret-free schema, expired fixture, reconnect persistence, no switching/CLI execution from reconnect/default",
+                  "git ls-remote baseline and implementation branch: matched local; branch push confirmed"
               ],
+    "environment":  {
+                        "frontend":  "127.0.0.1:5173",
+                        "realPublishing":  "disabled",
+                        "providerCalls":  "disabled",
+                        "postgresql":  "18.3",
+                        "database":  "127.0.0.1:55432",
+                        "java":  "25",
+                        "backend":  "127.0.0.1:8080",
+                        "maven":  "3.9.12"
+                    },
     "localEvidence":  [
-                          "storage/e2e-evidence-v2-p0.json",
-                          "storage/e2e-output.mp4"
+                          "storage/p1-tests.log",
+                          "storage/p1-frontend-build.log",
+                          "storage/p1-e2e.log",
+                          "storage/p1-contract.log",
+                          "storage/e2e-evidence-v2-p1.json",
+                          "storage/assignment-no-voice-pass.txt",
+                          "storage/assignment-ready-pass.txt",
+                          ".playwright-cli/"
                       ],
     "blockers":  [
-                     "Live Gemini/OpenRouter credentials absent; provider calls disabled",
-                     "YouTube live OAuth/publishing credentials and explicit posting approval absent",
-                     "TikTok/Instagram/Facebook publishing adapters absent",
-                     "Production user identity and authenticated media delivery not implemented",
-                     "Full browser mutation click-through not completed",
-                     "Draft PR creation for feat/v2-p0-reliability into feat/v2-p0-hardening returned GitHub connector 403 Resource not accessible by integration; no PR exists"
+                     "GitHub create_pull_request returned HTTP 403 Resource not accessible by integration; no PR exists",
+                     "Live Gemini/OpenRouter/OAuth/Telegram/publication not tested",
+                     "Gemini CLI official noninteractive auth probe not established; remains UNKNOWN",
+                     "All current provider default/switching capabilities UNSUPPORTED",
+                     "Flyway warns PostgreSQL 18 exceeds tested range; bundle-size warning remains"
                  ],
     "architectureDecisions":  [
-                                  "Preserve all historical publication rows and post IDs; one canonical target per content/platform",
-                                  "Quarantine ambiguous PUT outcomes and in-flight jobs after restart; never blind retry",
-                                  "Keep local Vite proxy token injection scoped to 127.0.0.1",
-                                  "Retain modular monolith and existing frontend routes/layout"
+                                  "Retain Spring modular monolith and existing React routes/layout; add /accounts sidebar route",
+                                  "Persist metadata and intents only; never read/copy provider auth caches or store passwords/cookies",
+                                  "CONNECTED means Codex local login status only, explicitly not live verified; nonzero probe stays UNKNOWN",
+                                  "Reconnect is AWAITING_USER_OFFICIAL_FLOW with fixed terminal instructions; does not launch login or change identity",
+                                  "Reject unsupported default selection with 409; no fabricated multi-account support",
+                                  "Git sandbox boundary handled using approved execution without ACL changes or unnecessary fetch",
+                                  "Asset assignment success remains committed even if later auto-resume fails; surface a separate warning"
                               ],
+    "git":  {
+                "implementationRemoteVerified":  true,
+                "finalDocumentation":  "Separate commit follows; verify remote HEAD at next cycle",
+                "push":  "CONFIRMED",
+                "pullRequest":  "BLOCKED_403",
+                "baselineRemoteVerified":  true,
+                "implementationRemoteSha":  "ef51627484552ba803f9e65d0e73640b4d8b6513"
+            },
     "nextCycle":  {
-                      "firstTask":  "V2-P0-07",
-                      "instructions":  "Verify branch/head/runtime, then validate media decodability before scene assignment. Finish browser mutation click-through and operator reconciliation procedure. No live social upload without explicit authorization."
+                      "firstTask":  "V2-P1-02",
+                      "instructions":  "Verify latest feature remote/local heads and clean worktree. Implement scoped Windows agent identity, heartbeat, leased allowlisted Git/FFmpeg tasks, timeouts, single-writer worktrees and restart recovery. See docs/ACCOUNT_MANAGER.md. No public exposure, main merge or real social publishing."
                   },
-    "manualPrUrl":  "https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p0-hardening...feat/v2-p0-reliability?expand=1"
+    "manualPrUrl":  "https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p0-media-ai...feat/v2-p1-account-manager?expand=1"
 }

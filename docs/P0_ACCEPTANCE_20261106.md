@@ -6,13 +6,14 @@ Baseline `feat/v2-p0-media-ai` at `70ad2088aa4a492cd19f1ad58b547eb80e0abb8c`; lo
 
 Environment: Windows, JDK 25, Maven 3.9.12, PostgreSQL 18.3 on loopback 55432, FFmpeg 8.1.2. Maven cache explicitly used `C:/Users/Admin/AppData/Local/codex-with-chatgpt/maven-repo-phase2b`. `CREATORFLOW_TEST_DB_URL=jdbc:postgresql://127.0.0.1:55432/creatorflow_test`; test DB user was the existing local cluster owner. No passwords/tokens are recorded here.
 
-- From backend: `mvn -Dmaven.repo.local=C:/Users/Admin/AppData/Local/codex-with-chatgpt/maven-repo-phase2b package -q` with test DB and `FFMPEG_PATH` set: 25 tests, 0 failures/errors/skips. This run includes the two new Account API tests and migration V8. The existing migration regression was updated to expect V8. Its V1-V4 then V5-V8 upgrade and no-op rerun passed, retaining conflicting post IDs.
+- From backend: `& D:/DevTools/apache-maven-3.9.12/bin/mvn.cmd '-Dmaven.repo.local=C:/Users/Admin/AppData/Local/codex-with-chatgpt/maven-repo-phase2b' package -q` with test DB and `FFMPEG_PATH` set: 25 tests, 0 failures/errors/skips. This run includes the two new Account API tests and migration V8. The existing migration regression was updated to expect V8. Its V1-V4 then V5-V8 upgrade and no-op rerun passed, retaining conflicting post IDs.
 - MediaValidatorTest, AssetValidationIntegrationTest, ApiSecurityIntegrationTest: corrupt/truncated PNG/JPEG/WAV/MP4 rejection, valid real FFmpeg containers, structured 422, no asset insertion/readiness mutation on rejection.
 - AiReliabilityIntegrationTest (5 tests): invalid JSON/artifact, 429, timeout, three-attempt 503 fallback, nonretryable error, duplicate concurrent generation, durable usage/artifact and restart recovery. Provider fixtures are MOCK_ONLY.
 - Fresh database `creatorflow_p1_acceptance_20261106`: runtime applied Flyway V1-V8; every history entry `success=true`; readiness UP.
 - From frontend: `npm run build` with `VITE_API_BASE_URL=http://127.0.0.1:5173`: TypeScript/Vite passed. Bundle-size warning remains.
 - From repository root: `CreatorFlow-Backend/scripts/smoke-e2e.ps1 -Ffprobe <FFmpeg-bin>/ffprobe.exe -EvidenceFile storage/e2e-evidence-v2-p1.json`: PASS. Actual MP4 duration 15.000000 seconds, video/audio/subtitle streams; corrupt media rejected; isolated post-upload corruption produces render failure; retry count 1; cancel CANCELLED. Publication fails closed with no remote post ID and real publishing disabled.
 - `CreatorFlow-Backend/scripts/smoke-contract.ps1 -EvidenceFile storage/e2e-evidence-v2-p1.json`: PASS, 11 routes plus authentication/validation/storyboard/media checks. An initial attempt used the script's old default evidence file from a different DB and returned 204 for that nonexistent storyboard; rerun used the matching current evidence.
+- Full output decode: `& '<FFmpeg-bin>/ffmpeg.exe' -nostdin -v error -i storage/e2e-output.mp4 -f null NUL`: exit 0. Installed FFmpeg bin: `C:/Users/Admin/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-8.1.2-full_build/bin` (also used for `FFMPEG_PATH` and ffprobe above).
 
 ## Browser mutation smoke and fix
 

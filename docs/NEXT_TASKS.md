@@ -1,6 +1,18 @@
 # CreatorFlow next tasks
 
-Updated: 2026-11-05. Read `AGENTS.md` and `.creatorflow/handoffs/latest.json`, then verify Git and runtime before executing. Tasks below are ordered by dependency, not by feature enthusiasm.
+Updated: 2026-11-06. Read `AGENTS.md` and `.creatorflow/handoffs/latest.json`, then verify Git and runtime. Current branch `feat/v2-p1-account-manager`; implementation `ef51627`, baseline `70ad208`. P0-06 remaining asset/settings mutations, P0-07/08 regressions and V2-P1-01 are implemented/tested within the scope in `PROJECT_STATUS.md` and `P0_ACCEPTANCE_20261106.md`.
+
+## Immediate next task: V2-P1-02 Windows Local Agent
+
+1. Create a new branch from the verified remote `feat/v2-p1-account-manager` head in a clean worktree. Git metadata needs approved execution in this sandbox; do not change ACLs or retry fetch when heads already match.
+2. Implement scoped agent identity, loopback transport, heartbeat and PostgreSQL leases. Backend remains authoritative; discover provider capabilities on the agent host.
+3. Implement fixed allowlisted Git/FFmpeg task kinds, working-directory boundaries, timeout/descendant cleanup, single-writer worktrees, durable attempts and restart recovery. Test real local processes, duplicate delivery and expired leases.
+4. Preserve official credential ownership; no cache copying or unsupported account switching. Any future automatic login launch must be explicit and user-visible; current reconnect only supplies official terminal instructions.
+5. Run DB/API/browser checks, update handoffs, commit and push. No main merge, public API exposure, production deploy or real social publication.
+
+Architecture and acceptance: [ACCOUNT_MANAGER.md](ACCOUNT_MANAGER.md). External blockers: live provider/OAuth setup and GitHub connector PR-write permission. The branch was pushed and remote verified; draft PR returned HTTP 403. [Create PR manually](https://github.com/danielnguyendbk/CreatorFlow/compare/feat/v2-p0-media-ai...feat/v2-p1-account-manager?expand=1) or grant integration PR-write permission. No PR number exists.
+
+## Historical backlog (current status above takes precedence)
 
 V2-P0-04 through V2-P0-06 are implemented in `feat/v2-p0-reliability`. Their exact test scope is in `PROJECT_STATUS.md` and `FRONTEND_API_CONTRACT.md`. The table retains acceptance criteria for audit history.
 
