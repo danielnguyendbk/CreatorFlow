@@ -70,6 +70,7 @@ def main(args):
         identity = wait(lambda: next((a for a in api("agents") if a["name"] == "E2E Recovery Agent" and a["status"] == "ONLINE"), None))
         agent_id = identity["id"]
         wait(lambda: set(next(a for a in api("agents") if a["id"] == agent_id)["capabilities"]) == {"GIT_FIXTURE", "FFMPEG_FIXTURE", "CAPABILITY_PROBE"})
+        assert worker.poll() is None
         def enqueue(kind, duration=1, timeout=20):
             body = dict(agentId=agent_id, kind=kind, worktreeKey="e2e-fixture", idempotencyKey=str(uuid.uuid4()), timeoutSec=timeout, durationSec=duration)
             task = api("agent-tasks", body)

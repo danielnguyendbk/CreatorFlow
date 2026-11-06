@@ -89,6 +89,13 @@ class Client:
                 return None
         self.http = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
 
+    def ready(self):
+        try:
+            with self.http.open(self.base + "/actuator/health/readiness", timeout=2) as response:
+                return json.load(response).get("status") == "UP"
+        except (OSError, ValueError):
+            return False
+
     def post(self, path, body, enrollment=None):
         headers = {"Content-Type": "application/json"}
         if enrollment:
@@ -202,6 +209,11 @@ def run(args):
     signal.signal(signal.SIGINT, lambda *_: stop.__setitem__(0, True))
     signal.signal(signal.SIGTERM, lambda *_: stop.__setitem__(0, True))
     with exclusive_lock(root / "instance.lock"):
+        while not stop[0] and not client.ready():
+            print("Waiting for local backend readiness", flush=True)
+            time.sleep(1)
+        if stop[0]:
+            return
         credential_file = root / "identity.dpapi"
         if credential_file.exists():
             client.identity = json.loads(protect(credential_file.read_bytes(), decrypt=True))
