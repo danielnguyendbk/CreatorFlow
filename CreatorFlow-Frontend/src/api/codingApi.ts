@@ -1,8 +1,14 @@
-import type { CodingInventory, CredentialInventory, CodingRepository, CodingAdmissionResult } from '@/types';
+import type { CodingInventory, CredentialInventory, CodingRepository, CodingAdmissionResult, CodingExecution, CodingExecutionInventory } from '@/types';
 import { apiRequest, realApi } from './_http';
 const base = '/api/v2/coding';
 function backend() { if (!realApi) throw new Error('Coding foundation requires the real backend.'); }
 export const codingApi = {
+  executions: () => { backend(); return apiRequest<CodingExecutionInventory>(base + '/executions'); },
+  executionDraft: (workspaceId: string, objective: string, allowedFiles: string[], budgetPolicyId: string, timeoutSec: number) => {
+    backend(); return apiRequest<CodingExecution>(base + '/executions', { method: 'POST', body: JSON.stringify({workspaceId, taskType: 'CODEX_EXECUTE', provider: 'CODEX_CLI', objective, allowedFiles, budgetPolicyId, timeoutSec, maxAttempts: 1, requestKey: crypto.randomUUID()}) });
+  },
+  authorizeExecution: (id: string, contractHash: string, expiresInMinutes: number) => { backend(); return apiRequest<CodingExecution>(`${base}/executions/${encodeURIComponent(id)}/authorize`, { method: 'POST', body: JSON.stringify({contractHash, confirmation: 'AUTHORIZE_CODEX', expiresInMinutes}) }); },
+  cancelExecution: (id: string) => { backend(); return apiRequest<CodingExecution>(`${base}/executions/${encodeURIComponent(id)}/cancel`, { method: 'POST' }); },
   inventory: () => { backend(); return apiRequest<CodingInventory>(base); },
   credentials: () => { backend(); return apiRequest<CredentialInventory>('/api/v2/agent-credentials'); },
   register: (input: { agentId: string; canonicalPath: string; remoteUrl: string; allowedBases: string[]; protectedBranches: string[] }) => {

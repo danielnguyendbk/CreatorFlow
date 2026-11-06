@@ -53,6 +53,20 @@ export interface CredentialInventory {
   audit: { agentId: string | null; generation: number | null; type: string; actor: string; createdAt: string }[];
   retention: { logsDays: number; temporaryWorktreeDays: number; artifactMetadataDays: number; preserveReferenced: boolean };
 }
+export interface CodingExecution {
+  id: string; workspace_id: string; agent_id: string; state: string; contract_hash: string;
+  contract: { baseCommit: string; checkpointId: string; repositoryId: string; repositoryConfigHash: string; agentId: string;
+    task: { workspaceId: string; objective: string; allowedFiles: string[]; provider: string; budgetPolicyId: string; timeoutSec: number; maxAttempts: number } };
+  authorization_id: string | null; session_id: string | null; attempt: number; lease_expires_at: string | null;
+  checkpoint_id: string | null; error_code: string | null; diff: string | null; changed_files: string[] | null;
+  diff_sha256: string | null; evidence_hash: string | null; updated_at: string;
+}
+export interface CodingExecutionInventory {
+  executionEnabled: boolean; liveVerification: string; executions: CodingExecution[];
+  capabilities: { agent_id: string; session_id: string; cli_version: string | null; protocol_supported: boolean; sandbox_verified: boolean; error_code: string | null; evidence_hash: string; observed_at: string }[];
+  authorizations: { id: string; execution_id: string; operator_id: string; credential_generation: number; expires_at: string; revoked_at: string | null }[];
+  events: { id: number; execution_id: string; type: string; actor: string; created_at: string }[];
+}
 export interface TaskCycle { id: string; state: string; tasks: {id: string; nodeKey: string; state: string}[] }
 export interface LocalAgent {
   id: string;

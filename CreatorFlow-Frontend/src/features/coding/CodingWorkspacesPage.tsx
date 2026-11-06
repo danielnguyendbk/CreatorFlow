@@ -4,6 +4,7 @@ import { codingApi } from '@/api/codingApi';
 import { agentApi } from '@/api/agentApi';
 import { Button, Input, PageHeader } from '@/components/ui';
 import { UsageWidget } from '@/features/usage/AiUsagePage';
+import { CodingExecutionsPanel } from './CodingExecutionsPanel';
 
 export function CodingWorkspacesPage() {
   const cache = useQueryClient();
@@ -38,6 +39,7 @@ export function CodingWorkspacesPage() {
       <p className="text-sm text-zinc-400">Installed capability and quota admission never enable an AI executor.</p>
     </section>
     {selectedAgent && <UsageWidget compact agentId={selectedAgent} />}
+    {selectedAgent && <CodingExecutionsPanel key={selectedAgent} agentId={selectedAgent} foundation={inventory.data} />}
     <div className="grid gap-5 xl:grid-cols-2">
       <form className="space-y-4 rounded-xl border border-zinc-800 p-4" onSubmit={e => { e.preventDefault(); register.mutate(); }}>
         <h2 className="font-semibold">Register approved repository</h2>
