@@ -18,11 +18,12 @@ import org.springframework.web.server.ResponseStatusException;
 import static org.junit.jupiter.api.Assertions.*;
 
 @EnabledIfEnvironmentVariable(named="CREATORFLOW_TEST_DB_URL",matches=".+")
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT,properties={"creatorflow.api-token=p5-browser-fixture","CREATORFLOW_AGENT_ENROLLMENT_TOKEN=p5-enrollment-fixture-at-least-32-characters","CREATORFLOW_ENABLE_REAL_PUBLISH=false","TELEGRAM_ENABLED=false"})
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT,properties={"creatorflow.api-token=p5-browser-fixture","creatorflow.codex-execution-enabled=true","CREATORFLOW_AGENT_ENROLLMENT_TOKEN=p5-enrollment-fixture-at-least-32-characters","CREATORFLOW_ENABLE_REAL_PUBLISH=false","TELEGRAM_ENABLED=false"})
 class CodingFoundationIntegrationTest {
     @DynamicPropertySource static void database(DynamicPropertyRegistry p) {p.add("spring.datasource.url",()->System.getenv("CREATORFLOW_TEST_DB_URL"));p.add("spring.datasource.username",()->System.getenv("CREATORFLOW_TEST_DB_USER"));p.add("spring.datasource.password",()->System.getenv().getOrDefault("CREATORFLOW_TEST_DB_PASSWORD",""));}
     @Autowired JdbcTemplate db;@Autowired ObjectMapper json;@Autowired AgentQueue queue;@Autowired AgentCredentials credentials;
     @Autowired CodingRegistry registry;@Autowired CodingWorkspaces workspaces;@Autowired CodingAdmission admission;@Autowired UsageApi usage;@Autowired TestRestTemplate http;
+    @Autowired CodingExecutions executions;
     UUID agent,session;String secret;Path repository;UUID repo;String base="a".repeat(40);
     @BeforeEach void setup() throws Exception {
         var identity=queue.register("P5 database fixture");agent=(UUID)identity.get("id");secret=(String)identity.get("credential");
@@ -110,6 +111,56 @@ class CodingFoundationIntegrationTest {
         db.update("insert into ai_usage_snapshots values (?,?,?,?,now(),'OK',?::jsonb)",snapshot.id(),agent,sequence,java.sql.Timestamp.from(snapshot.observedAt()),json.writeValueAsString(snapshot));
     }
     CodingAdmission.Check check(boolean reserve) {return new CodingAdmission.Check(UUID.randomUUID(),agent,CodingAdmission.Provider.CODEX_CLI,30,1,reserve);}
+    UUID executionDraft() throws Exception {
+        var w=workspaces.create(createInput(UUID.randomUUID().toString()),"local-user");var task=queue.claim(agent,session);UUID id=(UUID)task.get("id");
+        workspaces.report(agent,id,new CodingWorkspaces.Report(session,1,UUID.randomUUID(),"READY",base,false));queue.finish(agent,session,id,new AgentApi.Completion(session,1,AgentApi.Outcome.SUCCEEDED,new AgentApi.Result(0,null,null,base,null,null,null)));
+        var policy=admission.policy(new CodingAdmission.Policy(agent,CodingAdmission.Provider.CODEX_CLI,true,true,1,60,1,60),"local-user");capabilityAndQuota(10,0,false);
+        // Explicitly mocked sandbox evidence, never a live OS verification claim.
+        executions.capability(agent,new CodingExecutions.Capability(session,"0.162.1",true,true,null,"b".repeat(64)));
+        return (UUID)executions.create(new CodingExecutions.Create((UUID)w.get("id"),"CODEX_EXECUTE","CODEX_CLI","Update fixture README only",List.of("README.md"),(UUID)policy.get("id"),30,1,UUID.randomUUID().toString()),"local-user").get("id");
+    }
+    void authorizeExecution(UUID id){executions.authorize(id,new CodingExecutions.Authorize((String)executions.row(id).get("contract_hash"),"AUTHORIZE_CODEX",5),"local-user");}
+    CodingExecutions.Attempt executionAttempt(){return new CodingExecutions.Attempt(session,1);}
+    @Test void executionAuthorizationBindsExactContractAndCannotUseAgentAuthority() throws Exception {
+        UUID id=executionDraft();assertTrue(executions.claim(agent,session).isEmpty());
+        assertEquals(HttpStatus.UNAUTHORIZED,post("/api/v2/coding/executions/"+id+"/authorize",Map.of("contractHash",executions.row(id).get("contract_hash"),"confirmation","AUTHORIZE_CODEX","expiresInMinutes",5),runtime(secret)).getStatusCode());
+        assertThrows(ResponseStatusException.class,()->executions.authorize(id,new CodingExecutions.Authorize("f".repeat(64),"AUTHORIZE_CODEX",5),"local-user"));
+        authorizeExecution(id);authorizeExecution(id);assertEquals(1,db.queryForObject("select count(*) from coding_execution_authorizations where execution_id=?",Integer.class,id));
+        assertThrows(org.springframework.dao.DataAccessException.class,()->db.update("update coding_executions set contract='{}' where id=?",id));
+        assertThrows(ResponseStatusException.class,()->CodingExecutions.file("src/**"));assertThrows(ResponseStatusException.class,()->CodingExecutions.file("AGENTS.md"));assertThrows(ResponseStatusException.class,()->CodingExecutions.file("../secret"));
+    }
+    @Test void executionRevalidatesQuotaBetweenClaimAndStartAndIgnoresHistoricalReady() throws Exception {
+        UUID id=executionDraft();var historical=admission.check(check(false),"local-user");assertEquals("READY",historical.get("state"));authorizeExecution(id);assertEquals(id,executions.claim(agent,session).get("id"));assertNull(queue.claim(agent,session));
+        db.update("delete from ai_usage_snapshots where agent_id=?",agent);capabilityAndQuota(100,0,false);
+        var denied=executions.begin(agent,id,executionAttempt());assertEquals(false,denied.get("permitted"));assertEquals("WAIT_FOR_RESET",executions.row(id).get("error_code"));assertEquals("BLOCKED",executions.row(id).get("state"));
+        assertThrows(ResponseStatusException.class,()->executions.begin(agent,id,executionAttempt()));
+    }
+    @Test void executionRequiresFreshSandboxAndExactCheckpointAndCredentialGeneration() throws Exception {
+        UUID id=executionDraft();authorizeExecution(id);db.update("update coding_execution_capabilities set sandbox_verified=false where agent_id=?",agent);assertTrue(executions.claim(agent,session).isEmpty());assertEquals("SANDBOX_NOT_VERIFIED",executions.row(id).get("error_code"));
+        executions.capability(agent,new CodingExecutions.Capability(session,"0.162.1",true,true,null,"b".repeat(64)));authorizeExecution(id);
+        db.update("update agent_credentials set generation=generation+1 where agent_id=?",agent);assertTrue(executions.claim(agent,session).isEmpty());assertEquals("AUTHORIZATION_EXPIRED_OR_FENCED",executions.row(id).get("error_code"));
+    }
+    @Test void executionConcurrentClaimHasOneWriterAndSingleUseStart() throws Exception {
+        UUID id=executionDraft();authorizeExecution(id);var pool=Executors.newFixedThreadPool(4);int claims=0;
+        try{var jobs=new ArrayList<Future<Map<String,Object>>>();for(int i=0;i<4;i++)jobs.add(pool.submit(()->executions.claim(agent,session)));for(var f:jobs)if(!f.get(10,TimeUnit.SECONDS).isEmpty())claims++;}finally{pool.shutdownNow();}
+        assertEquals(1,claims);assertEquals(true,executions.begin(agent,id,executionAttempt()).get("permitted"));assertThrows(ResponseStatusException.class,()->executions.begin(agent,id,executionAttempt()));
+        assertThrows(ResponseStatusException.class,()->workspaces.operation(new CodingWorkspaces.Operation((UUID)executions.row(id).get("workspace_id"),"WORKTREE_CLEANUP",UUID.randomUUID().toString()),"local-user"));
+    }
+    @Test void executionBudgetMutationInvalidatesApprovalRatherThanExpandingAuthority() throws Exception {
+        UUID id=executionDraft();authorizeExecution(id);var task=(Map<?,?>)executions.contract(executions.row(id)).get("task");
+        db.update("update coding_budget_policies set max_reserved_seconds=600 where id=?",UUID.fromString(task.get("budgetPolicyId").toString()));executions.claim(agent,session);assertEquals("BUDGET_POLICY_CHANGED",executions.row(id).get("error_code"));
+    }
+    @Test void executionReviewStoresExactDiffHashAndCannotReplayOrEscapeScope() throws Exception {
+        UUID id=executionDraft();authorizeExecution(id);executions.claim(agent,session);executions.begin(agent,id,executionAttempt());
+        String diff="diff --git a/README.md b/README.md\n--- a/README.md\n+++ b/README.md\n@@ -1 +1 @@\n-old\n+new\n";
+        var bad=new CodingExecutions.Result(session,1,UUID.randomUUID(),"REVIEW_REQUIRED",diff,List.of("outside.txt"),AgentIdentity.hash(diff),"a".repeat(64),null);assertThrows(ResponseStatusException.class,()->executions.result(agent,id,bad));
+        var good=new CodingExecutions.Result(session,1,UUID.randomUUID(),"REVIEW_REQUIRED",diff,List.of("README.md"),AgentIdentity.hash(diff),"a".repeat(64),null);assertEquals("REVIEW_REQUIRED",executions.result(agent,id,good).get("state"));assertEquals("REVIEW_REQUIRED",workspaces.workspace((UUID)executions.row(id).get("workspace_id")).get("state"));assertThrows(ResponseStatusException.class,()->executions.result(agent,id,good));
+    }
+    @Test void executionCancellationExpiryAndRestartRecoveryNeverRetryDirtyWork() throws Exception {
+        UUID id=executionDraft();authorizeExecution(id);db.update("update coding_execution_authorizations set expires_at=now()-interval '1 second' where execution_id=?",id);executions.claim(agent,session);assertEquals("AUTHORIZATION_EXPIRED_OR_FENCED",executions.row(id).get("error_code"));
+        authorizeExecution(id);executions.claim(agent,session);executions.begin(agent,id,executionAttempt());executions.cancel(id,"local-user");assertEquals(true,executions.renew(agent,id,executionAttempt()).get("cancelRequested"));
+        db.update("update coding_executions set lease_expires_at=now()-interval '1 second' where id=?",id);executions.recover();assertEquals("NEEDS_RECONCILIATION",executions.row(id).get("state"));assertTrue(executions.claim(agent,session).isEmpty());assertThrows(ResponseStatusException.class,()->executions.begin(agent,id,executionAttempt()));
+    }
     @Test void admissionDistinguishesDisabledReadyBudgetStaleUnknownWeeklyAndExhausted() throws Exception {
         assertEquals("DISABLED",admission.check(check(false),"local-user").get("state"));
         admission.policy(new CodingAdmission.Policy(agent,CodingAdmission.Provider.CODEX_CLI,true,true,1,60,1,30),"local-user");

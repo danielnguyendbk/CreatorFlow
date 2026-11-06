@@ -102,6 +102,7 @@ class AgentQueue {
     @Transactional Map<String,Object> claim(UUID agent,UUID session) {
         db.queryForList("select id from local_agents where id=? for update",agent);
         current(agent,session);
+        if(db.queryForObject("select count(*) from coding_executions where agent_id=? and state in ('CLAIMED','RUNNING','CANCEL_REQUESTED')",Integer.class,agent)>0) return null;
         if(db.queryForObject("select count(*) from agent_tasks where agent_id=? and state in ('RUNNING','CANCEL_REQUESTED')",Integer.class,agent)>0) return null;
         var rows=db.queryForList("select t.id from agent_tasks t join local_agents a on a.id=t.agent_id where t.agent_id=? and t.state='QUEUED' and t.not_before<=now() and (t.cycle_id is null or exists (select 1 from agent_cycles c where c.id=t.cycle_id and c.state in ('QUEUED','RUNNING'))) and a.capabilities ?? t.kind and (not exists(select 1 from coding_task_contracts cc where cc.task_id=t.id) or exists(select 1 from coding_task_contracts cc join coding_workspaces w on w.id=cc.workspace_id join coding_repositories r on r.id=w.repository_id where cc.task_id=t.id and w.current_task_id=t.id and r.enabled and r.verification='VERIFIED')) and not exists (select 1 from agent_task_dependencies d join agent_tasks p on p.id=d.depends_on_id where d.task_id=t.id and p.state<>'SUCCEEDED') order by t.created_at limit 1 for update of t skip locked",agent);
         if(rows.isEmpty()) return null;

@@ -9,12 +9,17 @@ from pathlib import Path
 import re
 import shutil
 import signal
+import sys
 import time
 import urllib.request
 import urllib.parse
 import uuid
 from contextlib import contextmanager
 from windows_process import JobProcess
+
+# Keep runtime and imported adapters on one exception/lock module when launched as a script.
+if __name__ == '__main__':
+    sys.modules.setdefault('agent',sys.modules[__name__])
 
 VERSION = "0.1.0"
 KINDS = {"GIT_FIXTURE", "FFMPEG_FIXTURE", "CAPABILITY_PROBE"}
@@ -266,6 +271,8 @@ def run(args):
             capabilities += list(WORKTREE_KINDS)
         session = client.post("session", {"capabilities": capabilities})["sessionId"]
         manager = WorktreeManager(root, client, session) if os.environ.get('CREATORFLOW_REPOSITORY_ROOTS') else None
+        from codex_executor import ExecutionManager
+        coding = ExecutionManager(manager,client,session) if manager else None
         usage_thread = None
         if os.environ.get("CREATORFLOW_USAGE_ENABLED", "true").lower() == "true":
             import threading
@@ -313,8 +320,15 @@ def run(args):
                             match = re.search(r'codex-cli (\d+\.\d+\.\d+(?:[-.][A-Za-z0-9.]+)?)', output)
                             version = match[1] if not code and match else None
                         client.post('coding/capabilities', dict(sessionId=session, providers=[dict(provider='CODEX_CLI', installed=bool(version), version=version), dict(provider='GEMINI_CLI', installed=bool(shutil.which('gemini')), version=None)]))
+                        client.post('coding/executions/capability',dict(sessionId=session,**coding.runner.capability()))
                     last_configuration = time.monotonic()
                 tick()
+                if coding:
+                    execution=client.post('coding/executions/claim',dict(sessionId=session))
+                    if execution:
+                        coding.execute(execution,tick)
+                        if args.once:return
+                        continue
                 task = client.post("claim", {"sessionId": session})
                 if not task:
                     time.sleep(0.5)

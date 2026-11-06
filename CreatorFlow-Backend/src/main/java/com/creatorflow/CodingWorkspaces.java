@@ -55,6 +55,7 @@ class CodingWorkspaces {
     @Transactional Map<String,Object> operation(Operation input,String actor) {
         ContentManifests.operator(actor);if(!KINDS.contains(input.taskType())) throw AgentQueue.conflict("NOT_ENABLED: autonomous AI executor");
         var workspace=workspace(input.workspaceId());UUID agent=(UUID)workspace.get("agent_id");db.queryForList("select id from local_agents where id=? for update",agent);
+        if(db.queryForObject("select count(*) from coding_executions where workspace_id=? and state in ('AUTHORIZED','CLAIMED','RUNNING','CANCEL_REQUESTED')",Integer.class,input.workspaceId())>0) throw AgentQueue.conflict("Workspace reserved by coding execution");
         db.queryForList("select id from coding_workspaces where id=? for update",input.workspaceId());workspace=workspace(input.workspaceId());eligible((UUID)workspace.get("repository_id"));
         String key="coding-"+input.idempotencyKey(),hash=AgentIdentity.hash(registry.encode(input));
         var old=db.queryForList("select c.workspace_id,c.request_hash from agent_tasks t join coding_task_contracts c on c.task_id=t.id where t.idempotency_key=?",key);
